@@ -43,6 +43,7 @@ function headerHTML() {
 	                  <li><a href="/recipes/pizza_casserole.html">Pizza Casserole</a></li>
 	                  <li><a href="/recipes/new_roots_creole_salt.html">New Roots & Sweet Home Spice Blends</a></li>
 	                  <li><a href="/recipes/shepherds_pie.html">Shepherd's Pie</a></li>
+                    <li><a href="/recipes/ham_and_cheese_delight.html">Ham and Cheese Delight</a></li>
 	                </ul>
 	            </li>
 	          </ul>
@@ -92,7 +93,7 @@ function giveActiveClassToCurrentPage() {
     const pathname = window.location.pathname.replace("/public/", "");
     const currentHref = window.location.href.replace(".html", "") + "END";
 
-	/* Homepage */
+    /* Homepage */
     if (href == "/" || href == "/index.html") {
       if (pathname == "/") {
         el.classList.add("active");
@@ -103,7 +104,7 @@ function giveActiveClassToCurrentPage() {
         el.classList.add("active");
 
         /* Subnavigation: */
-		
+
         if (el.closest("details")) {
           el.closest("details").setAttribute("open", "open");
           el.closest("details").classList.add("active");
@@ -111,7 +112,7 @@ function giveActiveClassToCurrentPage() {
 
         if (el.closest("ul")) {
           if (el.closest("ul").closest("ul")) {
-          	el.closest("ul").closest("ul").classList.add("active");
+            el.closest("ul").closest("ul").classList.add("active");
           }
         }
       }
