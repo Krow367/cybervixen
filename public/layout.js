@@ -65,7 +65,7 @@ function headerHTML() {
           <a href="https://cybervixen.atabook.org"><img src="./ata.png" alt="Sign my guestbook!"></a>
           <div class="sidebar-title">Sites I like!</div>
           <a href="https://onio.neocities.org" title="Visit Onio Café"><img src="https://onio.neocities.org/thebutton.gif" alt="Come Chat With Us!" width="88" height="31"></a>
-          <a href="https://kuroi.com.br/" title="KuroiOS"><img src="/images/kuroi.png" alt="Kuroi OS" width="88" height="31"></a>
+          <a href="https://kuroi.com.br/" title="KuroiOS"><img src="${nesting}/images/kuroi.png" alt="Kuroi OS" width="88" height="31"></a>
         </div>
 
       </aside>
