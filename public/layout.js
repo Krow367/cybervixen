@@ -62,7 +62,7 @@ function headerHTML() {
         
         <div class="sidebar-section">
           <div class="sidebar-title">Sign my atabook!</div>
-          <a href="https://cybervixen.atabook.org"><img src="./ata.png" alt="Sign my guestbook!"></a>
+          <a href="https://cybervixen.atabook.org"><img src="${nesting}/ata.png" alt="Sign my guestbook!"></a>
           <div class="sidebar-title">Sites I like!</div>
           <a href="https://onio.neocities.org" title="Visit Onio Café"><img src="https://onio.neocities.org/thebutton.gif" alt="Come Chat With Us!" width="88" height="31"></a>
           <a href="https://kuroi.com.br/" title="KuroiOS"><img src="${nesting}/images/kuroi.png" alt="Kuroi OS" width="88" height="31"></a>
