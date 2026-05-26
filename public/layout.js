@@ -72,6 +72,7 @@ function headerHTML() {
 	          <ul>
 	            <li><a href="/index.html">Home</a></li>
 	            <li><a href="/about.html">Who am I?</a></li>
+              <li><a href="/blog/blog.html">Ramblings</a></li>
 	            <li>
 	                <strong><a href="/recipes/recipes.html">Recipes!</a></strong>
 	                <ul>
@@ -102,7 +103,7 @@ function headerHTML() {
           <a href="https://cybervixen.atabook.org"><img src="./ata.png" alt="Sign my guestbook!"></a>
           <div class="sidebar-title">Sites I like!</div>
           <a href="https://onio.neocities.org" title="Visit Onio Café"><img src="https://onio.neocities.org/thebutton.gif" alt="Come Chat With Us!" width="88" height="31"></a>
-          <a href="https://kuroi.com.br/" title="KuroiOS"><img src="./images/kuroi.png" alt="Kuroi OS" width="88" height="31"></a>
+          <a href="https://kuroi.com.br/" title="KuroiOS"><img src="/images/kuroi.png" alt="Kuroi OS" width="88" height="31"></a>
         </div>
 
       </aside>
