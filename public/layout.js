@@ -21,7 +21,7 @@ function headerHTML() {
   // You can use it to refer to images etc.
   // Example: <img src="${nesting}img/logo.png"> might output <img src="../img/logo.png">
 
-    if (path.includes("/blog/blog.html")) {
+    if (path.includes("/blog/")) {
     return `
        <!-- =============================================== -->
       <!-- HEADER -->
