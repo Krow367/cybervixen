@@ -16,9 +16,44 @@ function loadLayoutByPetraPixel() {
 const nesting = getNesting();
 
 function headerHTML() {
+  const path = window.location.pathname;
   // ${nesting} outputs "./" or "../" depending on current page depth.
   // You can use it to refer to images etc.
   // Example: <img src="${nesting}img/logo.png"> might output <img src="../img/logo.png">
+
+    if (path.includes("/blog/blog.html")) {
+    return `
+       <!-- =============================================== -->
+      <!-- HEADER -->
+      <!-- =============================================== -->
+
+      <header>
+
+        <div class="header-content">
+	        <div class="header-title">Welcome to the Fox Den!</div>
+	        
+	        <!-- NAVIGATION -->
+	        <nav>
+	          <ul>
+	            <li><a href="/index.html">Home</a></li>
+	            <li><a href="/about.html">Who am I?</a></li>
+	            <li>
+	                <strong><a href="/recipes/recipes.html">Recipes!</a></strong>
+	                <ul>
+	                  <li><a href="/recipes/smash_sauce.html">Burger Sauce</a></li>
+	                  <li><a href="/recipes/pizza_casserole.html">Pizza Casserole</a></li>
+	                  <li><a href="/recipes/new_roots_creole_salt.html">New Roots & Sweet Home Spice Blends</a></li>
+	                  <li><a href="/recipes/shepherds_pie.html">Shepherd's Pie</a></li>
+                    <li><a href="/recipes/ham_and_cheese_delight.html">Ham and Cheese Delight</a></li>
+	                </ul>
+	            </li>
+	          </ul>
+	        </nav>
+        	
+        </div>
+      </header>
+    `;
+  }
 
   return `
   
@@ -63,10 +98,10 @@ function headerHTML() {
         
         <div class="sidebar-section">
           <div class="sidebar-title">Sign my atabook!</div>
-          <a href="https://cybervixen.atabook.org"><img src="/ata.png" alt="Sign my guestbook!"></a>
+          <a href="https://cybervixen.atabook.org"><img src="./ata.png" alt="Sign my guestbook!"></a>
           <div class="sidebar-title">Sites I like!</div>
           <a href="https://onio.neocities.org" title="Visit Onio Café"><img src="https://onio.neocities.org/thebutton.gif" alt="Come Chat With Us!" width="88" height="31"></a>
-          <a href="https://kuroi.com.br/" title="KuroiOS"><img src="/images/kuroi.png" alt="Kuroi OS width="88" height="31"></a>
+          <a href="https://kuroi.com.br/" title="KuroiOS"><img src="./images/kuroi.png" alt="Kuroi OS" width="88" height="31"></a>
         </div>
 
       </aside>

@@ -36,7 +36,7 @@
 }
 
 body {
-  cursor: url("violin.png")1 1, auto;
+  cursor: url("./violin.png")1 1, auto;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -48,7 +48,7 @@ body {
   font-family: var(--font);
   line-height: 1.2;
   background: var(--background-color);
-  background-image: url("/stars3.gif");
+  background-image: url("./stars3.gif");
 
 }
 
@@ -314,7 +314,10 @@ header nav ul ul li a {
 
 main {
   line-height: 1.5;
+  scrollbar-width: 12px;
+  scrollbar-color: #64adff transparent;
 }
+
 
 main a,
 main a:visited {
