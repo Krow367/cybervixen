@@ -23,6 +23,36 @@ function headerHTML() {
 
     if (!path.includes("/blog/")) {
     return `
+          <!-- =============================================== -->
+      <!-- HEADER -->
+      <!-- =============================================== -->
+
+      <header>
+
+        <div class="header-content">
+	        <div class="header-title">Welcome to the Fox Den!</div>
+	        
+	        <!-- NAVIGATION -->
+	        <nav>
+	          <ul>
+	            <li><a href="/index.html">Home</a></li>
+	            <li><a href="/about.html">Who am I?</a></li>
+              <li><a href="/blog/blog.html">Ramblings</a></li>
+	            <li>
+	                <strong><a href="/recipes/recipes.html">Recipes!</a></strong>
+	                <ul>
+	                  <li><a href="/recipes/smash_sauce.html">Burger Sauce</a></li>
+	                  <li><a href="/recipes/pizza_casserole.html">Pizza Casserole</a></li>
+	                  <li><a href="/recipes/new_roots_creole_salt.html">New Roots & Sweet Home Spice Blends</a></li>
+	                  <li><a href="/recipes/shepherds_pie.html">Shepherd's Pie</a></li>
+                    <li><a href="/recipes/ham_and_cheese_delight.html">Ham and Cheese Delight</a></li>
+	                </ul>
+	            </li>
+	          </ul>
+	        </nav>
+        	
+        </div>
+      </header>
       <!-- =============================================== -->
       <!-- LEFT SIDEBAR -->
       <!-- =============================================== -->
