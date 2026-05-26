@@ -35,7 +35,7 @@ function headerHTML() {
 	        <!-- NAVIGATION -->
 	        <nav>
 	          <ul>
-	            <li><a href="/index.html">Home</a></li>
+	            <li><a href="/home.html">Home</a></li>
 	            <li><a href="/about.html">Who am I?</a></li>
               <li><a href="/blog/blog.html">Ramblings</a></li>
 	            <li>
@@ -86,7 +86,7 @@ function headerHTML() {
 	        <!-- NAVIGATION -->
 	        <nav>
 	          <ul>
-	            <li><a href="/index.html">Home</a></li>
+	            <li><a href="/home.html">Home</a></li>
 	            <li><a href="/about.html">Who am I?</a></li>
               <li><a href="/blog/blog.html">Ramblings</a></li>
 	            <li>
@@ -132,7 +132,7 @@ function giveActiveClassToCurrentPage() {
     const currentHref = window.location.href.replace(".html", "") + "END";
 
     /* Homepage */
-    if (href == "/" || href == "/index.html") {
+    if (href == "/" || href == "/home.html") {
       if (pathname == "/") {
         el.classList.add("active");
       }

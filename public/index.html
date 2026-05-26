@@ -2,84 +2,354 @@
 <html lang="en">
 
 <head>
-
-  <!-- Change your site title: (It is shown in the tab) -->
-  <title>The Fox Den</title>
-
-  <!-- Change your site description: (It is shown in Google results) -->
-  <meta content="The personal corner of the internet for a nerdy little fox" name="description" />
-
-  <!-- Setting character encoding and viewport size. Do not remove. -->
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Vixen</title>
+  <style>
+    #rain {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
 
-  <!-- FavIcon (small image in tab), change to any image you want: -->
-  <link href="favicon.ico" rel="icon" type="image/x-icon" />
+    .splash {
+      position: relative;
+      z-index: 1;
+    }
 
-  <!-- CSS: -->
-  <!-- You will have to change this to "../style.css" if this HTML file is in a subfolder, to "../../style.css" if this HTML file is in 2 subfolders, etc. -->
-  <link href="./style.css" rel="stylesheet" />
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
 
-  <!-- JavaScript: -->
-  <!-- You will have to change this to "../layout.js" if this HTML file is in a subfolder, to "../../layout.js" if this HTML file is in 2 subfolders, etc. -->
-  <script src="./layout.js"></script>
+    body {
+      display: grid;
+      place-items: center;
+      font-family: Arial, Helvetica, sans-serif;
+    }
 
-  <script>
-    // Template generated with petrapixel's layout generator.
-    // (Please do not remove this credit.)
-    console.log("%cTemplate generated with petrapixel's layout generator: https://petrapixel.neocities.org/coding/layout-generator", "font-size: 14pt; color: #922a45; background: #ffd3ef");
-  </script>
+    .splash {
+      position: relative;
+      width: min(92vw, 900px);
+      height: min(60vh, 420px);
+      display: grid;
+      place-items: center;
+    }
+
+    .brand {
+      position: relative;
+      width: 100%;
+      text-align: center;
+    }
+
+    .cyber {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(-250px);
+      font-size: 90px;
+      letter-spacing: 0.35em;
+      color: #64adff;
+      opacity: 0;
+      text-transform: uppercase;
+      text-shadow: 0 0 4px #64adff, 0 0 10px #64adff, 0 0 22px #64adff;
+      filter: saturate(1.2);
+    }
+
+    .vixen {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -10%) rotate(30deg);
+      font-size: 120px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #d614c6;
+      white-space: nowrap;
+    }
+
+
+    .letter {
+      display: inline-block;
+      opacity: 0;
+      transform-origin: center;
+    }
+
+    .show-v .v {
+      animation: shot 360ms ease-out forwards;
+    }
+
+    .show-v .i {
+      animation: shot 360ms ease-out forwards 360ms;
+    }
+
+    .show-v .x {
+      animation: shot 360ms ease-out forwards 620ms;
+    }
+
+    .show-v .e {
+      animation: burst 200ms linear forwards 1120ms;
+    }
+
+    .show-v .n {
+      animation: burst 100ms linear forwards 1420ms;
+    }
+
+    .show-cyber {
+      animation: flickerIn 1.15s ease-out forwards 2.05s;
+    }
+
+    .show-enter .enter-link {
+      animation:
+        typeEnter 1.1s steps(5, end) forwards 2.6s,
+        blinkCursor 700ms step-end infinite 2.6s;
+    }
+
+    .enter-wrap {
+      position: absolute;
+      left: 50%;
+      top: calc(50% + 120px);
+      transform: translateX(-50%);
+    }
+
+    .enter-link {
+      display: inline-block;
+      color: #5dff5d;
+      text-decoration: none;
+      text-transform: uppercase;
+      transform: translateY(150px);
+      font-size: 30px;
+      letter-spacing: 0.22em;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 0.16em solid #5dff5d;
+      width: 0;
+      opacity: 0;
+    }
+
+    @keyframes shot {
+      0% {
+        opacity: 0;
+        transform: translate(-0.18em, 0.14em) scale(0.2);
+        text-shadow: none;
+      }
+
+      65% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1.18);
+        text-shadow: 0 0 6px rgba(255, 255, 255, 0.45);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+      }
+    }
+
+    @keyframes burst {
+      0% {
+        opacity: 0;
+        transform: scale(0.15);
+      }
+
+      70% {
+        opacity: 1;
+        transform: scale(1.28);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes flickerIn {
+      0% {
+        opacity: 0;
+        text-shadow: none;
+      }
+
+      8% {
+        opacity: 0.2;
+        text-shadow: none;
+      }
+
+      12% {
+        opacity: 1;
+        text-shadow: 0 0 4px #64adff, 0 0 10px #64adff, 0 0 22px #64adff;
+      }
+
+      18% {
+        opacity: 0.35;
+        text-shadow: none;
+      }
+
+      25% {
+        opacity: 1;
+      }
+
+      31% {
+        opacity: 0.55;
+        text-shadow: none;
+      }
+
+      40% {
+        opacity: 1;
+        text-shadow: 0 0 4px #64adff, 0 0 10px #64adff, 0 0 22px #64adff;
+      }
+
+      48% {
+        opacity: 0.75;
+      }
+
+      58% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 1;
+        text-shadow: 0 0 4px #64adff, 0 0 10px #64adff, 0 0 22px #64adff;
+      }
+    }
+
+    @keyframes typeEnter {
+      from {
+        width: 0;
+        opacity: 1;
+      }
+
+      to {
+        width: 7.75ch;
+        opacity: 1;
+      }
+    }
+
+    @keyframes blinkCursor {
+
+      0%,
+      100% {
+        border-color: #5dff5d;
+      }
+
+      50% {
+        border-color: transparent;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      .letter,
+      .cyber {
+        animation: none !important;
+        opacity: 1 !important;
+      }
+    }
+  </style>
 </head>
 
 <body>
+  <canvas id="rain"></canvas>
+  <div class="splash">
+    <div class="brand" id="brand">
+      <div class="cyber" id="cyber">Cyber</div>
 
-  <script>NekoType = "neon"</script>
-  <h1 id=nl>
-    <script src="https://webneko.net/n20171213.js"></script><a href="https://webneko.net">Neko</a>
-  </h1>
-
-
-  <!-- The next line is a skip-to-content link for keyboard users. Do not remove it! -->
-  <a href="#content" id="skip-to-content-link">Skip to content</a>
-
-  <div class="layout">
-
-    <!-- =============================================== -->
-    <!-- Header (and Sidebars) will be loaded per JavaScript! Edit layout.js to change. -->
-    <!-- =============================================== -->
-
-
-    <main id="content"> <!-- Do NOT remove the ID here -->
-
-      <noscript>Please enable JavaScript to view this website!</noscript>
-
-      <!-- =============================================== -->
-      <!-- MAIN CONTENT -->
-      <!-- =============================================== -->
-
-
-      <section>
-
-        <h1>Welcome!!!!!</h1>
-        <p>Hi! Welcome to my own little corner of the internet! Hopefully over the coming months and years I can learn
-          HTML and make this place something special.</p>
-        <p>I'm not fully sure where to go just yet, maybe I'll talk about games I'm playing or songs I'm learning on my
-          violin. Who knows? I certainly don't.</p>
-
-
-      </section>
-    </main>
-
-    <!-- =============================================== -->
-    <!-- Footer will be loaded per JavaScript! Edit layout.js to change. -->
-    <!-- =============================================== -->
-
-
-    <!-- Closing .layout: -->
+      <div class="vixen" id="vixen" aria-label="Vixen">
+        <span class="letter v">V</span>
+        <span class="letter i">I</span>
+        <span class="letter x">X</span>
+        <span class="letter e">E</span>
+        <span class="letter n">N</span>
+      </div>
+      <div class="enter-wrap">
+        <a class="enter-link" href="/home.html">ENTER</a>
+      </div>
+    </div>
   </div>
 
+<script>
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      document.getElementById("vixen").classList.add("show-v");
+      document.getElementById("cyber").classList.add("show-cyber");
+    }, 250);
 
-  <!-- Add any additional Javascript code (<script></script>) here. -->
+    setTimeout(() => {
+      document.body.classList.add("show-enter");
+    }, 1400);
+
+    setTimeout(() => {
+      window.addEventListener("keydown", function handler(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          window.location.href = "/home.html";
+          window.removeEventListener("keydown", handler);
+        }
+      });
+    }, 5500);
+  });
+</script>
+  <script>
+    const canvas = document.getElementById("rain");
+    const ctx = canvas.getContext("2d");
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    const fontSize = 18;
+    const columns = () => Math.floor(canvas.width / fontSize);
+    const drops = [];
+
+    function initDrops() {
+      drops.length = 0;
+      for (let i = 0; i < columns(); i++) {
+        drops.push({
+          y: Math.random() * canvas.height / fontSize,
+          speed: 0.1 + Math.random() * 0.3
+        });
+      }
+    }
+
+    initDrops();
+    window.addEventListener("resize", initDrops);
+
+    function drawRain() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#39ff14";
+      ctx.font = fontSize + "px monospace";
+
+
+
+      for (let i = 0; i < drops.length; i++) {
+        const drop = drops[i];
+        const y = drop.y * fontSize;
+
+        ctx.fillRect(i * fontSize + 8, y, 2, 12);
+        drop.y += drop.speed;
+
+        if (y > canvas.height && Math.random() > 0.985) {
+          drop.y = 0;
+        }
+      }
+
+      requestAnimationFrame(drawRain);
+    }
+
+    drawRain();
+  </script>
 </body>
 
 </html>
