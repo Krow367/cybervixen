@@ -1,0 +1,219 @@
+@import url("https://fonts.googleapis.com/css?family=VT323&display=swap");
+
+:root {
+    --green: #5bf870;
+}
+
+.window {
+    position: fixed;
+    top: 12vh;
+    left: 12vw;
+    width: 76vw;
+    height: 72vh;
+    background: #000000;
+    color: #5bf870;
+    border: 2px solid #5bf870;
+    box-shadow: 0 0 20px rgba(91, 248, 112, 0.35);
+    z-index: 50;
+    font-family: "VT323", monospace;
+    font-size: max(2rem);
+    overflow: hidden;
+    flex-direction: column;
+    display: flex;
+    scrollbar-color: var(--green) transparent;
+}
+
+
+.titlebar {
+    cursor: move;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #000;
+    border-bottom: 1px solid #5bf870;
+    text-transform: uppercase;
+    text-shadow: 0 0 5px #c8c8c8;
+}
+
+.hidden {
+    display: none;
+}
+.window.minimized .body {
+  display: none;
+}
+
+.window.minimized {
+  height: auto;
+}
+
+.buttons button {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--green);
+    background: transparent;
+    color: var(--green);
+    font: inherit;
+    width: 1.6em;
+    height: 1.6em;
+    line-height: 1.4em;
+    border-radius: 0;
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sidebar {
+  flex: 0 0 10%;
+  border-right: 1px solid rgba(91, 248, 112, 0.4);
+  overflow-y: scroll;
+  min-height: 0;
+  padding: 1rem;
+}
+
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1rem;
+  overflow-y: scroll;
+}
+
+a:visited{
+color: #5bf870;
+}
+a{
+    color:#5bf870;
+}
+
+.scrollbox {
+  --sb-size: 18px;
+  --sb-step: 32;
+  --green: #5bf870;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--sb-size);
+  min-height: 0;
+  height: 100%;
+  background: #000;
+  color: var(--green);
+}
+
+.scrollbox-viewport {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-right: 0.5rem;
+}
+
+.scrollbox-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbox-content {
+  min-height: 100%;
+}
+
+.scrollbar {
+  display: grid;
+  grid-template-rows: var(--sb-size) minmax(0, 1fr) var(--sb-size);
+  width: var(--sb-size);
+  border-left: 1px solid var(--green);
+  background: #000;
+  user-select: none;
+}
+
+.scrollbar-btn,
+.scrollbar-track,
+.scrollbar-thumb {
+  box-sizing: border-box;
+}
+
+.scrollbar-btn {
+  position: relative;
+  width: 100%;
+  height: var(--sb-size);
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--green);
+  border-left: 0;
+  background: #000;
+  color: var(--green);
+  cursor: pointer;
+}
+
+.scrollbar-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+}
+
+.scrollbar-btn.up::before {
+  border-bottom: 7px solid var(--green);
+}
+
+.scrollbar-btn.down::before {
+  border-top: 7px solid var(--green);
+}
+
+.scrollbar-btn:hover,
+.scrollbar-thumb:hover {
+  background: #071f10;
+}
+
+.scrollbar-btn:active,
+.scrollbar-thumb:active,
+.scrollbar-thumb.dragging {
+  background: #10361d;
+}
+
+.scrollbar-track {
+  position: relative;
+  border-right: 1px solid var(--green);
+  border-bottom: 1px solid var(--green);
+  border-top: 1px solid var(--green);
+  background:
+    linear-gradient(#000, #000) padding-box,
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 6px,
+      rgba(91, 248, 112, 0.08) 6px 7px
+    );
+}
+
+.scrollbar-thumb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  min-height: 24px;
+  border: 1px solid var(--green);
+  border-right: 0;
+  background: var(--green);
+  cursor: grab;
+}
+
+.scrollbar-thumb::before {
+  content: "";
+  position: absolute;
+  inset: 4px 3px;
+  border: 1px solid rgba(91, 248, 112, 0.6);
+  pointer-events: none;
+}
+
+.scrollbar-thumb:active {
+  cursor: grabbing;
+}

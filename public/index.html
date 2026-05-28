@@ -5,7 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cyber Vixen</title>
+  <script type="module" src="./mobilecheck.js"></script>
+  <link rel="icon" type="image/x-icon" href="img/icon.png">
   <style>
+
     #rain {
       position: fixed;
       inset: 0;
@@ -50,16 +53,17 @@
     }
 
     .cyber {
+      font-family: "VT323", monospace;
       position: absolute;
       top: 0;
       left: 50%;
       transform: translateX(-50%) translateY(-250px);
       font-size: 90px;
       letter-spacing: 0.35em;
-      color: #64adff;
+      color: #5bf870;
       opacity: 0;
       text-transform: uppercase;
-      text-shadow: 0 0 4px #64adff, 0 0 10px #64adff, 0 0 22px #64adff;
+      text-shadow: 0 0 4px #5bf870, 0 0 10px #5bf870, 0 0 22px #5bf870;
       filter: saturate(1.2);
     }
 
@@ -183,7 +187,7 @@
 
       12% {
         opacity: 1;
-        text-shadow: 0 0 4px #64adff, 0 0 10px #64adff, 0 0 22px #64adff;
+        text-shadow: 0 0 4px #5bf870, 0 0 10px #5bf870, 0 0 22px #5bf870;
       }
 
       18% {
@@ -202,7 +206,7 @@
 
       40% {
         opacity: 1;
-        text-shadow: 0 0 4px #64adff, 0 0 10px #64adff, 0 0 22px #64adff;
+        text-shadow: 0 0 4px #5bf870, 0 0 10px #5bf870, 0 0 22px #5bf870;
       }
 
       48% {
@@ -215,7 +219,7 @@
 
       100% {
         opacity: 1;
-        text-shadow: 0 0 4px #64adff, 0 0 10px #64adff, 0 0 22px #64adff;
+        text-shadow: 0 0 4px #5bf870, 0 0 10px #5bf870, 0 0 22px #5bf870;
       }
     }
 
@@ -273,28 +277,28 @@
     </div>
   </div>
 
-<script>
-  window.addEventListener("load", () => {
-    setTimeout(() => {
-      document.getElementById("vixen").classList.add("show-v");
-      document.getElementById("cyber").classList.add("show-cyber");
-    }, 250);
+  <script>
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        document.getElementById("vixen").classList.add("show-v");
+        document.getElementById("cyber").classList.add("show-cyber");
+      }, 250);
 
-    setTimeout(() => {
-      document.body.classList.add("show-enter");
-    }, 1400);
+      setTimeout(() => {
+        document.body.classList.add("show-enter");
+      }, 1400);
 
-    setTimeout(() => {
-      window.addEventListener("keydown", function handler(e) {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          window.location.href = "/home.html";
-          window.removeEventListener("keydown", handler);
-        }
-      });
-    }, 5500);
-  });
-</script>
+      setTimeout(() => {
+        window.addEventListener("keydown", function handler(e) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            window.location.href = "./home.html";
+            window.removeEventListener("keydown", handler);
+          }
+        });
+      }, 5500);
+    });
+  </script>
   <script>
     const canvas = document.getElementById("rain");
     const ctx = canvas.getContext("2d");
