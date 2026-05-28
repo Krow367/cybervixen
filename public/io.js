@@ -438,7 +438,8 @@ export function openWindow(id) {
 
 const files = [
 	"./commands/blog/blog.html",
-	"./commands/recipes/recipes.html"
+	"./commands/recipes/recipes.html",
+	"./commands/about/about.html"
 ];
 
 for (const path of files) {
