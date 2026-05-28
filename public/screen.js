@@ -237,6 +237,7 @@ function setupWindow(root) {
 
 setupWindow(document.getElementById("blog"));
 setupWindow(document.getElementById("recipes"));
+setupWindow(document.getElementById("about"));
 
 const crt = document.getElementById("crt");
 
