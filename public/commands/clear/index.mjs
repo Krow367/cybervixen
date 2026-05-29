@@ -2,7 +2,8 @@ import { clear } from '../../screen.js';
 import { type } from '../../io.js';
 
 async function command() {
-    await type(`    ⠀⠀⠀⠀ ⠀⠀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀⠀⠀⠀
+    await type(`
+        
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠙⠻⢶⣄⡀⠀⠀⠀⢀⣤⠶⠛⠛⡇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣇⠀⠀⣙⣿⣦⣤⣴⣿⣁⠀⠀⣸⠇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣡⣾⣿⣿⣿⣿⣿⣿⣿⣷⣌⠋⠀⠀⠀⠀
@@ -21,7 +22,7 @@ async function command() {
         wait: 5,
         fox: true,
     });
-    await type('"Harmony engineered. Dissent removed."',
+    await type('"Harmony engineered."',
         {
             initialWait: 0,
             wait: 0,
