@@ -1,13 +1,12 @@
 import { openWindow, loadRecipeList } from "../../io.js";
 
 const output = [
-    "To consume is human.",
-    "To create is life."
+  "Poets have been mysteriously silent on the subject of cheese."
 ];
 
 export { output };
 export default function () {
-    openWindow("recipes");
-    loadRecipeList();
+  openWindow("recipes");
+  loadRecipeList();
   return {};
 }

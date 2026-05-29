@@ -1,7 +1,7 @@
 import { openWindow } from "../../io.js";
 
 const output = [
-	"Starting Blog.exe..."
+	"The concept of progress acts as a protective mechanism to shield us from the terrors of the future."
 ];
 
 export { output };
