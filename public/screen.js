@@ -29,7 +29,8 @@ export async function boot() {
     await type(`Loading.....`, {
         initialWait: 500
     });
-    await type(`    ⠀⠀⠀⠀ ⠀⠀⠀⠀⠀⢀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀⠀⠀⠀
+    await type(`
+
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠙⠻⢶⣄⡀⠀⠀⠀⢀⣤⠶⠛⠛⡇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣇⠀⠀⣙⣿⣦⣤⣴⣿⣁⠀⠀⣸⠇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣡⣾⣿⣿⣿⣿⣿⣿⣿⣷⣌⠋⠀⠀⠀⠀
@@ -170,7 +171,7 @@ export function clear(screen = document.querySelector(".terminal")) {
 
 
 
-function setupWindow(root) {
+export function setupWindow(root) {
     if (!root) return;
 
     const titlebar = root.querySelector(".titlebar");
@@ -235,9 +236,11 @@ function setupWindow(root) {
     };
 }
 
+// Setup pages so we can drag, etc
 setupWindow(document.getElementById("blog"));
 setupWindow(document.getElementById("recipes"));
 setupWindow(document.getElementById("about"));
+setupWindow(document.getElementById("links"));
 
 const crt = document.getElementById("crt");
 

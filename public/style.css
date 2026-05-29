@@ -15,6 +15,7 @@ body {
     background: #111;
     margin: 0;
     font-family: sans-serif;
+cursor: url("img/curosr.png"), auto;
 }
 
 html{
@@ -222,3 +223,6 @@ pre {
 .turn-on {
   animation: powerOn 900ms ease-out forwards;
 }
+
+
+

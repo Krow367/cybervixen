@@ -345,6 +345,14 @@ export async function parse(input) {
 
 	let module;
 
+	// Catch any commands that need to open an external link so browsers don't get pissy
+	let pissy = ["atabook", "guestbook"]
+	if (pissy.some((word) => command.includes(word))) {
+		await type("Signed in blood...");
+		await pause(1)
+		window.open("https://cybervixen.atabook.org/", "_blank");
+		return;
+	}
 	// Try to import the command function
 	try {
 		module = await import(`./commands/${command}/index.mjs`);
@@ -436,10 +444,12 @@ export function openWindow(id) {
 	document.getElementById(id).querySelectorAll("[data-scrollbox]").forEach(setupFakeScrollbar);
 }
 
+// Preload Pages
 const files = [
 	"./commands/blog/blog.html",
 	"./commands/recipes/recipes.html",
-	"./commands/about/about.html"
+	"./commands/about/about.html",
+	"./commands/links/links.html"
 ];
 
 for (const path of files) {
