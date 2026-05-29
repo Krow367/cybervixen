@@ -17,19 +17,24 @@ async function power() {
     document.getElementById("monitor").classList.toggle("turn-on");
     document.getElementById("monitor").classList.toggle("on");
     return;
-    
+
 }
 
 export async function boot() {
     clear();
+    let Debug = true;
 
-    await type(`Cyber Industries(TM) CV-2077 terminal interface`, {
-        initialWait: 2000
-    });
-    await type(`Loading.....`, {
-        initialWait: 500
-    });
-    await type(`
+    if (!Debug) {
+        await type(`Cyber Industries(TM) CV-2077 terminal interface`, {
+            initialWait: 2000
+        });
+        await type(`Loading.....`, {
+            initialWait: 500
+        });
+    }
+
+    if (!Debug) {
+        await type(`
 
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠙⠻⢶⣄⡀⠀⠀⠀⢀⣤⠶⠛⠛⡇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣇⠀⠀⣙⣿⣦⣤⣴⣿⣁⠀⠀⣸⠇⠀⠀⠀
@@ -45,16 +50,17 @@ export async function boot() {
 ⠀⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⣋⣁⣤⣀⣀⣤⣤⣤⣤⣄⣿⡄⠀⠀⠀⠀
 ⠀⠀⠀⠀⠙⠿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠛⠋⠉⠁⠀⠀⠀⠀⠈⠛⠃⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`, {
-        initialWait: 0,
-        wait: 5,
-        fox: true,
-    });
-    await type(`Welcome to FoxOS ver. 1.33.7`, {
-        initialWait: 100,
-    });
-    await type(`"Harmony engineered."`, {
-        initialWait: 100,
-    });
+            initialWait: 0,
+            wait: 5,
+            fox: true,
+        });
+        await type(`Welcome to FoxOS ver. 1.33.7`, {
+            initialWait: 100,
+        });
+        await type(`"Harmony engineered."`, {
+            initialWait: 100,
+        });
+    }
     await type(`Try 'HELP' for commands.`, {
         initialWait: 100,
     });

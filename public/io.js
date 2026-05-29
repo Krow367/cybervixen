@@ -3,6 +3,20 @@ import pause from "./pause.js";
 
 import { handleClick } from "./ui.mjs"
 
+    // Preload Pages
+    const files = [
+        "./commands/blog/blog.html",
+        "./commands/recipes/recipes.html",
+        "./commands/about/about.html",
+        "./commands/links/links.html"
+    ];
+
+    for (const path of files) {
+        const html = await fetch(path).then(r => r.text());
+        document.body.insertAdjacentHTML("beforeend", html);
+    }
+	
+
 // Command history
 let prev = getHistory();
 let historyIndex = -1;
@@ -444,19 +458,6 @@ export function openWindow(id) {
 	document.getElementById(id).querySelectorAll("[data-scrollbox]").forEach(setupFakeScrollbar);
 }
 
-// Preload Pages
-const files = [
-	"./commands/blog/blog.html",
-	"./commands/recipes/recipes.html",
-	"./commands/about/about.html",
-	"./commands/links/links.html"
-];
-
-for (const path of files) {
-	const html = await fetch(path).then(r => r.text());
-	document.body.insertAdjacentHTML("beforeend", html);
-}
-
 function setupContentLoader(windowEl, attr = "recipe") {
 	const content = windowEl.querySelector("[data-content]");
 	const sidebar = windowEl.querySelector("[data-sidebar-content");
@@ -493,8 +494,6 @@ export async function loadRecipeList() {
 		.join("");
 
 }
-
-
 
 function setupFakeScrollbar(root) {
 	const viewport = root.querySelector("[data-viewport]");
