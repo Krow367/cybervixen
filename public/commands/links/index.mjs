@@ -1,12 +1,15 @@
 import { openWindow } from "../../io.js";
 import { setupWindow } from "../../screen.js";
 
-const output = [
-    "Everything is connected.",
-    "Nethack.Scan(\"localHost\").GetNeighbors(all)",
-    "...................Done!",
-    "Compiling....."
+
+
+let quotes = [
+  `Everything is connected.\nNethack.Scan(\"localHost\").GetNeighbors(all)\n...................Done!\nCompiling.....`,
 ];
+
+let selection = Math.floor(Math.random() * quotes.length);
+let output = quotes[selection];
+
 
 export { output };
 export default function () {
