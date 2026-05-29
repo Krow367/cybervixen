@@ -22,7 +22,7 @@ async function power() {
 
 export async function boot() {
     clear();
-    let Debug = true;
+    let Debug = false;
 
     if (!Debug) {
         await type(`Cyber Industries(TM) CV-2077 terminal interface`, {
