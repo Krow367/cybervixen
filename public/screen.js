@@ -22,7 +22,7 @@ async function power() {
 
 export async function boot() {
     clear();
-    let Debug = false;
+    let Debug = true;
 
     if (!Debug) {
         await type(`Cyber Industries(TM) CV-2077 terminal interface`, {
@@ -177,7 +177,7 @@ export function clear(screen = document.querySelector(".terminal")) {
 
 
 
-export function setupWindow(root) {
+/** export function setupWindow(root) {
     if (!root) return;
 
     const titlebar = root.querySelector(".titlebar");
@@ -190,6 +190,7 @@ export function setupWindow(root) {
     let startY = 0;
     let startLeft = 0;
     let startTop = 0;
+
 
     const onMouseDown = (e) => {
         if (e.target.closest("button")) return;
@@ -204,6 +205,8 @@ export function setupWindow(root) {
         document.body.style.userSelect = "none";
     };
 
+
+    
     const onMouseMove = (e) => {
         if (!dragging) return;
         root.style.left = `${startLeft + (e.clientX - startX)}px`;
@@ -235,6 +238,123 @@ export function setupWindow(root) {
 
     return () => {
         titlebar?.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        minimizeBtn?.removeEventListener("click", onMinimize);
+        closeBtn?.removeEventListener("click", onClose);
+    };
+} */
+
+export function setupWindow(root) {
+    if (!root) return;
+
+
+    const titlebar = root.querySelector(".titlebar");
+    const minimizeBtn = root.querySelector(".minimize");
+    const closeBtn = root.querySelector(".close");
+    const resizeHandle = root.querySelector("[data-resize]");
+    const focusInput = () => document.querySelector('[contenteditable="true"]')?.focus();
+
+
+    let dragging = false;
+    let resizing = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+    let startWidth = 0;
+    let startHeight = 0;
+
+
+    const onMouseDown = (e) => {
+        if (e.target.closest("button")) return;
+        dragging = true;
+
+
+        const rect = root.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = rect.left;
+        startTop = rect.top;
+
+
+        document.body.style.userSelect = "none";
+    };
+
+
+    const onResizeMouseDown = (e) => {
+        resizing = true;
+
+
+        const rect = root.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = rect.width;
+        startHeight = rect.height;
+
+
+        document.body.style.userSelect = "none";
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+
+
+
+    const onMouseMove = (e) => {
+        if (dragging) {
+            root.style.left = `${startLeft + (e.clientX - startX)}px`;
+            root.style.top = `${startTop + (e.clientY - startY)}px`;
+        }
+
+
+        if (resizing) {
+            root.style.width = `${Math.max(320, startWidth + (e.clientX - startX))}px`;
+            root.style.height = `${Math.max(220, startHeight + (e.clientY - startY))}px`;
+        }
+    };
+
+
+    const onMouseUp = () => {
+        if (!dragging && !resizing) return;
+        dragging = false;
+        resizing = false;
+        document.body.style.userSelect = "";
+        focusInput();
+    };
+
+
+ const onMinimize = () => {
+    if (!root.classList.contains("minimized")) {
+        root.dataset.prevHeight = root.style.height;
+        root.classList.add("minimized");
+        root.style.height = "";
+    } else {
+        root.classList.remove("minimized");
+        root.style.height = root.dataset.prevHeight || "";
+    }
+
+    focusInput();
+};
+
+
+    const onClose = () => {
+        root.classList.add("hidden");
+        focusInput();
+    };
+
+
+    titlebar?.addEventListener("mousedown", onMouseDown);
+    resizeHandle?.addEventListener("mousedown", onResizeMouseDown);
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    minimizeBtn?.addEventListener("click", onMinimize);
+    closeBtn?.addEventListener("click", onClose);
+
+
+    return () => {
+        titlebar?.removeEventListener("mousedown", onMouseDown);
+        resizeHandle?.removeEventListener("mousedown", onResizeMouseDown);
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
         minimizeBtn?.removeEventListener("click", onMinimize);

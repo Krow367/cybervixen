@@ -15,40 +15,45 @@ body {
     background: #111;
     margin: 0;
     font-family: sans-serif;
-cursor: url("img/curosr.png"), auto;
+    cursor: url("img/curosr.png"), auto;
+
 }
 
-html{
+html {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
 
-html::-webkit-scrollbar{
+a {
+    cursor: url("img/pointer.png"), auto;
+}
+
+html::-webkit-scrollbar {
     display: none;
 }
 
 
 .terminal {
-	position: relative;
-	height: 100%;
-	padding: 2rem 2rem 2rem 4rem;
-	overflow-y: auto;
-	overflow-x: hidden;
-	word-break: break-word;
-	text-transform: uppercase;
-	animation: textShadow 4s infinite;
+    position: relative;
+    height: 100%;
+    padding: 2rem 2rem 2rem 4rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-break: break-word;
+    text-transform: uppercase;
+    animation: textShadow 4s infinite;
 }
 
 .terminal,
 .fullscreen {
-	color: var(--green-color);
-	text-shadow: 0 0 5px #c8c8c8;
+    color: var(--green-color);
+    text-shadow: 0 0 5px #c8c8c8;
 }
 
 #crt,
 pre {
     font-family: "VT323", monospace;
-    
+
 }
 
 
@@ -66,19 +71,19 @@ pre {
 }
 
 #crt-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
 }
 
 #terminal {
-    
-  position: relative;
-  z-index: 1;
+
+    position: relative;
+    z-index: 1;
 
 }
 
-.scanlines{
+.scanlines {
     content: " ";
     display: block;
     position: absolute;
@@ -95,28 +100,27 @@ pre {
 }
 
 #monitor.turn-off #crt:after {
-	animation: powerOn 0.4s ease-in-out;
-	/* animation-fill-mode: forwards; */
+    animation: powerOn 0.4s ease-in-out;
+    /* animation-fill-mode: forwards; */
 }
 
 #monitor:not(.on) #crt:before {
-	content: " ";
-	display: block;
-	position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	right: 0;
-	background: linear-gradient(
-		to bottom,
-		rgba(18, 16, 16, 0.1) 50%,
-		rgba(0, 0, 0, 0.25) 50%
-	);
-	background-size: 100% 8px;
-	z-index: 2;
-	pointer-events: none;
-	animation: fadeIn 2s;
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(to bottom,
+            rgba(18, 16, 16, 0.1) 50%,
+            rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 8px;
+    z-index: 2;
+    pointer-events: none;
+    animation: fadeIn 2s;
 }
+
 #crt:after {
     content: " ";
     opacity: 0;
@@ -174,21 +178,26 @@ pre {
 }
 
 #prompt {
-	display: none;
+    display: none;
 }
+
 [contenteditable] {
-	caret-color: transparent; /** This hides the default browser caret */
-	outline: none;
+    caret-color: transparent;
+    /** This hides the default browser caret */
+    outline: none;
 }
+
 #input {
-	position: relative;
-	display: block;
-	white-space: pre-wrap;
+    position: relative;
+    display: block;
+    white-space: pre-wrap;
 }
+
 /* Inserts the > before terminal input */
 #input:before {
-	content: var(--term);
+    content: var(--term);
 }
+
 /* Puts a blinking square after the content as replacement for caret */
 #input[contenteditable="true"]:after,
 .typer.active:after {
@@ -203,8 +212,8 @@ pre {
 
 .typer.no-cursor::after,
 #input.no-cursor::after {
-  opacity: 0;
-  animation: none;
+    opacity: 0;
+    animation: none;
 }
 
 /* 
@@ -212,17 +221,14 @@ pre {
  * Otherwise the caret is always on new line
  */
 [contenteditable="true"] br:last-child {
-	display: none;
+    display: none;
 }
 
 .typer {
-	word-break: break-all;
+    word-break: break-all;
 
 }
 
 .turn-on {
-  animation: powerOn 900ms ease-out forwards;
+    animation: powerOn 900ms ease-out forwards;
 }
-
-
-

@@ -5,6 +5,7 @@
 }
 
 .window {
+  container: window / inline-size;
   position: fixed;
   top: 12vh;
   left: 12vw;
@@ -16,7 +17,6 @@
   box-shadow: 0 0 20px rgba(91, 248, 112, 0.35);
   z-index: 5;
   font-family: "VT323", monospace;
-  font-size: max(2rem);
   overflow: hidden;
   flex-direction: column;
   display: flex;
@@ -25,7 +25,7 @@
 
 
 .titlebar {
-  cursor: move;
+  cursor: url("./img/grab.png"), move;
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 0.75rem;
@@ -33,6 +33,7 @@
   border-bottom: 1px solid #5bf870;
   text-transform: uppercase;
   text-shadow: 0 0 5px #c8c8c8;
+  font-size: clamp(1rem, 2cqw, 2rem);
 }
 
 .hidden {
@@ -62,6 +63,7 @@
   height: 1.6em;
   line-height: 1.4em;
   border-radius: 0;
+  cursor: url("img/curosr.png"), auto;
 }
 
 .body {
@@ -76,6 +78,7 @@
   overflow-y: scroll;
   min-height: 0;
   padding: 1rem;
+  font-size: clamp(1rem, 2cqw, 2rem);
 }
 
 .content {
@@ -83,6 +86,7 @@
   min-height: 0;
   padding: 1rem;
   overflow-y: scroll;
+  font-size: clamp(1rem, 2cqw, 2rem);
 }
 
 a:visited {
@@ -110,7 +114,7 @@ a {
   min-width: 0;
   min-height: 0;
   height: 100%;
-  overflow: auto;
+  overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-right: 0.5rem;
@@ -149,7 +153,7 @@ a {
   border-left: 0;
   background: #000;
   color: var(--green);
-  cursor: pointer;
+  cursor: url("img/pointer.png"), pointer;
 }
 
 .scrollbar-btn::before {
@@ -203,7 +207,7 @@ a {
   border: 1px solid var(--green);
   border-right: 0;
   background: var(--green);
-  cursor: grab;
+  cursor: url("img/grab.png"), grab;
 }
 
 .scrollbar-thumb::before {
@@ -215,7 +219,21 @@ a {
 }
 
 .scrollbar-thumb:active {
-  cursor: grabbing;
+  cursor: url("img/grab.png"), grab;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  cursor: url("img/resize.png"), nwse-resize;
+  z-index: 20;
+}
+
+.window.minimized .resize-handle {
+  display: none;
 }
 
 #links {
