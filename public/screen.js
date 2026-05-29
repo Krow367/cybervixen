@@ -22,7 +22,10 @@ async function power() {
 
 export async function boot() {
     clear();
-    let Debug = false;
+    const Debug =
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1" ||
+    location.hostname === "::1";
 
     if (!Debug) {
         await type(`Cyber Industries(TM) CV-2077 terminal interface`, {
