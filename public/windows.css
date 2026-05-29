@@ -232,7 +232,8 @@ a {
     "cy cy cy cy cy cy cy cy"
     "bl bl bl bl bl bl bl bl"
     "a b c d e f g h"
-    "i j k l m n o p"
+    /** "i j k l m n o p" **/
+    "mu mu mu mu mu mu mu mu"
     "q r s t u v w x"
     "y z aa bb cc dd ee ff";
   align-items: start;
@@ -254,7 +255,11 @@ a {
   text-align: center;
   padding: 1rem;
   min-width: 0;
-  height: 100%;
+
+}
+.mutuals {
+  text-align: start;
+  grid-area: mu;
 }
 .bl {
   grid-area: bl;
