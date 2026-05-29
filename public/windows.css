@@ -14,7 +14,7 @@
     color: #5bf870;
     border: 2px solid #5bf870;
     box-shadow: 0 0 20px rgba(91, 248, 112, 0.35);
-    z-index: 50;
+    z-index: 5;
     font-family: "VT323", monospace;
     font-size: max(2rem);
     overflow: hidden;
