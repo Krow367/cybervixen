@@ -4,4 +4,5 @@ const output = [
 	"ERROR: FILE CORRUPTED. UNABLE TO DISPLAY ALL COMMANDS."
 ];
 
+
 export { output };
