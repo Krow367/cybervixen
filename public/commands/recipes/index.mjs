@@ -5,12 +5,20 @@ let quotes = [
   `Double, double toil and trouble\;\nFire burn and cauldron bubble.`
 ];
 
-let selection = Math.floor(Math.random() * quotes.length);
-let output = quotes[selection];
 
-export { output };
+let output;
+
+function pickOutput() {
+  output = quotes[Math.floor(Math.random() * quotes.length)];
+  return output;
+}
+
+pickOutput();
+
+export { output }
 
 export default function () {
+  pickOutput();
   openWindow("recipes");
   loadRecipeList();
   return {};

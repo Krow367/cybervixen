@@ -5,11 +5,18 @@ let quotes = [
   "The concept of progress acts as a protective mechanism to shield us from the terrors of the future.",
 ];
 
-let selection = Math.floor(Math.random() * quotes.length);
-let output = quotes[selection];
+let output;
+
+function pickOutput() {
+  output = quotes[Math.floor(Math.random() * quotes.length)];
+  return output;
+}
+
+pickOutput();
 
 export { output };
 export default function () {
-    openWindow("blog");
+  pickOutput();
+  openWindow("blog");
   return {};
 }
