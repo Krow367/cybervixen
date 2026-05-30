@@ -10,7 +10,7 @@ const windowState = new WeakMap();
 
 let activeWindow = null;
 let activeTypingHost = null;
-let zCounter = 100;
+let zCounter = 20;
 let openCount = 0;
 
 function getTerminal() {
@@ -45,6 +45,10 @@ function isWindowVisible(root) {
 
 function isWindowMinimized(root) {
     return !!root && root.classList.contains("minimized");
+}
+
+function randomBetween(min, max) {
+    return Math.floor(min + Math.random() * (max - min + 1));
 }
 
 function ensureWindowSurface(root) {
@@ -105,137 +109,72 @@ export async function typeInActiveHost(text, options = {}) {
     return type(text, options, getTypingHost());
 }
 
-function getCascadeAnchor(root) {
+function applyInitialWindowPosition(root) {
+    const state = getWindowState(root);
+    if (state.openedOnce) return;
+
+    const crt = document.getElementById("crt");
+    const crtRect = crt?.getBoundingClientRect();
+
+    const offsetX = 24;
+    const offsetY = 20;
+    const margin = 16;
+
+    let left = 48 + openCount * 10;
+    let top = 40 + openCount * 8;
+
+    let anchorWindow = null;
+
     if (
         activeWindow &&
         activeWindow !== root &&
         isWindowVisible(activeWindow) &&
         !isWindowMinimized(activeWindow)
     ) {
-        return activeWindow;
+        anchorWindow = activeWindow;
+    } else {
+        anchorWindow = [...document.querySelectorAll(WINDOW_SELECTOR)]
+            .filter(win =>
+                win !== root &&
+                isWindowVisible(win) &&
+                !isWindowMinimized(win)
+            )
+            .sort((a, b) => (Number(a.style.zIndex) || 0) - (Number(b.style.zIndex) || 0))
+            .at(-1) || null;
     }
 
-    const visibleWindows = [...document.querySelectorAll(WINDOW_SELECTOR)]
-        .filter(win =>
-            win !== root &&
-            isWindowVisible(win) &&
-            !isWindowMinimized(win)
-        )
-        .sort((a, b) => (Number(a.style.zIndex) || 0) - (Number(b.style.zIndex) || 0));
-
-    return visibleWindows.at(-1) || null;
-}
-
-function clampWindowToCRT(left, top, root) {
-    const crt = document.getElementById("crt");
-    const crtRect = crt?.getBoundingClientRect();
-    const rootRect = root.getBoundingClientRect();
-
-    if (!crtRect) {
-        return { left, top };
+    if (anchorWindow) {
+        const activeRect = anchorWindow.getBoundingClientRect();
+        left = activeRect.left + offsetX;
+        top = activeRect.top + offsetY;
     }
-
-    const margin = 16;
-    const width = rootRect.width || root.offsetWidth || 640;
-    const height = rootRect.height || root.offsetHeight || 480;
-
-    const minLeft = crtRect.left + margin;
-    const minTop = crtRect.top + margin;
-    const maxLeft = Math.max(minLeft, crtRect.right - width - margin);
-    const maxTop = Math.max(minTop, crtRect.bottom - height - margin);
-
-    return {
-        left: Math.max(minLeft, Math.min(left, maxLeft)),
-        top: Math.max(minTop, Math.min(top, maxTop))
-    };
-}
-
-function applyInitialWindowPosition(root) {
-    const state = getWindowState(root);
-    if (state.openedOnce) return;
 
     root.style.position = "fixed";
+    root.style.display = "";
+    root.style.visibility = "hidden";
+    root.classList.remove("hidden");
 
-    const offsetX = 32;
-    const offsetY = 24;
-
-    let left = 48 + openCount * 12;
-    let top = 40 + openCount * 10;
-
-    const anchor =
-        activeWindow &&
-        activeWindow !== root &&
-        isWindowVisible(activeWindow) &&
-        !isWindowMinimized(activeWindow)
-            ? activeWindow
-            : [...document.querySelectorAll(WINDOW_SELECTOR)]
-                .filter(win =>
-                    win !== root &&
-                    isWindowVisible(win) &&
-                    !isWindowMinimized(win)
-                )
-                .sort((a, b) => (Number(a.style.zIndex) || 0) - (Number(b.style.zIndex) || 0))
-                .at(-1);
-
-    if (anchor) {
-        const anchorLeft = parseFloat(anchor.style.left);
-        const anchorTop = parseFloat(anchor.style.top);
-
-        left = (Number.isFinite(anchorLeft) ? anchorLeft : anchor.getBoundingClientRect().left) + offsetX;
-        top = (Number.isFinite(anchorTop) ? anchorTop : anchor.getBoundingClientRect().top) + offsetY;
-    }
-
-    const crt = document.getElementById("crt");
-    const crtRect = crt?.getBoundingClientRect();
     const rect = root.getBoundingClientRect();
-    const width = rect.width || root.offsetWidth || 640;
-    const height = rect.height || root.offsetHeight || 480;
-    const margin = 16;
+    const width = rect.width || 640;
+    const height = rect.height || 480;
 
     if (crtRect) {
         const minLeft = crtRect.left + margin;
         const minTop = crtRect.top + margin;
-        const maxLeft = Math.max(minLeft, crtRect.right - width - margin);
-        const maxTop = Math.max(minTop, crtRect.bottom - height - margin);
+        const maxLeft = crtRect.right - width - margin;
+        const maxTop = crtRect.bottom - height - margin;
+
+        if (left > maxLeft) left = minLeft;
+        if (top > maxTop) top = minTop;
 
         left = Math.max(minLeft, Math.min(left, maxLeft));
         top = Math.max(minTop, Math.min(top, maxTop));
     }
 
-    const visibleWindows = [...document.querySelectorAll(WINDOW_SELECTOR)]
-        .filter(win =>
-            win !== root &&
-            isWindowVisible(win) &&
-            !isWindowMinimized(win)
-        );
-
-    let tries = 0;
-    while (
-        visibleWindows.some(win => {
-            const winLeft = parseFloat(win.style.left);
-            const winTop = parseFloat(win.style.top);
-            return Math.abs(winLeft - left) < 20 && Math.abs(winTop - top) < 20;
-        }) &&
-        tries < 20
-    ) {
-        left += offsetX;
-        top += offsetY;
-
-        if (crtRect) {
-            const minLeft = crtRect.left + margin;
-            const minTop = crtRect.top + margin;
-            const maxLeft = Math.max(minLeft, crtRect.right - width - margin);
-            const maxTop = Math.max(minTop, crtRect.bottom - height - margin);
-
-            if (left > maxLeft) left = minLeft;
-            if (top > maxTop) top = minTop;
-        }
-
-        tries += 1;
-    }
-
     root.style.left = `${Math.round(left)}px`;
     root.style.top = `${Math.round(top)}px`;
+    root.style.visibility = "";
+    root.classList.add("hidden");
 
     state.openedOnce = true;
     openCount += 1;
@@ -258,23 +197,27 @@ function syncWindowBackground(root) {
     surface.style.setProperty("--crt-offset-y", `${offsetY}px`);
 }
 
+
+
 function setActiveWindow(root, { focusTyping = false } = {}) {
     if (!root || !isWindowVisible(root) || isWindowMinimized(root)) return;
 
     activeWindow = root;
-    zCounter = Math.min(zCounter + 1, 8000); // stay below scanlines at 8888/9999
 
-    document.querySelectorAll(WINDOW_SELECTOR).forEach((win) => {
-        win.classList.toggle("active-window", win === root);
-    });
+    const windows = [...document.querySelectorAll(WINDOW_SELECTOR)]
+        .filter((win) => !win.classList.contains("hidden"));
 
-    root.style.position = "fixed";
-    root.style.zIndex = String(zCounter);
+    let base = 20;
 
-    const crt = document.getElementById("crt");
-    if (root.parentElement === crt) {
-        crt.appendChild(root);
+    for (const win of windows) {
+        if (win !== root) {
+            win.style.zIndex = String(base++);
+            win.classList.remove("active-window");
+        }
     }
+
+    root.style.zIndex = String(base + 100);
+    root.classList.add("active-window");
 
     syncWindowBackground(root);
 
@@ -480,21 +423,15 @@ export function openWindow(idOrRoot, options = {}) {
 
     ensureWindowSurface(root);
     syncWindowTypingMetadata(root);
-
-    const wasHidden = root.classList.contains("hidden");
-    const wasMinimized = root.classList.contains("minimized");
+    applyInitialWindowPosition(root);
 
     root.classList.remove("hidden");
     root.style.display = "";
 
-    if (wasMinimized) {
+    if (root.classList.contains("minimized")) {
         const state = getWindowState(root);
         root.classList.remove("minimized");
         root.style.height = state.prevHeight || "";
-    }
-
-    if (wasHidden) {
-        applyInitialWindowPosition(root);
     }
 
     root.querySelectorAll("[data-scrollbox]").forEach(setupFakeScrollbar);
@@ -535,7 +472,7 @@ export function minimizeWindow(idOrRoot) {
     if (!root.classList.contains("minimized")) {
         state.prevHeight = root.style.height;
         root.classList.add("minimized");
-        root.style.height = "auto";
+        root.style.height = "";
 
         if (activeWindow === root) {
             clearActiveWindow(root);
@@ -558,10 +495,7 @@ export function setupWindow(root) {
     syncWindowTypingMetadata(root);
     syncWindowBackground(root);
 
-    if (!root.style.zIndex) {
-        root.style.zIndex = "1";
-    }
-
+    const surface = root.querySelector(":scope > .window-surface");
     const titlebar = root.querySelector(".titlebar");
     const minimizeBtn = root.querySelector(".minimize");
     const closeBtn = root.querySelector(".close");
@@ -878,6 +812,7 @@ function setupFakeScrollbar(root) {
     };
 
     const onViewportScroll = () => paint();
+
     const onWindowResize = () => paintSoon();
 
     thumb.addEventListener("mousedown", onThumbMouseDown);
@@ -945,7 +880,12 @@ function setupFakeScrollbar(root) {
 function initWindows() {
     setupAllWindows();
 
-    ["blog", "recipes", "about", "links"].forEach((id) => {
+    [
+        "blog",
+        "recipes",
+        "about",
+        "links"
+    ].forEach((id) => {
         const win = document.getElementById(id);
         if (win) {
             syncWindowBackground(win);
