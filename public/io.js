@@ -55,17 +55,17 @@ function getHistory() {
 
 /** Prepends a command to the in-memory history list and persists it. */
 function addToHistory(cmd) {
-    prev         = [cmd, ...prev];
+    prev = [cmd, ...prev];
     historyIndex = -1;
-    tmp          = "";
+    tmp = "";
     try {
         localStorage.setItem("commandHistory", JSON.stringify(prev));
     } catch { /* storage quota — silently ignore */ }
 }
 
-let prev         = getHistory();
+let prev = getHistory();
 let historyIndex = -1;
-let tmp          = "";
+let tmp = "";
 
 // ─── Typed-block tracking ─────────────────────────────────────────────────────
 
@@ -123,7 +123,7 @@ function createTypedBlock(typer) {
 
 /** Appends a new blank line div to a typed block and returns its state object. */
 function createTypedLine(block) {
-    const line      = document.createElement("div");
+    const line = document.createElement("div");
     line.classList.add("typed-line");
     const lineState = { el: line, chars: [] };
     block.lines.push(lineState);
@@ -204,13 +204,13 @@ function normalizeWait(wait, payload) {
  */
 async function typeStringIntoBlock(text, block, options, container) {
     const {
-        wait         = 30,
-        lineWait     = 100,
+        wait = 30,
+        lineWait = 100,
         processChars = true
     } = options;
 
     let lineState = createTypedLine(block);
-    const queue   = processChars ? text.split("") : text;
+    const queue = processChars ? text.split("") : text;
 
     for (const char of queue) {
         if (char === "\n") {
@@ -218,7 +218,7 @@ async function typeStringIntoBlock(text, block, options, container) {
             scroll(container);
             const newlineDelay = normalizeWait(wait, { char, line: lineState, block });
             if (newlineDelay) await pause(newlineDelay / 1000);
-            if (lineWait)     await pause(lineWait     / 1000);
+            if (lineWait) await pause(lineWait / 1000);
             lineState = createTypedLine(block);
             continue;
         }
@@ -267,8 +267,8 @@ async function runTypeOps(ops, block, options, container) {
         if (op.kind === "type") {
             await typeStringIntoBlock(op.text ?? "", block, {
                 ...options,
-                wait:         op.wait         ?? options.wait,
-                lineWait:     op.lineWait     ?? options.lineWait,
+                wait: op.wait ?? options.wait,
+                lineWait: op.lineWait ?? options.lineWait,
                 processChars: op.processChars ?? options.processChars
             }, container);
             continue;
@@ -276,7 +276,7 @@ async function runTypeOps(ops, block, options, container) {
 
         if (op.kind === "replace") {
             const targetBlock = resolveBlock(op.block ?? -1);
-            const targetLine  = resolveLine(targetBlock, op.line ?? -1);
+            const targetLine = resolveLine(targetBlock, op.line ?? -1);
             replaceCharInLine(targetLine, op.index ?? 0, op.char ?? " ");
             scroll(container);
             const delay = normalizeWait(op.wait ?? options.wait ?? 0, { op, block: targetBlock, line: targetLine });
@@ -286,7 +286,7 @@ async function runTypeOps(ops, block, options, container) {
 
         if (op.kind === "replaceMany") {
             const targetBlock = resolveBlock(op.block ?? -1);
-            const targetLine  = resolveLine(targetBlock, op.line ?? -1);
+            const targetLine = resolveLine(targetBlock, op.line ?? -1);
             for (const item of (op.chars ?? [])) {
                 replaceCharInLine(targetLine, item.index ?? 0, item.char ?? " ");
                 scroll(container);
@@ -328,33 +328,34 @@ async function runTypeOps(ops, block, options, container) {
  */
 export async function type(
     text,
-    options  = {},
+    options = {},
     container = document.querySelector(".terminal")
 ) {
     if (!text) return;
 
     const {
-        wait           = 30,
-        initialWait    = 1000,
-        finalWait      = 500,
-        lineWait       = 100,
-        typerClass     = "",
-        useContainer   = false,
-        stopBlinking   = true,
-        processChars   = true,
+        wait = 30,
+        initialWait = 1000,
+        finalWait = 500,
+        lineWait = 100,
+        typerClass = "",
+        useContainer = false,
+        stopBlinking = true,
+        processChars = true,
         clearContainer = false,
-        fox            = false,
+        fox = false,
     } = options;
 
     // Create (or reuse) the typer wrapper div.
     const typer = useContainer ? container : document.createElement("div");
     typer.classList.add("typer", "active");
-    if (fox)        typer.classList.add("no-cursor");
+    typer.classList.add("typing");
+    if (fox) typer.classList.add("no-cursor");
     if (typerClass) typer.classList.add(typerClass);
 
     if (clearContainer) {
         container.innerHTML = "&nbsp;";
-        typedBlocks.length  = 0;
+        typedBlocks.length = 0;
     }
 
     if (!useContainer) {
@@ -380,9 +381,9 @@ export async function type(
     }
 
     await pause(finalWait / 1000);
-
+    typer.classList.remove("typing");
     if (stopBlinking) typer.classList.remove("active");
-    if (fox)          typer.classList.remove("no-cursor");
+    if (fox) typer.classList.remove("no-cursor");
 }
 
 /**
@@ -391,10 +392,10 @@ export async function type(
  */
 export function isPrintable(keycode) {
     return (
-        (keycode > 47 && keycode < 58)   ||   // 0-9
-        keycode === 32                    ||   // space
-        (keycode > 64 && keycode < 91)   ||   // A-Z
-        (keycode > 95 && keycode < 112)  ||   // numpad 0-9
+        (keycode > 47 && keycode < 58) ||   // 0-9
+        keycode === 32 ||   // space
+        (keycode > 64 && keycode < 91) ||   // A-Z
+        (keycode > 95 && keycode < 112) ||   // numpad 0-9
         (keycode > 185 && keycode < 193) ||   // punctuation
         (keycode > 218 && keycode < 223)       // punctuation
     );
@@ -406,7 +407,7 @@ export function isPrintable(keycode) {
  */
 export function moveCaretToEnd(el) {
     if (!document.createRange) return;
-    const range     = document.createRange();
+    const range = document.createRange();
     range.selectNodeContents(el);
     range.collapse(false);
     const selection = window.getSelection();
@@ -467,8 +468,8 @@ export async function input(pw) {
                 event.preventDefault();
                 const keyCode = event.keyCode;
                 const chrCode = keyCode - 48 * Math.floor(keyCode / 48);
-                const chr     = String.fromCharCode(96 <= keyCode ? chrCode : keyCode);
-                const span    = document.createElement("span");
+                const chr = String.fromCharCode(96 <= keyCode ? chrCode : keyCode);
+                const span = document.createElement("span");
                 span.classList.add("char");
                 span.textContent = chr;
                 event.target.appendChild(span);
@@ -478,7 +479,7 @@ export async function input(pw) {
         };
 
         const terminal = document.querySelector(".terminal");
-        const inputEl  = document.createElement("span");
+        const inputEl = document.createElement("span");
         inputEl.setAttribute("id", "input");
         if (pw) inputEl.classList.add("password");
         inputEl.setAttribute("contenteditable", true);
@@ -593,12 +594,12 @@ export async function prompt(text, pw = false) {
 export async function waitForKey() {
     return new Promise((resolve) => {
         const handle = () => {
-            document.removeEventListener("keyup",  handle);
-            document.removeEventListener("click",  handle);
+            document.removeEventListener("keyup", handle);
+            document.removeEventListener("click", handle);
             resolve();
         };
-        document.addEventListener("keyup",  handle);
-        document.addEventListener("click",  handle);
+        document.addEventListener("keyup", handle);
+        document.addEventListener("click", handle);
     });
 }
 
@@ -606,10 +607,10 @@ export async function waitForKey() {
 
 /** Injects a <link rel="stylesheet"> into <head> for dynamically loaded command CSS. */
 function _addStylesheet(href) {
-    const link  = document.createElement("link");
-    link.rel    = "stylesheet";
-    link.type   = "text/css";
-    link.href   = href;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.type = "text/css";
+    link.href = href;
     document.head.appendChild(link);
 }
 
@@ -629,7 +630,7 @@ const _recipesSidebar = document.getElementById("recipes")
  * fake scrollbar for the updated content.
  */
 function _setupRecipeContentLoader() {
-    const win     = document.getElementById("recipes");
+    const win = document.getElementById("recipes");
     if (!win) return;
 
     const content = win.querySelector("[data-content]");
@@ -676,7 +677,7 @@ export async function loadRecipeList() {
  * @param {string} path  URL of the HTML file to fetch.
  */
 export async function loadTemplates(path) {
-    const txt       = await fetch(path).then(r => r.text());
-    const parsed    = new DOMParser().parseFromString(txt, "text/html");
+    const txt = await fetch(path).then(r => r.text());
+    const parsed = new DOMParser().parseFromString(txt, "text/html");
     parsed.querySelectorAll("template").forEach(t => document.head.appendChild(t));
 }
