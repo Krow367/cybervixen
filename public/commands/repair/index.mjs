@@ -75,7 +75,7 @@ function sliceArt() {
 
 function shuffle() {
     let lastSwap = -1;
-    const shuffleMax = 2;
+    const shuffleMax = 300;
     let currentShuffle = 0;
 
     while (currentShuffle < shuffleMax) {
