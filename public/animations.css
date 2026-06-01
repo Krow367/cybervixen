@@ -232,28 +232,28 @@
 
 /** The classic 'minimize to the center' effect */
 @keyframes powerOn {
+	0% {
+		animation-timing-function: ease-out;
+		transform: scale(0, 0.0001) translate3d(0, 0, 0);
+		-webkit-filter: brightness(50);
+		filter: brightness(50);
+		background: #fff;
+	}
+
+	60% {
+		transform: scale(1.0, 0.001) translate3d(0, 0, 0);
+		-webkit-filter: brightness(10);
+		filter: brightness(10);
+		background: #fff;
+	}
+
 	100% {
 		transform: scale(1, 1.0) translate3d(0, 0, 0);
 		-webkit-filter: brightness(1);
 		filter: brightness(1);
 		opacity: 1;
-		background: var(--green-bg);
-		background-image: radial-gradient(ellipse, var(--green-bg) 0%, var(--off) 90%);
-	}
-
-	60% {
-		background: #fff !important;
-		transform: scale(1.0, 0.001) translate3d(0, 0, 0);
-		-webkit-filter: brightness(10);
-		filter: brightness(10);
-	}
-
-	0% {
-		background: #fff !important;
-		animation-timing-function: ease-out;
-		transform: scale(0, 0.0001) translate3d(0, 0, 0);
-		-webkit-filter: brightness(50);
-		filter: brightness(50);
+		/* Match #crt's actual resting background exactly so there is no snap at the end */
+		background: var(--crt-glow), #05321e;
 	}
 }
 

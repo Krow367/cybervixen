@@ -1,7 +1,18 @@
-@import url("https://fonts.googleapis.com/css?family=VT323&display=swap");
-@import url("https://fonts.googleapis.com/css?family=Share+Tech+Mono&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap");
+@font-face {
+    font-family: "Hack";
+    src: url("./fonts/hack-regular.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+}
 
+
+
+@font-face {
+    font-family: "VT323";
+    src: url("./fonts/VT323.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+}
 
 :root {
     --green-color: #5bf870;
@@ -9,6 +20,20 @@
     --off: #050505;
     --dark: #111;
     --term: "> ";
+
+    --crt-glow:
+        radial-gradient(ellipse at center,
+            rgba(5, 50, 30, 1) 0%,
+            /**rgba(7, 62, 35, 0.40) 26%,*/
+            rgba(5, 50, 30, 0.25) 52%,
+            /** rgba(3, 32, 18, 0.012) 74%,*/
+            rgba(1, 12, 7, 0.03) 100%),
+        linear-gradient(to bottom,
+            rgba(0, 0, 0, 0.04),
+            rgba(0, 0, 0, 0.12)),
+        radial-gradient(ellipse at center,
+            rgba(140, 255, 170, 0.07) 0%,
+            rgba(0, 0, 0, 0) 68%);
 }
 
 body {
@@ -16,7 +41,6 @@ body {
     margin: 0;
     font-family: sans-serif;
     cursor: url("img/curosr.png"), auto;
-
 }
 
 html {
@@ -32,7 +56,6 @@ html::-webkit-scrollbar {
     display: none;
 }
 
-
 .terminal {
     position: relative;
     height: 100%;
@@ -44,53 +67,65 @@ html::-webkit-scrollbar {
     animation: textShadow 4s infinite;
 }
 
+.terminal-underline {
+    text-decoration: underline;
+}
+
 .terminal,
 .fullscreen {
     color: var(--green-color);
     text-shadow: 0 0 5px #c8c8c8;
 }
 
-#crt,
-pre {
-    font-family: "VT323", monospace;
-
+#crt > pre,
+#terminal pre {
+   
 }
 
-
 #crt {
+     font-family: "VT323", monospace;
     min-width: 80ch;
-    /* This makes 80 monospace characters fit on the screen */
     height: 100vh;
-    font-size: max(1rem,
-            2.2vmin);
-    /* Scale the font-size relative to the minimum screen dimension */
+    font-size: max(1rem, 2.2vmin);
     position: relative;
     transition: all 0.5s;
     overflow: hidden;
     z-index: 0;
+    isolation: isolate;
+    background:
+        var(--crt-glow),
+        #020902;
 }
 
 #crt-bg {
     position: absolute;
     inset: 0;
     z-index: 0;
+    background: inherit;
 }
 
 #terminal {
-
     position: relative;
     z-index: 1;
+}
 
+.terminal {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    padding: 2rem 2rem 2rem 4rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-break: break-word;
+    text-transform: uppercase;
+    animation: textShadow 4s infinite;
 }
 
 .scanlines {
     content: " ";
     display: block;
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
+    inset: 0;
     background: linear-gradient(to bottom,
             rgba(18, 16, 16, 0) 50%,
             rgba(0, 0, 0, 0.25) 50%);
@@ -101,17 +136,13 @@ pre {
 
 #monitor.turn-off #crt:after {
     animation: powerOn 0.4s ease-in-out;
-    /* animation-fill-mode: forwards; */
 }
 
 #monitor:not(.on) #crt:before {
     content: " ";
     display: block;
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
+    inset: 0;
     background: linear-gradient(to bottom,
             rgba(18, 16, 16, 0.1) 50%,
             rgba(0, 0, 0, 0.25) 50%);
@@ -127,10 +158,7 @@ pre {
     background: #fff;
     display: block;
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
@@ -139,14 +167,25 @@ pre {
 
 @keyframes textShadow {
     0% {
-        text-shadow: 0.4389924193300864px 0 1px rgba(0, 30, 255, 0.5), -0.4389924193300864px 0 1px rgba(255, 0, 80, 0.3), 0 0 3px;
+        text-shadow:
+            0.4389924193300864px 0 1px rgba(0, 30, 255, 0.5),
+            -0.4389924193300864px 0 1px rgba(255, 0, 80, 0.3),
+            0 0 3px;
     }
 
     5% {
-        text-shadow: 2.7928974010788217px 0 1px rgba(0, 30, 255, 0.5), -2.7928974010788217px 0 1px rgba(255, 0, 80, 0.3), 0 0 3px;
+        text-shadow:
+            2.7928974010788217px 0 1px rgba(0, 30, 255, 0.5),
+            -2.7928974010788217px 0 1px rgba(255, 0, 80, 0.3),
+            0 0 3px;
     }
 
-    /** etc */
+    100% {
+        text-shadow:
+            0.4389924193300864px 0 1px rgba(0, 30, 255, 0.5),
+            -0.4389924193300864px 0 1px rgba(255, 0, 80, 0.3),
+            0 0 3px;
+    }
 }
 
 .scanline {
@@ -161,6 +200,7 @@ pre {
     position: absolute;
     bottom: 100%;
     animation: scanline 10s linear infinite;
+    pointer-events: none;
 }
 
 @keyframes scanline {
@@ -183,7 +223,6 @@ pre {
 
 [contenteditable] {
     caret-color: transparent;
-    /** This hides the default browser caret */
     outline: none;
 }
 
@@ -193,12 +232,10 @@ pre {
     white-space: pre-wrap;
 }
 
-/* Inserts the > before terminal input */
 #input:before {
     content: var(--term);
 }
 
-/* Puts a blinking square after the content as replacement for caret */
 #input[contenteditable="true"]:after,
 .typer.active:after {
     content: "";
@@ -216,19 +253,19 @@ pre {
     animation: none;
 }
 
-/* 
- * This makes the caret (:after) show correctly after the previously typed character.
- * Otherwise the caret is always on new line
- */
 [contenteditable="true"] br:last-child {
     display: none;
 }
 
 .typer {
     word-break: break-all;
-
 }
 
 .turn-on {
     animation: powerOn 900ms ease-out forwards;
+}
+
+.hack-font {
+    font-family: "Hack", monospace;
+    white-space: pre;
 }

@@ -1,610 +1,682 @@
+/**
+ * io.js — Input / Output & Command Parser
+ *
+ * Responsible for:
+ *   - Fetching and injecting window HTML templates into the DOM on load.
+ *   - The typewriter effect used to print text to the terminal.
+ *   - Reading keyboard input from the terminal's contenteditable span.
+ *   - Command history (localStorage-backed).
+ *   - Parsing and dispatching terminal commands to their command modules.
+ *   - Recipe-specific helpers (content loader, recipe list).
+ *
+ * Imports FROM: windows.js (openWindow, setupFakeScrollbar)
+ * Imported BY:  screen.js, command modules
+ */
+
 /* eslint "no-unused-expressions": "off" */
 import pause from "./pause.js";
+import { handleClick } from "./ui.mjs";
+import { openWindow, setupFakeScrollbar } from "./windows.js";
 
-import { handleClick } from "./ui.mjs"
+// Re-export openWindow so command modules can continue to import it from io.js
+// without needing to know about windows.js directly.
+export { openWindow };
 
-    // Preload Pages
-    const files = [
-        "./commands/blog/blog.html",
-        "./commands/recipes/recipes.html",
-        "./commands/about/about.html",
-        "./commands/links/links.html"
-    ];
+// ─── Page bootstrap ───────────────────────────────────────────────────────────
 
-    for (const path of files) {
-        const html = await fetch(path).then(r => r.text());
-        document.body.insertAdjacentHTML("beforeend", html);
-    }
-	
+// Fetch and inject each window's HTML into the document body before any other
+// module code runs. Using top-level await here keeps the load order predictable.
+const _windowFiles = [
+    "./commands/blog/blog.html",
+    "./commands/recipes/recipes.html",
+    "./commands/about/about.html",
+    "./commands/links/links.html",
+    "./commands/repair/repair.html"
+];
 
-// Command history
-let prev = getHistory();
-let historyIndex = -1;
-let tmp = "";
+for (const path of _windowFiles) {
+    const html = await fetch(path).then(r => r.text());
+    document.body.insertAdjacentHTML("beforeend", html);
+}
 
+// ─── Command history ──────────────────────────────────────────────────────────
+
+/** Loads the command history array from localStorage, returning [] on failure. */
 function getHistory() {
-	let storage = localStorage.getItem("commandHistory");
-	let prev;
-	if (storage) {
-		try {
-			let json = JSON.parse(storage);
-			prev = Array.isArray(json) ? json : [];
-		} catch (e) {
-			prev = [];
-		}
-	} else {
-		prev = [];
-	}
-	return prev;
+    const storage = localStorage.getItem("commandHistory");
+    if (!storage) return [];
+    try {
+        const json = JSON.parse(storage);
+        return Array.isArray(json) ? json : [];
+    } catch {
+        return [];
+    }
 }
 
+/** Prepends a command to the in-memory history list and persists it. */
 function addToHistory(cmd) {
-	prev = [cmd, ...prev];
-	historyIndex = -1;
-	tmp = "";
-
-	try {
-		localStorage.setItem("commandHistory", JSON.stringify(prev));
-	} catch (e) { }
+    prev         = [cmd, ...prev];
+    historyIndex = -1;
+    tmp          = "";
+    try {
+        localStorage.setItem("commandHistory", JSON.stringify(prev));
+    } catch { /* storage quota — silently ignore */ }
 }
 
+let prev         = getHistory();
+let historyIndex = -1;
+let tmp          = "";
+
+// ─── Typed-block tracking ─────────────────────────────────────────────────────
+
 /**
- * Convert a character that needs to be typed into something that can be shown on the screen.
- * Newlines becomes <br>
- * Tabs become three spaces.
- * Spaces become &nbsp;
- * */
+ * A "typed block" represents one call to type().  It contains the container
+ * div (.typer) and an array of line state objects, each of which tracks the
+ * line's DOM element and every character span within it.  Keeping references
+ * here allows later calls to replace individual characters in-place (used by
+ * the "replace" / "replaceMany" operation kinds).
+ *
+ * Structure:
+ * {
+ *   typer: Element,
+ *   lines: Array<{ el: Element, chars: Array<Element> }>
+ * }
+ */
+const typedBlocks = [];
+
+// ─── DOM character helpers ────────────────────────────────────────────────────
+
+/**
+ * Converts a raw character into the appropriate DOM node for terminal output:
+ *   "\n"  → <br>
+ *   "\t"  → <span class="char"> with three &nbsp;
+ *   " "   → <span class="char"> with &nbsp;
+ *   other → <span class="char"> with the literal character
+ */
 function getChar(char) {
-	let result;
-	if (typeof char === "string") {
-		if (char === "\n") {
-			result = document.createElement("br");
-		} else if (char === "\t") {
-			let tab = document.createElement("span");
-			tab.innerHTML = "&nbsp;&nbsp;&nbsp;";
-			result = tab;
-		} else if (char === " ") {
-			let space = document.createElement("span");
-			space.innerHTML = "&nbsp;";
-			space.classList.add("char");
-			result = space;
-		} else {
-			let span = document.createElement("span");
-			span.classList.add("char");
-			span.textContent = char;
-			result = span;
-		}
-	}
-	return result;
+    if (typeof char !== "string") return null;
+
+    if (char === "\n") {
+        return document.createElement("br");
+    }
+
+    const span = document.createElement("span");
+    span.classList.add("char");
+    span.dataset.char = char;
+
+    if (char === "\t") {
+        span.innerHTML = "&nbsp;&nbsp;&nbsp;";
+    } else if (char === " ") {
+        span.innerHTML = "&nbsp;";
+    } else {
+        span.textContent = char;
+    }
+    return span;
+}
+
+/** Creates a new typed block attached to the given typer element. */
+function createTypedBlock(typer) {
+    const block = { typer, lines: [] };
+    typedBlocks.push(block);
+    return block;
+}
+
+/** Appends a new blank line div to a typed block and returns its state object. */
+function createTypedLine(block) {
+    const line      = document.createElement("div");
+    line.classList.add("typed-line");
+    const lineState = { el: line, chars: [] };
+    block.lines.push(lineState);
+    block.typer.appendChild(line);
+    return lineState;
 }
 
 /**
- * Types the given text on the screen
- * @param {string|Array<string>} text Text to type
- * @param {Object} options Typer config
- * @param {number} options.wait Time (ms) to wait between characters.
- * @param {number} options.lineWait If text is an array of strings, it will wait this amount (ms) between lines
- * @param {number} options.finalWait Time (ms) to wait when finished.
- * @param {string} options.typerClass Class to add to the typing container, in order to style is with CSS
- * @param {boolean} options.useContainer If true, types text into the container element (3rd parameter). If false, creates a new div
- * @param {boolean} options.stopBlinking Stop blinking when typing is done
- * @param {boolean} options.processChars Whether to preprocess spaces, tabs and newlines to &nbsp; (3x&nbsp;) and <br>
- * @param {boolean} options.clearContainer Clear container before typing
- * @param {Element} container DOM element where text will be typed
- * @param {boolean} options.fox For when the fox ascii is printing, hide the cursor
+ * Resolves a block reference to a typed block.
+ * Accepts a numeric index (negative = from end) or an already-resolved block.
+ */
+function resolveBlock(blockRef = -1) {
+    if (typeof blockRef !== "number") return blockRef || null;
+    const index = blockRef < 0 ? typedBlocks.length + blockRef : blockRef;
+    return typedBlocks[index] || null;
+}
+
+/**
+ * Resolves a line reference within a typed block.
+ * Accepts a numeric index (negative = from end) or an already-resolved line.
+ */
+function resolveLine(block, lineRef = -1) {
+    if (!block) return null;
+    if (typeof lineRef !== "number") return lineRef || null;
+    const index = lineRef < 0 ? block.lines.length + lineRef : lineRef;
+    return block.lines[index] || null;
+}
+
+/**
+ * Appends a character (or pre-built node) to a line and tracks it in chars[].
+ *
+ * @param {Object}  lineState    Line state object from createTypedLine.
+ * @param {string|Node} char     Character string or pre-built DOM node.
+ * @param {boolean} processChars Whether to run char through getChar().
+ */
+function appendCharToLine(lineState, char, processChars = true) {
+    const node = processChars ? getChar(char) : char;
+    if (!node) return null;
+
+    lineState.el.appendChild(node);
+
+    if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains("char")) {
+        lineState.chars.push(node);
+    }
+    return node;
+}
+
+/**
+ * Replaces the character span at a given index within a line with a new one.
+ * Used by the "replace" / "replaceMany" operation kinds in type().
+ */
+function replaceCharInLine(lineState, index, char) {
+    if (!lineState) return null;
+    const target = lineState.chars[index];
+    if (!target) return null;
+
+    const next = getChar(char);
+    if (!next) return null;
+
+    target.replaceWith(next);
+    lineState.chars[index] = next;
+    return next;
+}
+
+/**
+ * Resolves a wait value: if it's a function, calls it with the payload and
+ * returns the result; otherwise returns it as-is.
+ */
+function normalizeWait(wait, payload) {
+    return typeof wait === "function" ? wait(payload) : wait;
+}
+
+// ─── Core typing engine ───────────────────────────────────────────────────────
+
+/**
+ * Types a plain string into a typed block one character at a time,
+ * inserting the configured inter-character and inter-line delays.
+ */
+async function typeStringIntoBlock(text, block, options, container) {
+    const {
+        wait         = 30,
+        lineWait     = 100,
+        processChars = true
+    } = options;
+
+    let lineState = createTypedLine(block);
+    const queue   = processChars ? text.split("") : text;
+
+    for (const char of queue) {
+        if (char === "\n") {
+            lineState.el.appendChild(document.createElement("br"));
+            scroll(container);
+            const newlineDelay = normalizeWait(wait, { char, line: lineState, block });
+            if (newlineDelay) await pause(newlineDelay / 1000);
+            if (lineWait)     await pause(lineWait     / 1000);
+            lineState = createTypedLine(block);
+            continue;
+        }
+
+        appendCharToLine(lineState, char, processChars);
+        scroll(container);
+
+        const charDelay = normalizeWait(wait, { char, line: lineState, block });
+        if (charDelay) await pause(charDelay / 1000);
+    }
+}
+
+/**
+ * Executes an array of typed operations (strings or operation objects) in
+ * sequence. Used when type() receives an array rather than a plain string.
+ *
+ * Supported operation kinds:
+ *   "type"        — type a string with optional per-op wait overrides
+ *   "replace"     — replace a single char in an existing line
+ *   "replaceMany" — replace multiple chars in an existing line
+ *   "pause"       — wait without typing
+ * 
+ * For example 
+ * 
+ * await type([
+ * {kind: "type", text: "I'm chargin' mah....},
+ * {wait: 100, text:"lasor!"},
+ * {kind: "replace", line: -1, index: 22, char: "z", wait 300},
+ * ]);
+ * This types the first line with default settings, waits 100ms, then finishes with "lasor!"
+ * on the same line (use /n for new line), then replaces the 22nd character (the s in lasor)
+ * with a z after 300ms
+ */
+
+
+
+async function runTypeOps(ops, block, options, container) {
+    for (const op of ops) {
+        if (!op) continue;
+
+        if (typeof op === "string") {
+            await typeStringIntoBlock(op, block, options, container);
+            continue;
+        }
+
+        if (op.kind === "type") {
+            await typeStringIntoBlock(op.text ?? "", block, {
+                ...options,
+                wait:         op.wait         ?? options.wait,
+                lineWait:     op.lineWait     ?? options.lineWait,
+                processChars: op.processChars ?? options.processChars
+            }, container);
+            continue;
+        }
+
+        if (op.kind === "replace") {
+            const targetBlock = resolveBlock(op.block ?? -1);
+            const targetLine  = resolveLine(targetBlock, op.line ?? -1);
+            replaceCharInLine(targetLine, op.index ?? 0, op.char ?? " ");
+            scroll(container);
+            const delay = normalizeWait(op.wait ?? options.wait ?? 0, { op, block: targetBlock, line: targetLine });
+            if (delay) await pause(delay / 1000);
+            continue;
+        }
+
+        if (op.kind === "replaceMany") {
+            const targetBlock = resolveBlock(op.block ?? -1);
+            const targetLine  = resolveLine(targetBlock, op.line ?? -1);
+            for (const item of (op.chars ?? [])) {
+                replaceCharInLine(targetLine, item.index ?? 0, item.char ?? " ");
+                scroll(container);
+                const delay = normalizeWait(item.wait ?? op.wait ?? options.wait ?? 0, { op: item, block: targetBlock, line: targetLine });
+                if (delay) await pause(delay / 1000);
+            }
+            continue;
+        }
+
+        if (op.kind === "pause") {
+            if (op.wait) await pause(op.wait / 1000);
+        }
+    }
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
+/**
+ * Types the given text into a terminal container with a configurable
+ * typewriter effect.
+ *
+ * @param {string|string[]|Object[]} text
+ *   A plain string, an array of strings (typed sequentially), or an array of
+ *   operation objects (see runTypeOps for the full op schema).
+ *
+ * @param {Object}  [options]
+ * @param {number|Function} [options.wait=30]        Delay (ms) between characters.
+ * @param {number}  [options.initialWait=1000]        Delay (ms) before starting.
+ * @param {number}  [options.lineWait=100]            Extra delay (ms) between lines.
+ * @param {number}  [options.finalWait=500]           Delay (ms) after finishing.
+ * @param {string}  [options.typerClass=""]          Extra CSS class on the typer div.
+ * @param {boolean} [options.useContainer=false]     Type directly into the container.
+ * @param {boolean} [options.stopBlinking=true]      Remove the blinking cursor when done.
+ * @param {boolean} [options.processChars=true]      Convert spaces/tabs/newlines to HTML.
+ * @param {boolean} [options.clearContainer=false]   Clear the container first.
+ * @param {boolean} [options.fox=false]              Hide cursor while the fox art prints.
+ *
+ * @param {Element} [container]  Target element; defaults to .terminal.
  */
 export async function type(
-	text,
-	options = {},
-	container = document.querySelector(".terminal")
+    text,
+    options  = {},
+    container = document.querySelector(".terminal")
 ) {
-	if (!text) return Promise.resolve();
+    if (!text) return;
 
-	let {
-		wait = 30,
-		initialWait = 1000,
-		finalWait = 500,
-		lineWait = 100,
-		typerClass = "",
-		useContainer = false,
-		stopBlinking = true,
-		processChars = true,
-		clearContainer = false,
-		fox = false,
-	} = options;
+    const {
+        wait           = 30,
+        initialWait    = 1000,
+        finalWait      = 500,
+        lineWait       = 100,
+        typerClass     = "",
+        useContainer   = false,
+        stopBlinking   = true,
+        processChars   = true,
+        clearContainer = false,
+        fox            = false,
+    } = options;
 
-	// If text is an array, e.g. type(['foo', 'bar'])
-	if (processChars && Array.isArray(text)) {
-		for (const t of text)
-			await type(
-				t,
-				{
-					...options,
-					initialWait: lineWait,
-					finalWait: lineWait
-				},
-				container
-			);
-		return;
-	}
+    // Create (or reuse) the typer wrapper div.
+    const typer = useContainer ? container : document.createElement("div");
+    typer.classList.add("typer", "active");
+    if (fox)        typer.classList.add("no-cursor");
+    if (typerClass) typer.classList.add(typerClass);
 
-	let interval;
-	return new Promise(async (resolve) => {
-		if (interval) {
-			clearInterval(interval);
-			interval = null;
-		}
-		// Create a div where all the characters can be appended to (or use the given container)
-		let typer = useContainer
-			? container
-			: document.createElement("div");
-		typer.classList.add("typer", "active");
-		if (fox) {
-			typer.classList.add("no-cursor");
-		}
+    if (clearContainer) {
+        container.innerHTML = "&nbsp;";
+        typedBlocks.length  = 0;
+    }
 
-		if (typerClass) {
-			typer.classList.add(typerClass);
-		}
-		// Handy if reusing the same container
-		if (clearContainer) {
-			container.innerHTML = "&nbsp;";
-		}
+    if (!useContainer) {
+        container.appendChild(typer);
+    }
 
-		if (!useContainer) {
-			container.appendChild(typer);
-		}
+    const block = createTypedBlock(typer);
 
-		if (initialWait) {
-			await pause(initialWait / 1000);
-		}
+    if (initialWait) await pause(initialWait / 1000);
 
-		let queue = text;
-		if (processChars) {
-			queue = text.split("");
-		}
+    if (Array.isArray(text) && text.every(item => typeof item === "string")) {
+        // Array of plain strings: type each in turn.
+        for (const t of text) {
+            await typeStringIntoBlock(t, block, { ...options, wait, lineWait, processChars }, container);
+            if (lineWait) await pause(lineWait / 1000);
+        }
+    } else if (Array.isArray(text)) {
+        // Array of operation objects.
+        await runTypeOps(text, block, { ...options, wait, lineWait, processChars }, container);
+    } else {
+        // Plain string.
+        await typeStringIntoBlock(text, block, { ...options, wait, lineWait, processChars }, container);
+    }
 
-		let prev;
+    await pause(finalWait / 1000);
 
-		// Use an interval to repeatedly pop a character from the queue and type it on screen
-		interval = setInterval(async () => {
-			if (queue.length) {
-				let char = queue.shift();
-
-				// This is an optimisation for typing a large number of characters on the screen.
-				// It seems the performance degrades when trying to add 500+ DOM elements rapidly on the screen.
-				// So the content of the previous element is moved to the typer container and removed, which
-				// reduces the amount of DOM elements.
-				// This may cause issues when the element is removed while the character is still animating (red screen)
-				if (processChars && prev) {
-					prev.remove();
-					if (
-						prev.firstChild &&
-						prev.firstChild.nodeType ===
-						Node.TEXT_NODE
-					) {
-						typer.innerText +=
-							prev.innerText;
-					} else {
-						typer.appendChild(prev);
-					}
-				}
-				let element = processChars
-					? getChar(char)
-					: char;
-				if (element) {
-					typer.appendChild(element);
-
-					if (element.nodeName === "BR") {
-						scroll(container);
-					}
-				}
-				prev = element;
-			} else {
-				// When the queue is empty, clean up the interval
-				clearInterval(interval);
-				await pause();
-				if (stopBlinking) {
-					typer.classList.remove("active");
-				}
-				if (fox) {
-					typer.classList.remove("no-cursor")
-
-				}
-				resolve();
-			}
-		}, wait);
-	});
-}
-
-export function isPrintable(keycode) {
-	return (
-		(keycode > 47 && keycode < 58) || // number keys
-		keycode === 32 || // spacebar & return key(s) (if you want to allow carriage returns)
-		(keycode > 64 && keycode < 91) || // letter keys
-		(keycode > 95 && keycode < 112) || // numpad keys
-		(keycode > 185 && keycode < 193) || // ;=,-./` (in order)
-		(keycode > 218 && keycode < 223)
-	);
-}
-
-export function moveCaretToEnd(el) {
-	var range, selection;
-	if (document.createRange) {
-		range = document.createRange(); //Create a range (a range is a like the selection but invisible)
-		range.selectNodeContents(el); //Select the entire contents of the element with the range
-		range.collapse(false); //collapse the range to the end point. false means collapse to end rather than the start
-		selection = window.getSelection(); //get the selection object (allows you to change selection)
-		selection.removeAllRanges(); //remove any selections already made
-		selection.addRange(range); //make the range you have just created the visible selection
-	}
+    if (stopBlinking) typer.classList.remove("active");
+    if (fox)          typer.classList.remove("no-cursor");
 }
 
 /**
- * Shows an input field, returns a resolved promise with the typed text on <enter>
- * @param {boolean} pw whether input is a password
- **/
-export async function input(pw) {
-	return new Promise((resolve) => {
-		// This handles all user input
-		const onKeyDown = (event) => {
-			// ENTER
-			if (event.keyCode === 13) {
-				event.preventDefault();
-				event.target.setAttribute(
-					"contenteditable",
-					false
-				);
-				let result = cleanInput(
-					event.target.textContent
-				);
-
-				// history
-				addToHistory(result);
-				resolve(result);
-			}
-			// UP
-			else if (event.keyCode === 38) {
-				if (historyIndex === -1)
-					tmp = event.target.textContent;
-				historyIndex = Math.min(
-					prev.length - 1,
-					historyIndex + 1
-				);
-				let text = prev[historyIndex];
-				event.target.textContent = text;
-			}
-			// DOWN
-			else if (event.keyCode === 40) {
-				historyIndex = Math.max(-1, historyIndex - 1);
-				let text = prev[historyIndex] || tmp;
-				event.target.textContent = text;
-			}
-			// BACKSPACE
-			else if (event.keyCode === 8) {
-				// Prevent inserting a <br> when removing the last character
-				if (event.target.textContent.length === 1) {
-					event.preventDefault();
-					event.target.innerHTML = "";
-				}
-			}
-			// Check if character can be shown as output (skip if CTRL is pressed)
-			else if (isPrintable(event.keyCode) && !event.ctrlKey) {
-				event.preventDefault();
-				// Wrap the character in a span
-				let span = document.createElement("span");
-
-				let keyCode = event.keyCode;
-				let chrCode =
-					keyCode - 48 * Math.floor(keyCode / 48);
-				let chr = String.fromCharCode(
-					96 <= keyCode ? chrCode : keyCode
-				);
-				// Add span to the input
-				span.classList.add("char");
-				span.textContent = chr;
-				event.target.appendChild(span);
-
-				// For password field, fill the data-pw attr with asterisks
-				// which will be shown using CSS
-				if (pw) {
-					let length =
-						event.target.textContent.length;
-					event.target.setAttribute(
-						"data-pw",
-						Array(length).fill("*").join("")
-					);
-				}
-				moveCaretToEnd(event.target);
-			}
-		};
-
-		// Add input to terminal
-		let terminal = document.querySelector(".terminal");
-		let input = document.createElement("span");
-		input.setAttribute("id", "input");
-		if (pw) {
-			input.classList.add("password");
-		}
-		input.setAttribute("contenteditable", true);
-		input.addEventListener("keydown", onKeyDown);
-		terminal.appendChild(input);
-		input.focus();
-	});
-}
-
-/**
- * Processes the user input and executes a command
- * @param {string} input
+ * Returns true when the keyCode is a printable character (letter, digit,
+ * punctuation, numpad, etc.) that should be echoed to the terminal input.
  */
-export async function parse(input) {
-	input = cleanInput(input);
-
-	if (!input) {
-		return;
-	}
-	// Only allow words, separated by space
-	let matches = String(input).match(/^(\w+(?:(?:\s|-)\w+)*)$/);
-
-	if (!matches) {
-		throw new Error("Invalid command");
-	}
-	let command = matches[1];
-	let args = matches[2];
-
-	let naughty = ["fuck", "shit", "die", "ass", "cunt"];
-	if (naughty.some((word) => command.includes(word))) {
-		throw new Error("Please don't use that language");
-	}
-
-	let module;
-
-	// Catch any commands that need to open an external link so browsers don't get pissy
-	let pissy = ["atabook", "guestbook"]
-	if (pissy.some((word) => command.includes(word))) {
-		await type("Signed in blood...");
-		await pause(1)
-		window.open("https://cybervixen.atabook.org/", "_blank");
-		return;
-	}
-	// Try to import the command function
-	try {
-		module = await import(`./commands/${command}/index.mjs`);
-	} catch (e) {
-		console.error(e);
-		// Kinda abusing TypeError to check if the import failed
-		if (e instanceof TypeError) {
-			e.message = `Unknown command: ${command}`;
-		}
-		// E.g. syntax error
-		else {
-			e.message = "Error while executing command";
-		}
-		throw e;
-	}
-
-	module.stylesheets?.forEach((name) => {
-		addStylesheet(`commands/${command}/${name}.css`);
-	});
-
-	// Try to import and parse any HTML templates that the command module exports
-	module.templates?.forEach(async (name) => {
-		await loadTemplates(`commands/${command}/${name}.html`);
-	});
-
-	// Show any output if the command exports any
-	await type(module.output);
-	await pause();
-
-	// Execute the command (default export)
-	await module.default?.(args);
-
-	return;
+export function isPrintable(keycode) {
+    return (
+        (keycode > 47 && keycode < 58)   ||   // 0-9
+        keycode === 32                    ||   // space
+        (keycode > 64 && keycode < 91)   ||   // A-Z
+        (keycode > 95 && keycode < 112)  ||   // numpad 0-9
+        (keycode > 185 && keycode < 193) ||   // punctuation
+        (keycode > 218 && keycode < 223)       // punctuation
+    );
 }
 
 /**
- * Lowercase and trim input
- * @param {string} input
+ * Moves the browser caret to the end of a contenteditable element so
+ * programmatic text insertion always appends rather than replaces.
+ */
+export function moveCaretToEnd(el) {
+    if (!document.createRange) return;
+    const range     = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+/**
+ * Renders a live terminal input span and resolves the returned Promise with
+ * the typed text when the user presses Enter.
+ *
+ * Handles:
+ *   Enter     → submit
+ *   Up/Down   → command history navigation
+ *   Backspace → prevent empty-string deletion artefacts
+ *   Printable → echo character and move caret
+ *
+ * @param {boolean} [pw=false]  If true, masks input with asterisks (password mode).
+ * @returns {Promise<string>}
+ */
+export async function input(pw) {
+    return new Promise((resolve) => {
+        const onKeyDown = (event) => {
+
+            if (event.keyCode === 13) {
+                // Enter: submit the current input.
+                event.preventDefault();
+                event.target.setAttribute("contenteditable", false);
+                const result = cleanInput(event.target.textContent);
+                addToHistory(result);
+                resolve(result);
+
+            } else if (event.keyCode === 38) {
+                // Up arrow: navigate backwards through history.
+                if (historyIndex === -1) tmp = event.target.textContent;
+                historyIndex = Math.min(prev.length - 1, historyIndex + 1);
+                event.target.textContent = prev[historyIndex];
+                if (pw) _maskInput(event.target);
+                moveCaretToEnd(event.target);
+
+            } else if (event.keyCode === 40) {
+                // Down arrow: navigate forwards through history.
+                historyIndex = Math.max(-1, historyIndex - 1);
+                event.target.textContent = prev[historyIndex] || tmp;
+                if (pw) _maskInput(event.target);
+                moveCaretToEnd(event.target);
+
+            } else if (event.keyCode === 8) {
+                // Backspace: prevent leaving a stray empty node.
+                if (event.target.textContent.length === 1) {
+                    event.preventDefault();
+                    event.target.innerHTML = "";
+                }
+                if (pw) requestAnimationFrame(() => _maskInput(event.target));
+
+            } else if (isPrintable(event.keyCode) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+                // Printable character: echo it as a <span> and move caret.
+                event.preventDefault();
+                const keyCode = event.keyCode;
+                const chrCode = keyCode - 48 * Math.floor(keyCode / 48);
+                const chr     = String.fromCharCode(96 <= keyCode ? chrCode : keyCode);
+                const span    = document.createElement("span");
+                span.classList.add("char");
+                span.textContent = chr;
+                event.target.appendChild(span);
+                if (pw) _maskInput(event.target);
+                moveCaretToEnd(event.target);
+            }
+        };
+
+        const terminal = document.querySelector(".terminal");
+        const inputEl  = document.createElement("span");
+        inputEl.setAttribute("id", "input");
+        if (pw) inputEl.classList.add("password");
+        inputEl.setAttribute("contenteditable", true);
+        inputEl.addEventListener("keydown", onKeyDown);
+        terminal.appendChild(inputEl);
+        inputEl.focus();
+    });
+}
+
+/** Updates the data-pw mask attribute to match the current input length. */
+function _maskInput(el) {
+    el.setAttribute("data-pw", Array(el.textContent.length).fill("*").join(""));
+}
+
+/**
+ * Processes a raw terminal command string:
+ * 1. Validates and sanitises the input.
+ * 2. Runs hardcoded special-case commands (e.g. atabook).
+ * 3. Dynamically imports the matching command module from ./commands/<cmd>/index.mjs.
+ * 4. Applies any stylesheets / templates declared by the module.
+ * 5. Types the module's output string and runs its default export.
+ *
+ * Throws an Error with a user-readable message on invalid input or unknown commands.
+ *
+ * @param {string} rawInput
+ */
+export async function parse(rawInput) {
+    const input = cleanInput(rawInput);
+    if (!input) return;
+
+    const matches = String(input).match(/^(\w+(?:(?:\s|-)\w+)*)$/);
+    if (!matches) throw new Error("Invalid command");
+
+    const command = matches[1];
+
+    // Filter obviously naughty words before attempting any import.
+    const naughty = ["fuck", "shit", "die", "ass", "cunt"];
+    if (naughty.some(word => command.includes(word))) {
+        throw new Error("Please don't use that language");
+    }
+
+    // Hardcoded redirect commands that don't need a full module.
+    const pissy = ["atabook", "guestbook"];
+    if (pissy.some(word => command.includes(word))) {
+        await type("Signed in blood...");
+        await pause(1);
+        window.open("https://cybervixen.atabook.org/", "_blank");
+        return;
+    }
+
+    let module;
+    try {
+        module = await import(`./commands/${command}/index.mjs`);
+    } catch (e) {
+        console.error(e);
+        e.message = e instanceof TypeError
+            ? `Unknown command: ${command}`
+            : "Error while executing command";
+        throw e;
+    }
+
+    // Load any CSS the command declares.
+    module.stylesheets?.forEach(name => _addStylesheet(`commands/${command}/${name}.css`));
+
+    // Load any HTML template files the command declares.
+    for (const name of (module.templates ?? [])) {
+        await loadTemplates(`commands/${command}/${name}.html`);
+    }
+
+    await type(module.output);
+    await pause();
+    await module.default?.(matches[2]);
+}
+
+/**
+ * Lowercases and trims a raw input string.
+ * Used both by parse() and by the input() keydown handler.
  */
 export function cleanInput(input) {
-	return input.toLowerCase().trim();
+    return input.toLowerCase().trim();
 }
 
 /**
- * Scrolls to bottom of element
- * @param {Element} el element to scroll
+ * Scrolls an element to its bottom edge.
+ * Defaults to the .terminal element so it keeps pace with new output.
+ *
+ * @param {Element} [el]
  */
 export function scroll(el = document.querySelector(".terminal")) {
-	el.scrollTop = el.scrollHeight;
+    el.scrollTop = el.scrollHeight;
 }
 
-/** Types the given text and asks input */
+/**
+ * Types a prompt string then immediately awaits user input.
+ * Convenience wrapper around type() + input().
+ *
+ * @param {string}  text
+ * @param {boolean} [pw=false]
+ * @returns {Promise<string>}
+ */
 export async function prompt(text, pw = false) {
-	await type(text);
-	return input(pw);
+    await type(text);
+    return input(pw);
 }
 
-/** Sets a global event listeners and returns when a key is hit */
+/**
+ * Resolves when the user next presses any key or clicks anywhere.
+ * Used to pause boot sequences until the user is ready.
+ *
+ * @returns {Promise<void>}
+ */
 export async function waitForKey() {
-	return new Promise((resolve) => {
-		const handle = () => {
-			document.removeEventListener("keyup", handle);
-			document.removeEventListener("click", handle);
-			resolve();
-		};
-		document.addEventListener("keyup", handle);
-		document.addEventListener("click", handle);
-	});
+    return new Promise((resolve) => {
+        const handle = () => {
+            document.removeEventListener("keyup",  handle);
+            document.removeEventListener("click",  handle);
+            resolve();
+        };
+        document.addEventListener("keyup",  handle);
+        document.addEventListener("click",  handle);
+    });
 }
 
-function addStylesheet(href) {
-	let head = document.getElementsByTagName("HEAD")[0];
+// ─── Internal helpers ─────────────────────────────────────────────────────────
 
-	// Create new link Element
-	let link = document.createElement("link");
-
-	// set the attributes for link element
-	link.rel = "stylesheet";
-	link.type = "text/css";
-	link.href = href;
-
-	// Append link element to HTML head
-	head.appendChild(link);
+/** Injects a <link rel="stylesheet"> into <head> for dynamically loaded command CSS. */
+function _addStylesheet(href) {
+    const link  = document.createElement("link");
+    link.rel    = "stylesheet";
+    link.type   = "text/css";
+    link.href   = href;
+    document.head.appendChild(link);
 }
 
-export function openWindow(id) {
-	document.getElementById(id).classList.remove("hidden");
-	document.getElementById(id).style.display = "";
-	document.getElementById(id).querySelectorAll("[data-scrollbox]").forEach(setupFakeScrollbar);
+// ─── Recipe helpers ───────────────────────────────────────────────────────────
+
+// Wire up the sidebar click-to-load behaviour for the recipes window.
+// This runs once on module load, after the HTML has been injected above.
+_setupRecipeContentLoader();
+
+/** Reference kept for loadRecipeList() which populates the sidebar. */
+const _recipesSidebar = document.getElementById("recipes")
+    ?.querySelector("[data-sidebar-content]");
+
+/**
+ * Attaches a click listener to the recipe sidebar that fetches and displays
+ * the selected recipe's HTML in the content pane, then re-initialises the
+ * fake scrollbar for the updated content.
+ */
+function _setupRecipeContentLoader() {
+    const win     = document.getElementById("recipes");
+    if (!win) return;
+
+    const content = win.querySelector("[data-content]");
+    const sidebar = win.querySelector("[data-sidebar-content]");
+
+    sidebar?.addEventListener("click", async (e) => {
+        const link = e.target.closest("a[data-recipe]");
+        if (!link) return;
+        e.preventDefault();
+
+        content.innerHTML = await fetch(link.dataset.recipe).then(r => r.text());
+
+        // Re-initialise scrollbars after the content pane is repopulated.
+        win.querySelectorAll("[data-scrollbox]").forEach(setupFakeScrollbar);
+    });
 }
 
-function setupContentLoader(windowEl, attr = "recipe") {
-	const content = windowEl.querySelector("[data-content]");
-	const sidebar = windowEl.querySelector("[data-sidebar-content");
-
-	sidebar.addEventListener("click", async (e) => {
-		const link = e.target.closest(`a[data-${attr}]`);
-		if (!link) return;
-		e.preventDefault();
-		content.innerHTML = await fetch(link.dataset[attr]).then(r => r.text());
-		document.getElementById("recipes").querySelectorAll("[data-scrollbox]").forEach(setupFakeScrollbar);
-	});
-}
-
-setupContentLoader(document.getElementById("recipes"));
-
-
-const recipesWindow = document.getElementById("recipes");
-const sidebar = recipesWindow.querySelector("[data-sidebar-content]");
-
-
+/**
+ * Fetches the recipe index JSON and builds the sidebar link list.
+ * Called by commands/recipes/index.mjs each time the recipes window is opened.
+ */
 export async function loadRecipeList() {
-	const files = await fetch("/recipes/index.json").then(r => r.json());
+    if (!_recipesSidebar) return;
 
-	sidebar.innerHTML = files
-		.map(name => {
-			const label = name
-				.replace(".html", "")
-				.replaceAll("-", " ")
-				.replace(/\b\w/g, c => c.toUpperCase());
+    const files = await fetch("/recipes/index.json").then(r => r.json());
 
-			return `
-			<p><a href="#" data-recipe="/recipes/${name}">${label}</a></p>`;
-		})
-		.join("");
-
+    _recipesSidebar.innerHTML = files
+        .map(name => {
+            const label = name
+                .replace(".html", "")
+                .replaceAll("-", " ")
+                .replace(/\b\w/g, c => c.toUpperCase());
+            return `<p><a href="#" data-recipe="/recipes/${name}">${label}</a></p>`;
+        })
+        .join("");
 }
 
-function setupFakeScrollbar(root) {
-	const viewport = root.querySelector("[data-viewport]");
-	const track = root.querySelector("[data-track]");
-	const thumb = root.querySelector("[data-thumb]");
-	const buttons = root.querySelectorAll("[data-dir]");
+// ─── Template helpers (used by screen.js) ────────────────────────────────────
 
-	if (!viewport || !track || !thumb) return;
-
-	let dragging = false;
-	let startY = 0;
-	let startTop = 0;
-	let holdTimer = null;
-	let holdInterval = null;
-
-	const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-
-	function metrics() {
-		const trackH = track.clientHeight;
-		const viewH = viewport.clientHeight;
-		const scrollH = viewport.scrollHeight;
-		const maxScroll = Math.max(0, scrollH - viewH);
-		const thumbH = maxScroll ? Math.max(24, (viewH / scrollH) * trackH) : trackH;
-		const maxThumbTop = Math.max(0, trackH - thumbH);
-		return { trackH, viewH, scrollH, maxScroll, thumbH, maxThumbTop };
-	}
-
-	function paint() {
-		const { maxScroll, thumbH, maxThumbTop } = metrics();
-
-		thumb.style.height = `${thumbH}px`;
-
-		if (!maxScroll) {
-			thumb.style.top = "0px";
-			thumb.style.display = "none";
-			return;
-		}
-
-		thumb.style.display = "block";
-		const top = (viewport.scrollTop / maxScroll) * maxThumbTop;
-		thumb.style.top = `${top}px`;
-	}
-
-	function scrollByStep(dir) {
-		const step = Number(getComputedStyle(root).getPropertyValue("--sb-step")) || 32;
-		viewport.scrollTop += step * dir;
-	}
-
-	function startHold(dir) {
-		scrollByStep(dir);
-		holdTimer = setTimeout(() => {
-			holdInterval = setInterval(() => scrollByStep(dir), 40);
-		}, 300);
-	}
-
-	function stopHold() {
-		clearTimeout(holdTimer);
-		clearInterval(holdInterval);
-		holdTimer = null;
-		holdInterval = null;
-	}
-
-	thumb.addEventListener("mousedown", (e) => {
-		e.preventDefault();
-		const thumbRect = thumb.getBoundingClientRect();
-		dragging = true;
-		startY = e.clientY;
-		startTop = thumbRect.top - track.getBoundingClientRect().top;
-		thumb.classList.add("dragging");
-	});
-
-	document.addEventListener("mousemove", (e) => {
-		if (!dragging) return;
-
-		const { maxScroll, maxThumbTop } = metrics();
-		const nextTop = clamp(startTop + (e.clientY - startY), 0, maxThumbTop);
-		thumb.style.top = `${nextTop}px`;
-
-		viewport.scrollTop = maxThumbTop
-			? (nextTop / maxThumbTop) * maxScroll
-			: 0;
-	});
-
-	document.addEventListener("mouseup", () => {
-		dragging = false;
-		thumb.classList.remove("dragging");
-		stopHold();
-	});
-
-	track.addEventListener("mousedown", (e) => {
-		if (e.target === thumb) return;
-
-		const rect = track.getBoundingClientRect();
-		const clickY = e.clientY - rect.top;
-		const thumbTop = thumb.offsetTop;
-		const thumbMid = thumbTop + thumb.offsetHeight / 2;
-
-		viewport.scrollTop += clickY < thumbMid ? -viewport.clientHeight * 0.9 : viewport.clientHeight * 0.9;
-	});
-
-	buttons.forEach(btn => {
-		const dir = Number(btn.dataset.dir);
-
-		btn.addEventListener("mousedown", () => startHold(dir));
-		btn.addEventListener("mouseleave", stopHold);
-		btn.addEventListener("mouseup", stopHold);
-		btn.addEventListener("click", e => e.preventDefault());
-	});
-
-	viewport.addEventListener("scroll", paint);
-	window.addEventListener("resize", paint);
-
-	paint();
+/**
+ * Fetches an HTML file, extracts all <template> elements from it, and appends
+ * them to <head> so they can be cloned later with addTemplate().
+ *
+ * @param {string} path  URL of the HTML file to fetch.
+ */
+export async function loadTemplates(path) {
+    const txt       = await fetch(path).then(r => r.text());
+    const parsed    = new DOMParser().parseFromString(txt, "text/html");
+    parsed.querySelectorAll("template").forEach(t => document.head.appendChild(t));
 }
