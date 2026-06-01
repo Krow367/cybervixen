@@ -38,7 +38,7 @@ async function command() {
         { kind: "replace", line: -1, index: 9, char: "█", wait: 900 },
         { kind: "replace", line: -1, index: 10, char: "█", wait: 130 },
         { kind: "replace", line: -1, index: 11, char: "█", wait: 75 },
-        { kind: "replace", line: -1, index: 12, char: "█", wait: 200 },
+        { kind: "replace", line: -1, index: 12, char: "█"},
 
         {
             kind: "pause",
