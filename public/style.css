@@ -81,7 +81,13 @@ html::-webkit-scrollbar {
 #terminal pre {
    
 }
-
+.typer.active .typed-line:last-child {
+    display: inline;
+}
+.typer.active.typing::after {
+    animation: none;
+    opacity: 1;
+}
 #crt {
      font-family: "VT323", monospace;
     min-width: 80ch;
