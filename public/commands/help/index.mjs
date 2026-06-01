@@ -2,7 +2,7 @@ import { type } from "../../io.js";
 
 export default async function () {
 	if (!localStorage.getItem("helpRepaired")) {
-		await type("THE MACHINE OFFERS WHAT LITTLE HELP IT CAN... \nAvailable commands:\nhelp, clear, blog, recipes, about, atabook, links, nethack, balls:;X:^!$_\*~!>@#',~▒:|7(^*29-_&-&<\=;M(;░`.)J%!+▓{[QR%^=~,?$-=]/}+\nERROR: FILE CORRUPTED. UNABLE TO DISPLAY ALL COMMANDS\nPlease run 'repair' to fix corrupted file.");
+		await type("THE MACHINE OFFERS WHAT LITTLE HELP IT CAN... \nAvailable commands:\nhelp, clear, blog, recipes, about, atabook, links, balls:;X:^!$_\*~!>@#',~▒:|7(^*29-_&-&<\=;M(;░`.)J%!+▓{[QR%^=~,?$-=]/}+\nERROR: FILE CORRUPTED. UNABLE TO DISPLAY ALL COMMANDS\nPlease run 'repair' to fix corrupted file.");
 	}
 	else {
 		const artText = document.getElementById("art-source").textContent.trim();

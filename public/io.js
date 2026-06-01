@@ -8,7 +8,8 @@ import { handleClick } from "./ui.mjs"
         "./commands/blog/blog.html",
         "./commands/recipes/recipes.html",
         "./commands/about/about.html",
-        "./commands/links/links.html"
+        "./commands/links/links.html",
+		"./commands/repair/repair.html"
     ];
 
     for (const path of files) {

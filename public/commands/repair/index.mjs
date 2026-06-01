@@ -226,4 +226,3 @@ async function checkWin() {
         boot();
     }
 }
-
