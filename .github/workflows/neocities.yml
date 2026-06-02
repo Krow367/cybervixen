@@ -12,10 +12,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      # When the dist_dir is ready, deploy it to neocities
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
       - name: Deploy to neocities
         uses: bcomnes/deploy-to-neocities@v1
         with:
           api_token: ${{ secrets.NEOCITIES_API_TOKEN }}
           cleanup: true
-          dist_dir: public
+          dist_dir: build
