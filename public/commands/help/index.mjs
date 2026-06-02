@@ -20,6 +20,6 @@ export default async function () {
 		artPre.style.margin = '0';
 		artPre.style.whiteSpace = 'pre';
 		lastTyper.appendChild(artPre);
-		await type("Thank you for playing! Unfortunately this is the end of the line for now.\ndon't worry, there'll be more in the ner future!\nCheck back soon and enjoy exploring the rest of the site!\nUnless you run 'Hard Reset' all new commands and functions will appear here as I add them!")
+		await type("Thank you for playing! Unfortunately this is the end of the line for now.\ndon't worry, there'll be more in the near future!\nCheck back soon and enjoy exploring the rest of the site!\nUnless you run 'Hard Reset' all new commands and functions will appear here as I add them!")
 	}
 }
