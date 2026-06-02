@@ -23,10 +23,8 @@
 
     --crt-glow:
         radial-gradient(ellipse at center,
-            rgba(5, 50, 30, 1) 0%,
-            /**rgba(7, 62, 35, 0.40) 26%,*/
-            rgba(5, 50, 30, 0.25) 52%,
-            /** rgba(3, 32, 18, 0.012) 74%,*/
+            rgb(9, 85, 51) 0%,
+            rgb(6, 63, 38) 15%,
             rgba(1, 12, 7, 0.03) 100%),
         linear-gradient(to bottom,
             rgba(0, 0, 0, 0.04),
@@ -77,19 +75,17 @@ html::-webkit-scrollbar {
     text-shadow: 0 0 5px #c8c8c8;
 }
 
-#crt > pre,
-#terminal pre {
-   
-}
 .typer.active .typed-line:last-child {
     display: inline;
 }
+
 .typer.active.typing::after {
     animation: none;
     opacity: 1;
 }
+
 #crt {
-     font-family: "VT323", monospace;
+    font-family: "VT323", monospace;
     min-width: 80ch;
     height: 100vh;
     font-size: max(1rem, 2.2vmin);
@@ -275,3 +271,118 @@ html::-webkit-scrollbar {
     font-family: "Hack", monospace;
     white-space: pre;
 }
+
+
+p code,
+li code,
+td code {
+    font-family: "Courier New", "Liberation Mono", monospace;
+    font-size: 0.6em;
+    border: transparent;
+    padding: 0.08em 0.3em;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--green-color)
+}
+
+/* Block code */
+div.sourceCode {
+    font-family: "Courier New", "Liberation Mono", monospace;
+    font-size: 0.7em;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 1em 1.1em;
+    overflow-x: auto;
+    line-height: 1.5;
+
+}
+
+pre code,
+pre.sourceCode code {
+    font-size: inherit;
+    font-family: inherit;
+}
+
+/* Pandoc token colors */
+code span.kw {
+    color: #c678dd;
+    font-weight: bold;
+}
+
+/* keyword */
+code span.dt {
+    color: #e5c07b;
+}
+
+/* data type */
+code span.dv {
+    color: #d19a66;
+}
+
+/* decimal value */
+code span.bn {
+    color: #d19a66;
+}
+
+/* base-n number */
+code span.fl {
+    color: #d19a66;
+}
+
+/* float */
+code span.st {
+    color: #98c379;
+}
+
+/* string */
+code span.ch {
+    color: #98c379;
+}
+
+/* char */
+code span.co {
+    color: #7f848e;
+    font-style: italic;
+}
+
+/* comment */
+code span.ot {
+    color: #56b6c2;
+}
+
+/* other */
+code span.fu {
+    color: #61afef;
+}
+
+/* function */
+code span.va {
+    color: #e06c75;
+}
+
+/* variable */
+code span.cf {
+    color: #c678dd;
+    font-weight: bold;
+}
+
+/* control flow */
+code span.op {
+    color: #abb2bf;
+}
+
+/* operator */
+code span.im {
+    color: #c678dd;
+}
+
+/* import */
+code span.bu {
+    color: #56b6c2;
+}
+
+/* built-in */
+code span.er {
+    color: #e06c75;
+}
+
+/* error */

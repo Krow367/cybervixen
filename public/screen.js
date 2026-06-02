@@ -31,6 +31,14 @@ import {
     isWindowMinimized,
 } from "./windows.js";
 
+//I need to be able to skip some animations and other time savers.
+//This should be called any time I need to skip some bullshit like
+//the boot animation or not shuffling the puzzle game 300 times
+globalThis.DEBUG =
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1" ||
+    location.hostname === "::1";
+
 // Re-export window management functions so command modules that currently
 // import from screen.js continue to work without changes.
 export { openWindow, closeWindow, minimizeWindow, setupWindow };
@@ -145,18 +153,15 @@ async function power() {
  */
 export async function boot() {
     clear();
-
-    const Debug =
-        location.hostname === "localhost"  ||
-        location.hostname === "127.0.0.1"  ||
-        location.hostname === "::1";
-
-    if (!Debug) {
+    if (globalThis.DEBUG) {
+        await type("DEBUG MODE IS ACTIVE! IF YOU SEE THIS, INFORM CYBERKITTEN.\nDEBUG MODE MAY HARM YOUR EXPERIENCE AS MANY PUZZLES\nWILL BE MUCH EASIER TO SOLVE THAN INTENDED!", { wait: 0 })
+    }
+    if (!globalThis.DEBUG) {
         await type(`Serenity Industries(TM) CV-2077 terminal interface`, { initialWait: 2000 });
-        await type(`Loading.....`,                                      { initialWait: 500  });
+        await type(`Loading.....`, { initialWait: 500 });
     }
 
-    if (!Debug) {
+    if (!globalThis.DEBUG) {
         await type(`
 
 
@@ -180,10 +185,10 @@ export async function boot() {
         });
 
         await type(`Welcome to FoxOS ver. 1.33.7`, { initialWait: 100 });
-        await type(`"Harmony engineered."`,         { initialWait: 100 });
+        await type(`"Harmony engineered."`, { initialWait: 100 });
+        await type(`Try 'HELP' for commands.`, { initialWait: 100 });
     }
 
-    await type(`Try 'HELP' for commands.`, { initialWait: 100 });
     focusTerminalInput();
     return main();
 }
@@ -297,7 +302,7 @@ export async function showTemplateScreen(id) {
 export function el(
     type,
     container = document.querySelector(".terminal"),
-    cls       = "",
+    cls = "",
     attrs
 ) {
     const element = document.createElement(type);

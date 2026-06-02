@@ -1,0 +1,32 @@
+p code,
+li code,
+td code {
+  font-family: "Courier New", "Liberation Mono", monospace;
+  font-size: 0.95em;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.08em 0.3em;
+  border-radius: 3px;
+}
+
+/* Block code */
+pre,
+pre.sourceCode {
+  font-family: "Courier New", "Liberation Mono", monospace;
+  font-size: 0.95em;
+  line-height: 1.5;
+  overflow-x: auto;
+  padding: 1em 1.1em;
+  margin: 1.2em 0;
+  border-radius: 6px;
+}
+
+/* Make pandoc wrappers behave nicely */
+div.sourceCode {
+  margin: 1.2em 0;
+}
+
+pre code,
+pre.sourceCode code {
+  font-size: inherit;
+  font-family: inherit;
+}

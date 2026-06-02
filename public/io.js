@@ -529,6 +529,7 @@ export async function parse(rawInput) {
         return;
     }
 
+
     let module;
     try {
         module = await import(`./commands/${command}/index.mjs`);

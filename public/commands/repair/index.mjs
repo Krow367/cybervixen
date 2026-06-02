@@ -9,11 +9,16 @@ export default async function () {
     const paddingLeft = parseFloat(style.paddingLeft);
     const paddingTop = parseFloat(style.paddingTop);
     const scrollTop = terminalEl.scrollTop;
-
-    openWindow("repair");
-    setTimeout(() => {
-        init(rect.left + paddingLeft, rect.top);
-    }, 50);
+    if (!localStorage.getItem("helpRepaired")) {
+        openWindow("repair");
+    }
+    else {
+        await type("You've already repaired the help file! You're welcome to play the game again, but nothing new will happen.")
+        openWindow("repair");
+    }
+    await new Promise(resolve => {
+        setTimeout(() => init(rect.left + paddingLeft, rect.top, resolve), 50);
+    });
 }
 
 
@@ -26,13 +31,22 @@ var board = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 var emptyIndex = 3;
 const solved = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 let tileContents = [];
+const terminalInput = document.getElementById("input");
 
-export function init(offsetLeft = 0, offsetTop = 0) {
+let gameController = null;
+
+export function init(offsetLeft = 0, offsetTop = 0, onDone = () => { }) {
+
+    // Kill any previous game's listeners in one shot
+    gameController?.abort();
+    gameController = new AbortController();
+    const { signal } = gameController;
+
     tileContents = sliceArt(); // now the <pre> exists in the DOM
     shuffle();
     renderBoard();
-    document.addEventListener("keydown", handleKeyDown);
-    //checkWin();
+    document.addEventListener("keydown", (e) => handleKeyDown(e, onDone), {signal });
+    terminalInput.removeEventListener("keydown", onkeydown);
     debugState();
     const puzzleGrid = document.getElementById("puzzle-grid");
     puzzleGrid.style.position = "absolute";
@@ -75,7 +89,8 @@ function sliceArt() {
 
 function shuffle() {
     let lastSwap = -1;
-    const shuffleMax = 300;
+    const shuffleMax = globalThis.DEBUG ? 2 : 300;
+    console.log(globalThis.DEBUG)
     let currentShuffle = 0;
 
     while (currentShuffle < shuffleMax) {
@@ -128,7 +143,6 @@ function renderBoard() {
             div.textContent = tileContents[board[i]];
             div.addEventListener("click", () => handleClick(i));
         }
-
         puzzleGrid.appendChild(div);
     }
 }
@@ -153,7 +167,7 @@ function debugState() {
 }
 
 
-function handleKeyDown(e) {
+async function handleKeyDown(e, onDone) {
     const leftTile = emptyIndex - 1;
     const rightTile = emptyIndex + 1;
     const aboveTile = emptyIndex - COLS;
@@ -186,6 +200,12 @@ function handleKeyDown(e) {
         }
 
     }
+    else if (e.key === "Escape") {
+        gameController?.abort();
+        closeWindow("repair");
+        await type("File repair aborted. All progress has been lost. Run Repair to try again.", { initialWait: 0, wait: 0 });
+        onDone();
+    }
     else {
         return;
     }
@@ -197,32 +217,39 @@ function handleKeyDown(e) {
     board[chosen] = 3;
     emptyIndex = chosen;
     renderBoard();
-    checkWin();
+    checkWin(onDone);
 }
 
-async function checkWin() {
+async function checkWin(onDone) {
     const isWon = board.every((val, i) => val === solved[i]);
     const puzzleGrid = document.getElementById("puzzle-grid");
     const artText = document.getElementById("art-source").textContent.trim();
     if (isWon) {
-        clear();
         const emptyTile = document.querySelector(".puzzle-tile.empty");
         emptyTile.textContent = tileContents[3];
         emptyTile.classList.remove("empty");
         puzzleGrid.classList.add("puzzle-solved");
         puzzleGrid.style.borderColor = "transparent";
-        document.removeEventListener("keydown", handleKeyDown);
+        gameController?.abort();
         localStorage.setItem("helpRepaired", "true");
         await new Promise(r => setTimeout(r, 2000));
         closeWindow("repair");
-        await type([
-            { kind: "type", text: "File sucessfully repaired." },
-            { kind: "type", text: "System Rebooting in.....3" },
-            { kind: "replace", line: -1, index: 24, char: "3", wait: 1000 },
-            { kind: "replace", line: -1, index: 24, char: "2", wait: 1000 },
-            { kind: "replace", line: -1, index: 24, char: "1", wait: 1000 },
-            { kind: "replace", line: -1, index: 24, char: "0", wait: 1000 },
-        ]);
-        boot();
+        terminalInput.addEventListener("keydown", onkeydown);
+        if (!localStorage.getItem("helpRepaired")) {
+            clear();
+            await type([
+                { kind: "type", text: "File sucessfully repaired." },
+                { kind: "type", text: "System Rebooting in.....3" },
+                { kind: "replace", line: -1, index: 24, char: "3", wait: 1000 },
+                { kind: "replace", line: -1, index: 24, char: "2", wait: 1000 },
+                { kind: "replace", line: -1, index: 24, char: "1", wait: 1000 },
+                { kind: "replace", line: -1, index: 24, char: "0", wait: 1000 },
+            ]);
+            boot();
+        }
+        else {
+            await type("Nice! You did it again! Bet you can't do it quicker.", { initialWait: 0 })
+            onDone();
+        }
     }
 }
