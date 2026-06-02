@@ -6,7 +6,8 @@ export default async function () {
 	}
 	else {
 		const artText = document.getElementById("art-source").textContent.trim();
-		await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, hard reset, balls",);
+		await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, balls",);
+		await type("hard reset")
 		await type(" ", { wait: 0, initialWait: 0, finalWait: 0 });
 		const typers = document.querySelectorAll(".typer");
 		const lastTyper = typers[typers.length - 1];
