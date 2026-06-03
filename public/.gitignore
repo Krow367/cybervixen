@@ -1,2 +1,5 @@
-public/*.kate-swp
-public/*.swp
+# Editor temp files
+*.swp
+*.kate-swp
+*~
+.*.swp
