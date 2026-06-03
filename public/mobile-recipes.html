@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipes — CyberVixen</title>
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+    <style>
+        :root {
+            --green: #39ff14;
+            --bg: #0a0a0a;
+            --border: #2a2a2a;
+            --muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--green);
+            font-family: "Courier New", Courier, monospace;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header a {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        header a:hover { color: var(--green); }
+
+        header h1 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            flex: 1;
+        }
+
+        /* ── Sidebar + content layout ── */
+        .layout {
+            display: flex;
+            height: calc(100vh - 49px);
+        }
+
+        nav {
+            width: 200px;
+            min-width: 200px;
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        nav a {
+            display: block;
+            padding: 0.4rem 1rem;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-left: 2px solid transparent;
+        }
+
+        nav a:hover,
+        nav a.active {
+            color: var(--green);
+            border-left-color: var(--green);
+        }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        /* ── Recipe content ── */
+        .intro p {
+            font-size: 0.8rem;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        #recipe-content h1 {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        #recipe-content h2 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 1.25rem 0 0.5rem;
+            color: var(--muted);
+        }
+
+        #recipe-content p,
+        #recipe-content li {
+            font-size: 0.8rem;
+            line-height: 1.7;
+            color: #ccc;
+        }
+
+        #recipe-content ul,
+        #recipe-content ol {
+            padding-left: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        #recipe-content a {
+            color: var(--green);
+        }
+
+        #recipe-content section {
+            max-width: 600px;
+        }
+
+        .placeholder {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/">← Back</a>
+        <h1>cookbook.exe</h1>
+    </header>
+
+    <div class="layout">
+        <nav id="recipe-nav">
+            <!-- auto-populated -->
+        </nav>
+        <main>
+            <div id="recipe-content">
+                <div class="intro">
+                    <p>These are some of my favorite recipes. Select one from the sidebar.</p>
+                    <p>None of these have the pointlessly long novels before the recipe. Just a quick few notes and then the good stuff.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        const nav     = document.getElementById("recipe-nav");
+        const content = document.getElementById("recipe-content");
+
+        // Load the manifest and build sidebar links
+        const files = await fetch("/recipes/index.json").then(r => r.json());
+
+        for (const name of files) {
+            const label = name
+                .replace(".html", "")
+                .replaceAll("-", " ")
+                .replace(/\b\w/g, c => c.toUpperCase());
+
+            const a = document.createElement("a");
+            a.href    = "#";
+            a.textContent = label;
+            a.dataset.recipe = `/recipes/${name}`;
+            nav.appendChild(a);
+
+            a.addEventListener("click", async (e) => {
+                e.preventDefault();
+                nav.querySelectorAll("a").forEach(l => l.classList.remove("active"));
+                a.classList.add("active");
+                content.innerHTML = await fetch(a.dataset.recipe).then(r => r.text());
+                content.scrollTop = 0;
+            });
+        }
+    </script>
+</body>
+</html>

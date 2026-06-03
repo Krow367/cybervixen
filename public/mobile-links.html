@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Links — CyberVixen</title>
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+    <style>
+        :root {
+            --green: #39ff14;
+            --bg: #0a0a0a;
+            --border: #2a2a2a;
+            --muted: #888;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--green);
+            font-family: "Courier New", Courier, monospace;
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header a.back {
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        header a.back:hover { color: var(--green); }
+
+        header h1 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        main {
+            padding: 1.5rem;
+            max-width: 600px;
+        }
+
+        /* ── My button + copybox ── */
+        .my-button {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .my-button p {
+            font-size: 0.75rem;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .my-button img {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .my-button textarea {
+            width: 100%;
+            background: #111;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.7rem;
+            padding: 0.4rem;
+            resize: none;
+        }
+
+        /* ── Button grid ── */
+        .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--muted);
+            margin-bottom: 0.75rem;
+        }
+
+        .button-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .button-grid a {
+            display: inline-block;
+            line-height: 0;
+        }
+
+        .button-grid img {
+            width: 88px;
+            height: 31px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a class="back" href="/">← Back</a>
+        <h1>web.exe</h1>
+    </header>
+
+    <main>
+        <div class="my-button">
+            <img src="./img/CyberButton.gif" width="88" height="31" alt="CyberVixen">
+            <p>Copy the code below to link back to my site!<br>
+            Drop me a line if you do — I'd love to check out your site!</p>
+            <textarea rows="3" readonly><a href="https://cybervixen.neocities.org/"><img src="https://cybervixen.neocities.org/img/CyberButton.gif" title="FoxOS ver. 1.33.7" alt="Harmony Engineered" width="88" height="31"></a></textarea>
+        </div>
+
+        <p class="section-label">Friends &amp; Neighbors</p>
+        <div class="button-grid">
+            <a href="https://onio.neocities.org" title="Visit Onio Café">
+                <img src="https://onio.neocities.org/thebutton.gif" alt="Come Chat With Us!">
+            </a>
+            <a href="https://kuroi.com.br/" title="KuroiOS">
+                <img src="./img/kuroi.png" alt="Kuroi">
+            </a>
+            <a href="https://unicodeangel.neocities.org" target="_blank">
+                <img src="https://unicodeangel.neocities.org/imgs/UnicodeAngelButton3.gif" alt="Unicode Angel">
+            </a>
+        </div>
+
+        <p class="section-label">Neighboring Network Nodes</p>
+        <div class="button-grid">
+            <a href="https://www.pseustuff.com">
+                <img src="https://pseustuff.com/gallery/PseuStuff.button.1.gif?ts=1773838952" alt="PseuStuff">
+            </a>
+        </div>
+    </main>
+</body>
+</html>
