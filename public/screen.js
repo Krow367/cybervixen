@@ -171,26 +171,28 @@ async function init() {
     ]);
 
     createWindow("blog", {
-        title:       "BLOG.EXE - RAMBLINGS OF A MAD FOX",
+        title: "BLOG.EXE - RAMBLINGS OF A MAD FOX",
         contentHTML: blogHTML,
-        onOpen:      loadBlogPosts,
+        onOpen: loadBlogPosts,
     });
 
     createWindow("recipes", {
-        title:       "cookbook.exe - cyber industries(TM) is not responsible for house fires",
+        title: "cookbook.exe - cyber industries(TM) is not responsible for house fires",
         contentHTML: recipesHTML,
-        onOpen:      loadRecipeList,
+        onOpen: loadRecipeList,
     });
 
     createWindow("about", {
-        title:       "neko.exe",
+        title: "neko.exe",
         contentHTML: aboutHTML,
     });
 
     createWindow("links", {
-        title:       "web.exe - Capturing your data, one strand at a time",
+        title: "web.exe - Capturing your data, one strand at a time",
         contentHTML: linksHTML,
     });
+    const artHTML = await fetch("./commands/repair/repair.html").then(r => r.text());
+    document.body.insertAdjacentHTML("beforeend", artHTML);
 
     setupGlobalFocusBehavior();
     on();
