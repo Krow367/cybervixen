@@ -6,7 +6,7 @@ export default async function () {
 	}
 	else {
 		await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, balls",);
-		await type("hard reset")
+		await type("hard reset\n theme [amber/green]")
 		await type(" ", { wait: 0, initialWait: 0, finalWait: 0 });
 		await type("Thank you for playing! Unfortunately this is the end of the line for now.\ndon't worry, there'll be more in the near future!\nCheck back soon and enjoy exploring the rest of the site!\nUnless you run 'Hard Reset' all new commands and functions will appear here as I add them!")
 	}

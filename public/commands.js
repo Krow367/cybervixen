@@ -13,20 +13,22 @@
  */
 
 export const commands = new Map([
-    ["help",        { module: "./commands/help/index.mjs" }],
-    ["clear",       { module: "./commands/clear/index.mjs" }],
-    ["repair",      { module: "./commands/repair/index.mjs" }],
-    ["blog",        { module: "./commands/blog/index.mjs" }],
-    ["recipes",     { module: "./commands/recipes/index.mjs" }],
-    ["about",       { module: "./commands/about/index.mjs" }],
-    ["links",       { module: "./commands/links/index.mjs" }],
-    ["balls",       { module: "./commands/balls/index.mjs" }],
-    ["nethack",     { module: "./commands/nethack/index.mjs" }],
-    ["scan",        { module: "./commands/scan/index.mjs" }],
-    ["hard reset",  { module: "./commands/hard reset/index.mjs" }],
-    ["atabook",     { module: "./commands/atabook/index.mjs" }],
-    ["follow",      { module: "./commands/follow/index.mjs"}],
+    ["help", { module: "./commands/help/index.mjs" }],
+    ["clear", { module: "./commands/clear/index.mjs" }],
+    ["repair", { module: "./commands/repair/index.mjs" }],
+    ["blog", { module: "./commands/blog/index.mjs" }],
+    ["recipes", { module: "./commands/recipes/index.mjs" }],
+    ["about", { module: "./commands/about/index.mjs" }],
+    ["links", { module: "./commands/links/index.mjs" }],
+    ["balls", { module: "./commands/balls/index.mjs" }],
+    ["nethack", { module: "./commands/nethack/index.mjs" }],
+    ["scan", { module: "./commands/scan/index.mjs" }],
+    ["hard reset", { module: "./commands/hard reset/index.mjs" }],
+    ["atabook", { module: "./commands/atabook/index.mjs" }],
+    ["follow", { module: "./commands/follow/index.mjs" }],
+    ["theme green", { module: "./commands/theme/index.mjs", theme: "green" }],
+    ["theme amber", { module: "./commands/theme/index.mjs", theme: "amber" }],
 
     // Aliases
-    ["guestbook",   { alias: "atabook" }],
+    ["guestbook", { alias: "atabook" }],
 ]);

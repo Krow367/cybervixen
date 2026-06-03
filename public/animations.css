@@ -253,21 +253,21 @@
 		filter: brightness(1);
 		opacity: 1;
 		/* Match #crt's actual resting background exactly so there is no snap at the end */
-		background: var(--crt-glow), #05321e;
+		background: var(--crt-phosphor), var(--phosphor-bg);
 	}
 }
 
 @keyframes glow {
 	0% {
-		box-shadow: 0 0 -10px var(--color);
+		box-shadow: 0 0 -10px var(--phosphor);
 	}
 
 	50% {
-		box-shadow: 0 0 10px var(--color);
+		box-shadow: 0 0 10px var(--phosphor);
 	}
 
 	100% {
-		box-shadow: 0 0 -10px var(--color);
+		box-shadow: 0 0 -10px var(--phosphor);
 	}
 }
 
@@ -298,7 +298,7 @@
 /* Flash the typed letter, fade opaque to transparent */
 @keyframes type {
 	from {
-		background-color: var(--color);
+		background-color: var(--phosphor);
 	}
 
 	to {

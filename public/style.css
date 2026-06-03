@@ -15,23 +15,38 @@
 }
 
 :root {
-    --green-color: #5bf870;
-    --green-bg: #05321e;
+    --phosphor: #5bf870;
+    --phosphor-rgb: 91, 248, 112;
+    --window-tint: rgba(0, 0, 0, 0.25);
+    --window-tint-strong: rgba(0, 0, 0, 0.16);
+    --phosphor-bg: rgb(5, 50, 30);
+    --boot:  #020902;
     --off: #050505;
     --dark: #111;
     --term: "> ";
 
-    --crt-glow:
+    --crt-phosphor:
         radial-gradient(ellipse at center,
-            rgb(9, 85, 51) 0%,
-            rgb(6, 63, 38) 15%,
-            rgba(1, 12, 7, 0.03) 100%),
-        linear-gradient(to bottom,
-            rgba(0, 0, 0, 0.04),
-            rgba(0, 0, 0, 0.12)),
+            #052714 0%,
+            #052714 25%,
+            rgba(0, 0, 0, 0.3) 100%);
+}
+
+:root[data-theme="amber"]{
+    --phosphor: rgb(255, 229, 98);
+    --phosphor-rgb: 255, 229, 98;
+    --window-tint: rgba(0, 0, 0, 0.25);
+    --window-tint-strong: rgba(0, 0, 0, 0.16);
+    --phosphor-bg: #070301;
+    --boot: #020100;
+    --off: #050505;
+    --dark: #111;
+    --term: "> ";
+
+    --crt-phosphor:
         radial-gradient(ellipse at center,
-            rgba(140, 255, 170, 0.07) 0%,
-            rgba(0, 0, 0, 0) 68%);
+            rgba(12, 10, 1, 0.3) 50%,
+            rgba(0, 0, 0, 0.3) 100%);
 }
 
 body {
@@ -71,7 +86,7 @@ html::-webkit-scrollbar {
 
 .terminal,
 .fullscreen {
-    color: var(--green-color);
+    color: var(--phosphor);
     text-shadow: 0 0 5px #c8c8c8;
 }
 
@@ -95,8 +110,8 @@ html::-webkit-scrollbar {
     z-index: 0;
     isolation: isolate;
     background:
-        var(--crt-glow),
-        #020902;
+        var(--crt-phosphor),
+        var(--boot);
 }
 
 #crt-bg {
@@ -170,22 +185,22 @@ html::-webkit-scrollbar {
 @keyframes textShadow {
     0% {
         text-shadow:
-            0.4389924193300864px 0 1px rgba(0, 30, 255, 0.5),
-            -0.4389924193300864px 0 1px rgba(255, 0, 80, 0.3),
+            0.438px 0 1px rgba(0, 30, 255, 0.5),
+            -0.438px 0 1px rgba(255, 0, 80, 0.3),
             0 0 3px;
     }
 
     5% {
         text-shadow:
-            2.7928974010788217px 0 1px rgba(0, 30, 255, 0.5),
-            -2.7928974010788217px 0 1px rgba(255, 0, 80, 0.3),
+            2.792px 0 1px rgba(0, 30, 255, 0.5),
+            -2.792px 0 1px rgba(255, 0, 80, 0.3),
             0 0 3px;
     }
 
     100% {
         text-shadow:
-            0.4389924193300864px 0 1px rgba(0, 30, 255, 0.5),
-            -0.4389924193300864px 0 1px rgba(255, 0, 80, 0.3),
+            0.438px 0 1px rgba(0, 30, 255, 0.5),
+            -0.438px 0 1px rgba(255, 0, 80, 0.3),
             0 0 3px;
     }
 }
@@ -281,7 +296,7 @@ td code {
     border: transparent;
     padding: 0.08em 0.3em;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--green-color)
+    border: 1px solid var(--phosphor)
 }
 
 /* Block code */

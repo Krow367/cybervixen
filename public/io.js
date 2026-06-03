@@ -381,7 +381,7 @@ export async function parse(rawInput) {
     if (!cmd) return;
 
     // Validate: only word characters, spaces, hyphens
-    if (!/^[\w\s-]+$/.test(cmd)) throw new Error("Invalid command");
+    if (!/^[\w\s-]+$/.test(cmd)) throw new Error("Invalid command.");
 
     // Look up in registry, following one level of alias
     let entry = commands.get(cmd);
@@ -417,7 +417,7 @@ export async function parse(rawInput) {
 
     await type(module.output);
     await pause();
-    await module.default?.();
+    await module.default?.(entry);
 }
 
 export function cleanInput(input) {
