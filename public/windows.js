@@ -431,6 +431,9 @@ export function openWindow(idOrRoot, options = {}) {
         requestAnimationFrame(() => syncWindowBackground(root));
     });
 
+    // Fire the onOpen lifecycle hook if one was registered via createWindow
+    root._onOpen?.();
+
     return root;
 }
 
@@ -449,6 +452,9 @@ export function closeWindow(idOrRoot) {
 
     root.classList.add("hidden");
     root.classList.remove("active-window");
+
+    // Fire the onClose lifecycle hook if one was registered via createWindow
+    root._onClose?.();
 
     if (activeWindow === root) {
         clearActiveWindow(root);
@@ -959,4 +965,69 @@ export function setupFakeScrollbar(root) {
     setTimeout(paintSoon, 0);
     setTimeout(paintSoon, 30);
     setTimeout(paintSoon, 120);
+}
+
+// ─── createWindow ─────────────────────────────────────────────────────────────
+
+/**
+ * Builds a complete window element programmatically and appends it to <body>.
+ * Replaces the need to duplicate window chrome HTML in every command file.
+ *
+ * If a window with this id already exists in the DOM it is returned as-is,
+ * so calling createWindow multiple times for the same id is safe.
+ *
+ * @param {string} id
+ * @param {Object} [options]
+ * @param {string}   [options.title=""]         Titlebar label text.
+ * @param {string}   [options.contentHTML=""]   Inner HTML to place inside .body.
+ * @param {string}   [options.className=""]     Extra CSS classes on the root .window div.
+ * @param {string}   [options.width]            Inline width (e.g. "640px").
+ * @param {string}   [options.height]           Inline height (e.g. "480px").
+ * @param {Function} [options.onOpen]           Called each time openWindow() is called on this window.
+ * @param {Function} [options.onClose]          Called each time closeWindow() is called on this window.
+ * @returns {Element}  The window root element.
+ */
+export function createWindow(id, options = {}) {
+    // Return existing window if already created
+    const existing = document.getElementById(id);
+    if (existing) return existing;
+
+    const {
+        title       = "",
+        contentHTML = "",
+        className   = "",
+        width,
+        height,
+        onOpen,
+        onClose,
+    } = options;
+
+    // Build the chrome
+    const root = document.createElement("div");
+    root.id    = id;
+    root.className = ["window", "hidden", className].filter(Boolean).join(" ");
+    if (width)  root.style.width  = width;
+    if (height) root.style.height = height;
+
+    root.innerHTML = `
+        <div class="window-surface">
+            <div class="titlebar">
+                <span>${title}</span>
+                <div class="buttons">
+                    <button class="minimize">_</button>
+                    <button class="close">X</button>
+                </div>
+            </div>
+            <div class="body">${contentHTML}</div>
+            <div class="resize-handle" data-resize></div>
+        </div>`;
+
+    document.body.appendChild(root);
+    setupWindow(root);
+
+    // Store lifecycle callbacks on the element so openWindow/closeWindow can call them
+    if (onOpen)  root._onOpen  = onOpen;
+    if (onClose) root._onClose = onClose;
+
+    return root;
 }

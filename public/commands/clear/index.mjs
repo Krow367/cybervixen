@@ -20,13 +20,13 @@ async function command() {
 ⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`, {
         initialWait: 0,
         wait: 5,
-        fox: true,
+        hideCursor: true,
     });
     await type('"Harmony engineered."',
         {
             initialWait: 0,
             wait: 0,
-            fox: true,
+            hideCursor: true,
         });
 };
 clear();

@@ -1,25 +1,8 @@
 {
   "name": "cybervixen",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node build.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/krow367/cybervixen.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/krow367/cybervixen/issues"
-  },
-  "homepage": "https://github.com/krow367/cybervixen#readme",
-  "devDependencies": {
-    "esbuild": "^0.28.0"
+    "build": "node scripts/build.mjs"
   }
-  
 }
