@@ -25,6 +25,7 @@ export const commands = new Map([
     ["scan",        { module: "./commands/scan/index.mjs" }],
     ["hard reset",  { module: "./commands/hard reset/index.mjs" }],
     ["atabook",     { module: "./commands/atabook/index.mjs" }],
+    ["follow",      { module: "./commands/follow/index.mjs"}],
 
     // Aliases
     ["guestbook",   { alias: "atabook" }],

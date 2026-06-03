@@ -1,0 +1,24 @@
+git status                    # what's changed / what's staged
+git log --oneline             # compact commit history
+git diff                      # see unstaged changes
+
+git add .                     # stage everything
+git add <file>                # stage one file
+git commit -m "message"       # commit staged changes
+
+git branch                    # list branches, shows current
+git checkout dev              # switch to dev branch
+git checkout -b new-feature   # create and switch to new branch
+git merge dev                 # merge dev into current branch
+
+git push origin main          # push main to GitHub (triggers deploy)
+git push origin dev           # push dev (no deploy)
+git pull                      # pull latest from GitHub
+
+git restore <file>            # discard unstaged changes to a file
+git restore .                 # discard ALL unstaged changes
+git reset HEAD~1              # undo last commit, keep the changes
+git revert <commit-hash>      # make a new commit that undoes an old one
+
+git stash                     # stash uncommitted changes
+git stash pop                 # bring them back
