@@ -96,8 +96,6 @@ function mobileDetected() {
         <div id="mobile-dialog">
             <h2>// WARNING //</h2>
             <p>Mobile device detected. This site is designed for desktop.<br>
-            <br>Some features may be buggy, not function properly, or just cause issues on mobile devices.<br>
-            If you're just here for my recipes, check out the links below to go to a mobile friendly version!
             Where would you like to go?</p>
             <button class="mobile-btn" id="btn-recipes">Recipes</button>
             <button class="mobile-btn" id="btn-links">Links</button>
