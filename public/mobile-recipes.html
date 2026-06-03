@@ -11,6 +11,7 @@
             --bg: #0a0a0a;
             --border: #2a2a2a;
             --muted: #888;
+            --drawer-width: 240px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,17 +21,22 @@
             color: var(--green);
             font-family: "Courier New", Courier, monospace;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         header {
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
+            position: sticky;
+            top: 0;
+            background: var(--bg);
+            z-index: 10;
         }
 
-        header a {
+        header a.back {
             color: var(--muted);
             text-decoration: none;
             font-size: 0.75rem;
@@ -38,32 +44,68 @@
             letter-spacing: 0.1em;
         }
 
-        header a:hover { color: var(--green); }
-
         header h1 {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.15em;
             flex: 1;
         }
 
-        /* ── Sidebar + content layout ── */
-        .layout {
-            display: flex;
-            height: calc(100vh - 49px);
+        /* ── Drawer toggle button ── */
+        #drawer-toggle {
+            background: transparent;
+            border: 1px solid var(--green);
+            color: var(--green);
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
         }
 
-        nav {
-            width: 200px;
-            min-width: 200px;
-            border-right: 1px solid var(--border);
+        /* ── Drawer overlay (backdrop) ── */
+        #drawer-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 20;
+        }
+
+        #drawer-backdrop.open { display: block; }
+
+        /* ── Drawer itself ── */
+        #drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--drawer-width);
+            height: 100vh;
+            background: #0d0d0d;
+            border-right: 1px solid var(--green);
+            z-index: 30;
+            transform: translateX(-100%);
+            transition: transform 0.2s ease;
             overflow-y: auto;
             padding: 1rem 0;
         }
 
-        nav a {
+        #drawer.open { transform: translateX(0); }
+
+        #drawer h2 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--muted);
+            padding: 0 1rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+
+        #drawer a {
             display: block;
-            padding: 0.4rem 1rem;
+            padding: 0.5rem 1rem;
             color: var(--muted);
             text-decoration: none;
             font-size: 0.75rem;
@@ -72,19 +114,18 @@
             border-left: 2px solid transparent;
         }
 
-        nav a:hover,
-        nav a.active {
+        #drawer a:active,
+        #drawer a.active {
             color: var(--green);
             border-left-color: var(--green);
         }
 
+        /* ── Main content ── */
         main {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
+            padding: 1.25rem;
+            max-width: 600px;
         }
 
-        /* ── Recipe content ── */
         .intro p {
             font-size: 0.8rem;
             color: var(--muted);
@@ -93,7 +134,7 @@
         }
 
         #recipe-content h1 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             margin-bottom: 1rem;
@@ -102,7 +143,7 @@
         }
 
         #recipe-content h2 {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             margin: 1.25rem 0 0.5rem;
@@ -122,46 +163,48 @@
             margin-bottom: 0.75rem;
         }
 
-        #recipe-content a {
-            color: var(--green);
-        }
-
-        #recipe-content section {
-            max-width: 600px;
-        }
-
-        .placeholder {
-            color: var(--muted);
-            font-size: 0.8rem;
-            margin-top: 2rem;
-        }
+        #recipe-content a { color: var(--green); }
     </style>
 </head>
 <body>
-    <header>
-        <a href="/">← Back</a>
-        <h1>cookbook.exe</h1>
-    </header>
+    <!-- Drawer backdrop -->
+    <div id="drawer-backdrop"></div>
 
-    <div class="layout">
-        <nav id="recipe-nav">
-            <!-- auto-populated -->
-        </nav>
-        <main>
-            <div id="recipe-content">
-                <div class="intro">
-                    <p>These are some of my favorite recipes. Select one from the sidebar.</p>
-                    <p>None of these have the pointlessly long novels before the recipe. Just a quick few notes and then the good stuff.</p>
-                </div>
-            </div>
-        </main>
+    <!-- Slide-out drawer -->
+    <div id="drawer">
+        <h2>Recipes</h2>
+        <div id="recipe-nav"><!-- auto-populated --></div>
     </div>
 
-    <script type="module">
-        const nav     = document.getElementById("recipe-nav");
-        const content = document.getElementById("recipe-content");
+    <header>
+        <a class="back" href="/">← Back</a>
+        <h1>cookbook.exe</h1>
+        <button id="drawer-toggle">≡ Recipes</button>
+    </header>
 
-        // Load the manifest and build sidebar links
+    <main>
+        <div id="recipe-content">
+            <div class="intro">
+                <p>These are some of my favorite recipes.<br>Tap <strong>≡ Recipes</strong> to pick one.</p>
+                <p>None of these have the pointlessly long novels before the recipe. Just a quick few notes and then the good stuff.</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        const nav      = document.getElementById("recipe-nav");
+        const content  = document.getElementById("recipe-content");
+        const drawer   = document.getElementById("drawer");
+        const backdrop = document.getElementById("drawer-backdrop");
+        const toggle   = document.getElementById("drawer-toggle");
+
+        function openDrawer()  { drawer.classList.add("open"); backdrop.classList.add("open"); }
+        function closeDrawer() { drawer.classList.remove("open"); backdrop.classList.remove("open"); }
+
+        toggle.addEventListener("click", openDrawer);
+        backdrop.addEventListener("click", closeDrawer);
+
+        // Load the manifest and build drawer links
         const files = await fetch("/recipes/index.json").then(r => r.json());
 
         for (const name of files) {
@@ -171,7 +214,7 @@
                 .replace(/\b\w/g, c => c.toUpperCase());
 
             const a = document.createElement("a");
-            a.href    = "#";
+            a.href = "#";
             a.textContent = label;
             a.dataset.recipe = `/recipes/${name}`;
             nav.appendChild(a);
@@ -181,7 +224,8 @@
                 nav.querySelectorAll("a").forEach(l => l.classList.remove("active"));
                 a.classList.add("active");
                 content.innerHTML = await fetch(a.dataset.recipe).then(r => r.text());
-                content.scrollTop = 0;
+                window.scrollTo(0, 0);
+                closeDrawer();
             });
         }
     </script>
