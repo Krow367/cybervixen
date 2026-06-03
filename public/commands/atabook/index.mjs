@@ -7,4 +7,6 @@ let output = quotes[selection];
 
 export { output };
 
-
+export default function () {
+  window.open("https://cybervixen.atabook.org", "_blank");
+}
