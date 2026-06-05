@@ -20,7 +20,7 @@
     --window-tint: rgba(0, 0, 0, 0.25);
     --window-tint-strong: rgba(0, 0, 0, 0.16);
     --phosphor-bg: rgb(5, 50, 30);
-    --boot:  #020902;
+    --boot: #020902;
     --off: #050505;
     --dark: #111;
     --term: "> ";
@@ -32,7 +32,7 @@
             rgba(0, 0, 0, 0.3) 100%);
 }
 
-:root[data-theme="amber"]{
+:root[data-theme="amber"] {
     --phosphor: rgb(255, 229, 98);
     --phosphor-rgb: 255, 229, 98;
     --window-tint: rgba(0, 0, 0, 0.25);
@@ -47,6 +47,21 @@
         radial-gradient(ellipse at center,
             rgba(12, 10, 1, 0.3) 50%,
             rgba(0, 0, 0, 0.3) 100%);
+}
+
+#alert-frame {
+    color: var(--phosphor);
+    text-shadow: 0 0 5px #c8c8c8;
+    animation: flicker 2s infinite;
+    position: fixed;
+    text-align: center;
+    background: var(--phosphor-bg);
+    border: 2px solid var(--phosphor);
+    padding: 10px 30px;
+    left: 50%;
+    top: 40%;
+    transform: translateX(-50%);
+    z-index: 9999;
 }
 
 body {
@@ -77,7 +92,7 @@ html::-webkit-scrollbar {
     overflow-x: hidden;
     word-break: break-word;
     text-transform: uppercase;
-    animation: textShadow 4s infinite;
+    animation: textShadow 3.2s infinite;
 }
 
 .terminal-underline {
@@ -145,28 +160,14 @@ html::-webkit-scrollbar {
     inset: 0;
     background: linear-gradient(to bottom,
             rgba(18, 16, 16, 0) 50%,
-            rgba(0, 0, 0, 0.25) 50%);
-    background-size: 100% 8px;
+            rgba(0, 0, 0, 0.20) 50%);
+    background-size: 100% 4px;
     z-index: 9999;
     pointer-events: none;
 }
 
 #monitor.turn-off #crt:after {
     animation: powerOn 0.4s ease-in-out;
-}
-
-#monitor:not(.on) #crt:before {
-    content: " ";
-    display: block;
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom,
-            rgba(18, 16, 16, 0.1) 50%,
-            rgba(0, 0, 0, 0.25) 50%);
-    background-size: 100% 8px;
-    z-index: 2;
-    pointer-events: none;
-    animation: fadeIn 2s;
 }
 
 #crt:after {
@@ -180,29 +181,6 @@ html::-webkit-scrollbar {
     height: 100%;
     pointer-events: none;
     z-index: 3;
-}
-
-@keyframes textShadow {
-    0% {
-        text-shadow:
-            0.438px 0 1px rgba(0, 30, 255, 0.5),
-            -0.438px 0 1px rgba(255, 0, 80, 0.3),
-            0 0 3px;
-    }
-
-    5% {
-        text-shadow:
-            2.792px 0 1px rgba(0, 30, 255, 0.5),
-            -2.792px 0 1px rgba(255, 0, 80, 0.3),
-            0 0 3px;
-    }
-
-    100% {
-        text-shadow:
-            0.438px 0 1px rgba(0, 30, 255, 0.5),
-            -0.438px 0 1px rgba(255, 0, 80, 0.3),
-            0 0 3px;
-    }
 }
 
 .scanline {

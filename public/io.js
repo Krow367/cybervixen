@@ -35,17 +35,17 @@ function getHistory() {
 }
 
 function addToHistory(cmd) {
-    prev         = [cmd, ...prev];
+    prev = [cmd, ...prev];
     historyIndex = -1;
-    tmp          = "";
+    tmp = "";
     try {
         localStorage.setItem("commandHistory", JSON.stringify(prev));
     } catch { /* storage quota — silently ignore */ }
 }
 
-let prev         = getHistory();
+let prev = getHistory();
 let historyIndex = -1;
-let tmp          = "";
+let tmp = "";
 
 // ─── Typed-block tracking ─────────────────────────────────────────────────────
 
@@ -91,7 +91,7 @@ function createTypedBlock(typer) {
 }
 
 function createTypedLine(block) {
-    const line      = document.createElement("div");
+    const line = document.createElement("div");
     line.classList.add("typed-line");
     const lineState = { el: line, chars: [] };
     block.lines.push(lineState);
@@ -128,7 +128,7 @@ function appendCharToLine(lineState, char) {
  */
 function replaceCharInLine(lineState, index, char) {
     if (!lineState) return null;
-    const i      = index < 0 ? lineState.chars.length + index : index;
+    const i = index < 0 ? lineState.chars.length + index : index;
     const target = lineState.chars[i];
     if (!target) return null;
     const next = getChar(char);
@@ -155,7 +155,7 @@ async function typeStringIntoBlock(text, block, options, container) {
             scroll(container);
             const newlineDelay = normalizeWait(wait, { char, line: lineState, block });
             if (newlineDelay) await pause(newlineDelay / 1000);
-            if (lineWait)     await pause(lineWait     / 1000);
+            if (lineWait) await pause(lineWait / 1000);
             lineState = createTypedLine(block);
             continue;
         }
@@ -196,7 +196,7 @@ async function runTypeOps(ops, block, options, container) {
         if (op.kind === "type") {
             await typeStringIntoBlock(op.text ?? "", block, {
                 ...options,
-                wait:     op.wait     ?? options.wait,
+                wait: op.wait ?? options.wait,
                 lineWait: op.lineWait ?? options.lineWait,
             }, container);
             continue;
@@ -204,7 +204,7 @@ async function runTypeOps(ops, block, options, container) {
 
         if (op.kind === "replace") {
             const targetBlock = resolveBlock(op.block ?? -1);
-            const targetLine  = resolveLine(targetBlock, op.line ?? -1);
+            const targetLine = resolveLine(targetBlock, op.line ?? -1);
             replaceCharInLine(targetLine, op.index ?? -1, op.char ?? " ");
             scroll(container);
             const delay = normalizeWait(op.wait ?? options.wait ?? 0, { op, block: targetBlock, line: targetLine });
@@ -216,6 +216,21 @@ async function runTypeOps(ops, block, options, container) {
             if (op.wait) await pause(op.wait / 1000);
         }
     }
+}
+
+export async function alert(text, options = {}) {
+    const frame = document.getElementById("alert-frame");
+    const body = document.getElementById("ab");
+    const { remove = false, } = options;
+    if (frame.classList.contains("hidden")) {
+        frame.classList.toggle("hidden");
+        body.innerHTML = text;
+        if (remove) {
+            pause(2);
+            frame.classList.toggle("hidden");
+        }
+    }
+
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -237,17 +252,17 @@ async function runTypeOps(ops, block, options, container) {
  */
 export async function type(
     text,
-    options   = {},
+    options = {},
     container = document.querySelector(".terminal")
 ) {
     if (!text) return;
 
     const {
-        wait        = 30,
-        initialWait = 1000,
-        finalWait   = 500,
-        lineWait    = 100,
-        hideCursor  = false,
+        wait = 30,
+        initialWait = 500,
+        finalWait = 500,
+        lineWait = 100,
+        hideCursor = false,
     } = options;
 
     const typer = document.createElement("div");
@@ -282,10 +297,10 @@ export async function type(
  */
 export function isPrintable(keycode) {
     return (
-        (keycode > 47 && keycode < 58)   ||
-        keycode === 32                    ||
-        (keycode > 64 && keycode < 91)   ||
-        (keycode > 95 && keycode < 112)  ||
+        (keycode > 47 && keycode < 58) ||
+        keycode === 32 ||
+        (keycode > 64 && keycode < 91) ||
+        (keycode > 95 && keycode < 112) ||
         (keycode > 185 && keycode < 193) ||
         (keycode > 218 && keycode < 223)
     );
@@ -296,7 +311,7 @@ export function isPrintable(keycode) {
  */
 export function moveCaretToEnd(el) {
     if (!document.createRange) return;
-    const range     = document.createRange();
+    const range = document.createRange();
     range.selectNodeContents(el);
     range.collapse(false);
     const selection = window.getSelection();
@@ -345,8 +360,8 @@ export async function input(pw) {
                 event.preventDefault();
                 const keyCode = event.keyCode;
                 const chrCode = keyCode - 48 * Math.floor(keyCode / 48);
-                const chr     = String.fromCharCode(96 <= keyCode ? chrCode : keyCode);
-                const span    = document.createElement("span");
+                const chr = String.fromCharCode(96 <= keyCode ? chrCode : keyCode);
+                const span = document.createElement("span");
                 span.classList.add("char");
                 span.textContent = chr;
                 event.target.appendChild(span);
@@ -356,7 +371,7 @@ export async function input(pw) {
         };
 
         const terminal = document.querySelector(".terminal");
-        const inputEl  = document.createElement("span");
+        const inputEl = document.createElement("span");
         inputEl.setAttribute("id", "input");
         if (pw) inputEl.classList.add("password");
         inputEl.setAttribute("contenteditable", true);
@@ -448,12 +463,12 @@ export async function prompt(text, pw = false) {
 export async function waitForKey() {
     return new Promise((resolve) => {
         const handle = () => {
-            document.removeEventListener("keyup",  handle);
-            document.removeEventListener("click",  handle);
+            document.removeEventListener("keyup", handle);
+            document.removeEventListener("click", handle);
             resolve();
         };
-        document.addEventListener("keyup",  handle);
-        document.addEventListener("click",  handle);
+        document.addEventListener("keyup", handle);
+        document.addEventListener("click", handle);
     });
 }
 
@@ -461,10 +476,10 @@ export async function waitForKey() {
 
 function _addStylesheet(href) {
     if (document.querySelector(`link[href="${href}"]`)) return; // already loaded
-    const link  = document.createElement("link");
-    link.rel    = "stylesheet";
-    link.type   = "text/css";
-    link.href   = href;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.type = "text/css";
+    link.href = href;
     document.head.appendChild(link);
 }
 
@@ -512,7 +527,7 @@ export async function loadRecipeList() {
 // ─── Blog helpers ─────────────────────────────────────────────────────────────
 
 let _blogSetupDone = false;
-let _blogLoaded    = false;
+let _blogLoaded = false;
 
 /**
  * Fetches blog/index.json, loads each post file in order, appends them
@@ -526,8 +541,8 @@ export async function loadBlogPosts() {
     const win = document.getElementById("blog");
     if (!win) return;
 
-    const sidebar  = win.querySelector("[data-sidebar-content]");
-    const content  = win.querySelector("[data-content]");
+    const sidebar = win.querySelector("[data-sidebar-content]");
+    const content = win.querySelector("[data-content]");
     const viewport = win.querySelector(".content [data-viewport]");
     if (!sidebar || !content) return;
 

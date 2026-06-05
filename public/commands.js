@@ -12,22 +12,25 @@
  *   onOpen   {Function} Called each time the command's window is opened (optional)
  */
 
+const base = (name = {}) => ({
+    module: `./commands/${name}/index.mjs`,
+});
+
 export const commands = new Map([
-    ["help", { module: "./commands/help/index.mjs" }],
-    ["clear", { module: "./commands/clear/index.mjs" }],
-    ["repair", { module: "./commands/repair/index.mjs" }],
-    ["blog", { module: "./commands/blog/index.mjs" }],
-    ["recipes", { module: "./commands/recipes/index.mjs" }],
-    ["about", { module: "./commands/about/index.mjs" }],
-    ["links", { module: "./commands/links/index.mjs" }],
-    ["balls", { module: "./commands/balls/index.mjs" }],
-    ["nethack", { module: "./commands/nethack/index.mjs" }],
-    ["scan", { module: "./commands/scan/index.mjs" }],
-    ["hard reset", { module: "./commands/hard reset/index.mjs" }],
-    ["atabook", { module: "./commands/atabook/index.mjs" }],
-    ["follow", { module: "./commands/follow/index.mjs" }],
-    ["theme green", { module: "./commands/theme/index.mjs", theme: "green" }],
-    ["theme amber", { module: "./commands/theme/index.mjs", theme: "amber" }],
+    ["help", base("help")],
+    ["clear", base("clear")],
+    ["repair", base("repair")],
+    ["blog", base("blog")],
+    ["recipes", base("recipes")],
+    ["about", base("about")],
+    ["links", base("links")],
+    ["balls", base("balls")],
+    ["hard reset", base("hard reset")],
+    ["atabook", base("atabook")],
+    ["follow", base("follow")],
+    ["theme green", { ...base("theme"), theme: "green" }],
+    ["theme amber", { ...base("theme"), theme: "amber" }],  
+    ["foxhound", base("foxhound")],
 
     // Aliases
     ["guestbook", { alias: "atabook" }],

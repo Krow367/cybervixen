@@ -1,0 +1,14 @@
+#foxhound-breakout {
+    border: 1px solid var(--phosphor);
+    pointer-events: none;
+    /* so it doesn't eat terminal clicks */
+}
+
+#foxhound-wrap {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 7000;
+}

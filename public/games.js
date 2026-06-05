@@ -7,7 +7,7 @@
  * Usage:
  *   import { registerGame, abortGame } from "./games.js";
  *
- *   // In your game's init():
+ *   // In game's init():
  *   const controller = new AbortController();
  *   registerGame("repair", controller);
  *   element.addEventListener("keydown", handler, { signal: controller.signal });

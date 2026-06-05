@@ -185,7 +185,7 @@ async function handleKeyDown(e, onDone) {
     } else if (e.key === "Escape") {
         abortGame("repair");
         clear();
-        await type("File repair aborted. All progress has been lost. Run Repair to try again.", { initialWait: 0, wait: 0 });
+        alert("File repair aborted. All progress has been lost. Run Repair to try again.", { remove: true });
         onDone();
         return;
     } else {

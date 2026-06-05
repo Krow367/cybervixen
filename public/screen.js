@@ -37,6 +37,8 @@ globalThis.DEBUG =
 
 export { openWindow, closeWindow, minimizeWindow, setupWindow };
 
+window.type = type;
+
 // ─── Selectors ────────────────────────────────────────────────────────────────
 
 const DEFAULT_TERMINAL_SELECTOR = ".terminal";
@@ -89,13 +91,13 @@ async function on() {
 async function power() {
     await pause(0.5);
     document.getElementById("monitor").classList.toggle("turn-on");
-    document.getElementById("monitor").classList.toggle("on");
+    
 }
 
 export async function boot() {
     clear();
     if (globalThis.DEBUG) {
-        await type("DEBUG MODE IS ACTIVE! IF YOU SEE THIS, INFORM CYBERKITTEN.\nDEBUG MODE MAY HARM YOUR EXPERIENCE AS MANY PUZZLES\nWILL BE MUCH EASIER TO SOLVE THAN INTENDED!", { wait: 0 });
+        await type("DEBUG MODE IS ACTIVE! IF YOU SEE THIS, INFORM CYBERVIXEN.\nDEBUG MODE MAY HARM YOUR EXPERIENCE AS MANY PUZZLES\nWILL BE MUCH EASIER TO SOLVE THAN INTENDED!", { wait: 0 });
     }
     if (!globalThis.DEBUG) {
         await type(`Serenity Industries(TM) CV-2077 terminal interface`, { initialWait: 2000 });
@@ -104,9 +106,6 @@ export async function boot() {
 
     if (!globalThis.DEBUG) {
         await type(`
-
-
-
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠙⠻⢶⣄⡀⠀⠀⠀⢀⣤⠶⠛⠛⡇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣇⠀⠀⣙⣿⣦⣤⣴⣿⣁⠀⠀⣸⠇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣡⣾⣿⣿⣿⣿⣿⣿⣿⣷⣌⠋⠀⠀⠀⠀

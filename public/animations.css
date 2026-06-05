@@ -237,14 +237,14 @@
 		transform: scale(0, 0.0001) translate3d(0, 0, 0);
 		-webkit-filter: brightness(50);
 		filter: brightness(50);
-		background: #fff;
+		background: #ffffff;
 	}
 
 	60% {
 		transform: scale(1.0, 0.001) translate3d(0, 0, 0);
 		-webkit-filter: brightness(10);
 		filter: brightness(10);
-		background: #fff;
+		background: #ffffff;
 	}
 
 	100% {
