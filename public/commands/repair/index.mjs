@@ -1,5 +1,5 @@
 import { clear, boot } from "../../screen.js";
-import { type } from "../../io.js";
+import { type, alert } from "../../io.js";
 import { registerGame, abortGame } from "../../games.js";
 
 // Inject CSS and art-source HTML once on first load
@@ -185,7 +185,7 @@ async function handleKeyDown(e, onDone) {
     } else if (e.key === "Escape") {
         abortGame("repair");
         clear();
-        alert("File repair aborted. All progress has been lost. Run Repair to try again.", { remove: true });
+        alert("File repair aborted. All progress has been lost. Run Repair to try again.",{remove: true});
         onDone();
         return;
     } else {

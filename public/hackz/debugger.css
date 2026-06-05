@@ -1,0 +1,55 @@
+#debug-layer,
+.debug-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 30000;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.debug-panel {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    width: 34rem;
+    max-width: calc(100vw - 2rem);
+    height: 36rem;
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: auto;
+    box-sizing: border-box;
+    color: var(--phosphor);
+    font-family: "VT323", monospace;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid var(--phosphor);
+    box-shadow:
+        0 0 0 1px rgba(var(--phosphor-rgb), 0.2),
+        0 0 18px rgba(var(--phosphor-rgb), 0.18),
+        inset 0 0 0 1px rgba(var(--phosphor-rgb), 0.08);
+    text-shadow: 0 0 5px rgba(200, 200, 200, 0.8);
+}
+
+.debug-panel.hidden {
+    display: none;
+}
+
+.debug-panel.minimized {
+    height: auto;
+    max-height: none;
+}
+
+.debug-panel.minimized .debug-panel-body,
+.debug-panel.minimized .debug-panel-resize {
+    display: none;
+}
+
+.debug-panel-titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.7rem;
+    background: var(--window-tint);
+}

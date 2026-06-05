@@ -1,9 +1,11 @@
 import { clear } from "../../screen.js";
 import { type, alert } from "../../io.js";
 import { registerGame, abortGame } from "../../games.js";
+import { callDebugger, field, getter, setter, toggleDebugPanel, destroyDebugPanel } from "../../hackz/debugger.js";
 
 let loaded = false;
 let controller;
+let debug;
 
 // canvas + drawing
 let canvas;
@@ -33,6 +35,19 @@ const brickCols = 8;
 // let visibleCred;
 // let specialCount = 3;
 // let metaData = [];
+
+const defaultSettings = {
+    ball: {
+        speed: 4,
+        maxSpeed: 14,
+        dx: null,
+        dy: null,
+    },
+    paddle: {
+        w: 75,
+        speed: 7,
+    },
+};
 
 async function ensureAssets() {
     if (loaded) return;
@@ -84,6 +99,7 @@ export default async function () {
 function stopGame(onDone) {
     const wrap = document.getElementById("foxhound-wrap")
     abortGame("foxhound");       // abort listeners
+    destroyDebugPanel(); // kill active debugger
     if (wrap) {
         wrap.style.display = "none";
     }
@@ -120,22 +136,26 @@ export function init(onDone = () => { }) {
 
     // controls: Escape, left/right, A/D
     document.addEventListener("keydown", (e) => {
+        const el = document.getElementById("alert-frame");
         if (e.key === "Escape") {
+            el.classList.add("hidden"); //rage quit check
             stopGame(onDone);
             clear();
         } else if (globalThis.DEBUG && e.code === "KeyR") {
+            el.classList.add("hidden");
             resetState();
         } else if ((e.key === "ArrowLeft" || e.code === "KeyA") && !gameOver) {
             paddle.left = true;
         } else if ((e.key === "ArrowRight" || e.code === "KeyD") && !gameOver) {
             paddle.right = true;
+        } else if (globalThis.DEBUG && e.code === "KeyP") {
+            toggleDebugPanel();
         } else if (gameOver === true) {
-            const el = document.getElementById("alert-frame");
             if (e.code === "KeyY") {
-                el.classList.toggle("hidden");
+                el.classList.add("hidden");
                 resetState();  // resetState sets gameOver = false and restarts loop
             } else if (e.code === "KeyN") {
-                el.classList.toggle("hidden");
+                el.classList.add("hidden");
                 clear();
                 stopGame(onDone);
             }
@@ -158,6 +178,36 @@ export function init(onDone = () => { }) {
     } catch (e) {
         console.error("foxhound init error", e);
     }
+
+
+    debug = callDebugger({
+        title: "foxHound",
+        target: () => ({ defaultSettings, ball, paddle, bricks, score, gameOver }),
+        fields: [
+            setter(
+                "ball.speed",
+                () => defaultSettings.ball.speed,
+                value => {
+                    const n = Number(value);
+                    if (!Number.isFinite(n) || n < 0) return;
+
+                    defaultSettings.ball.speed = n;
+
+                    if (ball) {
+                        ball.speed = n;
+                        const len = Math.hypot(ball.dx, ball.dy) || 1;
+                        ball.dx = (ball.dx / len) * n;
+                        ball.dy = (ball.dy / len) * n;
+                    }
+                }
+            ),
+            field("defaultSettings.ball.maxSpeed", { label: "ball.maxspeed" }),
+            field("defaultSettings.paddle.w", { label: "paddle.w" }),
+            field("defaultSettings.paddle.speed", { label: "paddle.speed" }),
+            getter("score", () => score),
+            getter("gameOver", () => gameOver),
+        ],
+    });
 }
 
 // ─── Game state reset ──────────────────────────────────────────────
@@ -180,40 +230,37 @@ function resetState() {
     console.log("resetState: speed", ball?.speed, "gameOver", gameOver);
     gameOver = false;
     score = 0;
-    // ball starts near bottom center, moving up
+
     ball = {
         x: canvas.width / 2,
         y: canvas.height - 40,
         dx: 0,
         dy: 0,
         r: 6,
-        speed: 4,
-        maxSpeed: 14,
+        speed: defaultSettings.ball.speed,
+        maxSpeed: defaultSettings.ball.maxSpeed,
     };
 
-    // choose a random angle around straight up
-    const spread = Math.PI / 2; // 90° total spread
-    const baseAngle = -Math.PI / 2; // straight up
+    const spread = Math.PI / 2;
+    const baseAngle = -Math.PI / 2;
     const angleOffset = (Math.random() * spread) - spread / 2;
     const angle = baseAngle + angleOffset;
 
-    // apply base speed to dx/dy
-    ball.dx = Math.cos(angle) * ball.speed;
-    ball.dy = Math.sin(angle) * ball.speed;
+    ball.dx = defaultSettings.ball.dx ?? (Math.cos(angle) * ball.speed);
+    ball.dy = defaultSettings.ball.dy ?? (Math.sin(angle) * ball.speed);
 
-    // paddle near bottom, centered
     paddle = {
-        x: (canvas.width - 75) / 2,
+        x: (canvas.width - defaultSettings.paddle.w) / 2,
         y: canvas.height - 20,
-        w: 75,
+        w: defaultSettings.paddle.w,
         h: 10,
-        speed: 7,
+        speed: defaultSettings.paddle.speed,
         left: false,
         right: false,
         vx: 0,
         prevX: 0,
     };
-    // bricks: build a 2D array
+
     bricks = [];
     for (let c = 0; c < brickCols; c++) {
         bricks[c] = [];
@@ -224,10 +271,11 @@ function resetState() {
                 x: brickX,
                 y: brickY,
                 alive: true,
-                special: false, // we’ll randomize later
+                special: false,
             };
         }
     }
+
     loop();
 }
 // ─── Drawing helpers ───────────────────────────────────────────────
@@ -330,7 +378,7 @@ function updateBall() {
     if (ball.y + ball.r > canvas.height) {
         gameOver = true;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        alert("Game over. Restart? Y/N")
+        alert(deadText);
         if (frameId !== null) {
             cancelAnimationFrame(frameId);
             frameId = null;
@@ -375,3 +423,20 @@ function loop() {
         frameId = null;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

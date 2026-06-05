@@ -198,7 +198,7 @@ function focusWindowIfNeeded(root) {
 function syncWindowBackground(root) {
     if (!root) return;
 
-    const surface = root.querySelector(":scope > .window-surface");
+    const surface = root.querySelector(":scope > .window-surface, :scope > #alert-frame");
     const crt = document.getElementById("crt");
     if (!surface || !crt) return;
 

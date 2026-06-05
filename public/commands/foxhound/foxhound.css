@@ -5,6 +5,7 @@
 }
 
 #foxhound-wrap {
+    font-family: "VT323", monospace;
     position: fixed;
     inset: 0;
     display: flex;

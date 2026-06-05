@@ -2,37 +2,40 @@
 <html>
 
 <head>
-    <title>FoxOS ver 1.33.7</title>
+    <title>foxOS ver 1.33.7</title>
     <script>    const t = localStorage.getItem("theme");
         if (t) document.documentElement.setAttribute("data-theme", t);</script>
     <link rel="icon" type="image/x-icon" href="./img/icon.png">
     <link href="./style.css" rel="stylesheet" />
     <link href="./animations.css" rel="stylesheet" />
     <link href="./windows.css" rel="stylesheet" />
+    <link href="./hackz/debugger.css" rel="stylesheet" />
     <link href="./commands/repair/repair.css" rel="stylesheet" />
     <meta charset="UTF-8">
 
 </head>
 
-<body><!-- the actual device -->
-
+<body>
     <div id="monitor" class="off">
-
         <!-- the rounded edge near the glass -->
         <div id="bezel">
             <!-- the overlay and horizontal pattern -->
             <div id="crt">
                 <div id="alert-frame" class="hidden">
-                    <p><h1>——WARNING——</h1></p>
+                    <h1>——WARNING——</h1>
                     <p id="ab"></p>
                 </div>
                 <div id="crt-bg"></div>
                 <div class="terminal"></div>
             </div>
         </div>
+
+        <div class="scanlines"></div>
+        <div class="scanline"></div>
     </div>
-    <div class="scanlines"></div>
-    <div class="scanline"></div>
+
+    <div id="debug-layer" class="debug-layer"></div>
+
     <script type="module" src="./screen.js"></script>
 </body>
 

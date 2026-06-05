@@ -223,11 +223,11 @@ export async function alert(text, options = {}) {
     const body = document.getElementById("ab");
     const { remove = false, } = options;
     if (frame.classList.contains("hidden")) {
-        frame.classList.toggle("hidden");
+        frame.classList.remove("hidden");
         body.innerHTML = text;
         if (remove) {
-            pause(2);
-            frame.classList.toggle("hidden");
+            await pause(2);
+            frame.classList.add("hidden");
         }
     }
 

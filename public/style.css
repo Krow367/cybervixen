@@ -52,17 +52,28 @@
 #alert-frame {
     color: var(--phosphor);
     text-shadow: 0 0 5px #c8c8c8;
-    animation: flicker 2s infinite;
     position: fixed;
     text-align: center;
-    background: var(--phosphor-bg);
+    background: transparent;
     border: 2px solid var(--phosphor);
     padding: 10px 30px;
     left: 50%;
     top: 40%;
     transform: translateX(-50%);
     z-index: 9999;
+    font-size: 2rem;
+    word-break: break-word;
 }
+
+#alert-frame::before {
+    background-image: var(--crt-phosphor), linear-gradient(#041106, #041106);
+    background-repeat: no-repeat, no-repeat;
+    background-size: 100vw 100vh, 100vw 100vh;
+    background-position:
+        var(--crt-offset-x, 0px) var(--crt-offset-y, 0px),
+        var(--crt-offset-x, 0px) var(--crt-offset-y, 0px);
+}
+
 
 body {
     background: #111;
