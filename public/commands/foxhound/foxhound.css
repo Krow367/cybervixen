@@ -6,10 +6,63 @@
 
 #foxhound-wrap {
     font-family: "VT323", monospace;
+    font-size: 1.5rem;
     position: fixed;
     inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     z-index: 7000;
+    display: grid;
+    grid-template-columns: 120px minmax(640px, 730px) 240px;
+    gap: 1rem;
+    align-items: start;
+    justify-content: center;
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
+}
+
+.foxhound-hud {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 480px;
+}
+
+.hud-panel {
+    border: 1px solid var(--phosphor);
+    padding: 0.75rem;
+    min-height: 140px;
+}
+
+.hud-title {
+    margin: 0 0 0.5rem;
+    font: inherit;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+}
+
+#foxhound-center {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+#foxhound-banner {
+    min-height: 1.5rem;
+    text-align: center;
+}
+
+#foxhound-breakout {
+    display: block;
+    width: 730px;
+    height: 480px;
+}
+
+#foxhound-credential,
+#foxhound-status,
+#foxhound-run-stats,
+#foxhound-log {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font: inherit;
 }
