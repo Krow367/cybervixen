@@ -1,36 +1,43 @@
-#foxhound-breakout {
-    border: 1px solid var(--phosphor);
-    pointer-events: none;
-    /* so it doesn't eat terminal clicks */
-}
-
 #foxhound-wrap {
     font-family: "VT323", monospace;
     font-size: 1.5rem;
     position: fixed;
-    inset: 0;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 7000;
+    color: var(--phosphor);
     display: grid;
-    grid-template-columns: 120px minmax(640px, 730px) 240px;
+    grid-template-columns: 240px 730px 240px;
     gap: 1rem;
     align-items: start;
-    justify-content: center;
-    width: 100%;
-    max-width: 1240px;
-    margin: 0 auto;
+
+    width: max-content;
+    margin: 0;
 }
 
-.foxhound-hud {
+#foxhound-hud-left,
+#foxhound-hud-right {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     min-height: 480px;
+    min-width: 0;
+}
+
+#foxhound-center {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 730px;
+    min-width: 0;
 }
 
 .hud-panel {
     border: 1px solid var(--phosphor);
     padding: 0.75rem;
     min-height: 140px;
+    box-sizing: border-box;
 }
 
 .hud-title {
@@ -38,12 +45,6 @@
     font: inherit;
     font-size: 0.95rem;
     letter-spacing: 0.08em;
-}
-
-#foxhound-center {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
 }
 
 #foxhound-banner {
@@ -55,6 +56,9 @@
     display: block;
     width: 730px;
     height: 480px;
+    border: 1px solid var(--phosphor);
+    pointer-events: none;
+    box-sizing: border-box;
 }
 
 #foxhound-credential,

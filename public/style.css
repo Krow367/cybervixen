@@ -53,10 +53,6 @@
     color: var(--phosphor);
     text-shadow: 0 0 5px #c8c8c8;
     position: fixed;
-    text-align: center;
-    background: transparent;
-    border: 2px solid var(--phosphor);
-    padding: 10px 30px;
     left: 50%;
     top: 40%;
     transform: translateX(-50%);
@@ -65,13 +61,41 @@
     word-break: break-word;
 }
 
-#alert-frame::before {
+.alert-surface {
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--phosphor);
+    padding: 10px 30px;
+    background: transparent;
+    isolation: isolate;
+}
+
+.alert-surface::before,
+.alert-surface::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.alert-surface::before {
     background-image: var(--crt-phosphor), linear-gradient(#041106, #041106);
     background-repeat: no-repeat, no-repeat;
     background-size: 100vw 100vh, 100vw 100vh;
     background-position:
         var(--crt-offset-x, 0px) var(--crt-offset-y, 0px),
         var(--crt-offset-x, 0px) var(--crt-offset-y, 0px);
+    z-index: -2;
+}
+
+.alert-surface::after {
+    background: rgba(0, 0, 0, 0.08);
+    z-index: -1;
+}
+
+.alert-surface > * {
+    position: relative;
+    z-index: 1;
 }
 
 

@@ -34,4 +34,5 @@ export const commands = new Map([
 
     // Aliases
     ["guestbook", { alias: "atabook" }],
+    ["load foxhound", { alias: "foxhound"}],
 ]);

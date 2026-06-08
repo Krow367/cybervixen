@@ -16,9 +16,8 @@
 
 import pause from "./pause.js";
 import { handleClick } from "./ui.mjs";
-import { openWindow, setupFakeScrollbar } from "./windows.js";
+import { openWindow, setupFakeScrollbar, syncWindowBackground } from "./windows.js";
 import { commands } from "./commands.js";
-
 export { openWindow };
 
 // ─── Command history ──────────────────────────────────────────────────────────
@@ -224,6 +223,7 @@ export async function alert(text, options = {}) {
     const { remove = false, } = options;
     if (frame.classList.contains("hidden")) {
         frame.classList.remove("hidden");
+        syncWindowBackground(frame);
         body.innerHTML = text;
         if (remove) {
             await pause(2);

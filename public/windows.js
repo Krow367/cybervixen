@@ -195,14 +195,19 @@ function focusWindowIfNeeded(root) {
  * Must be called any time the window moves (drag, resize, initial placement)
  * or the viewport scrolls / resizes.
  */
-function syncWindowBackground(root) {
+export function syncWindowBackground(root) {
     if (!root) return;
 
-    const surface = root.querySelector(":scope > .window-surface, :scope > #alert-frame");
+        const surface =
+        root.matches?.(".window-surface, #alert-frame")
+            ? root
+            : root.querySelector(":scope > .window-surface, :scope > .alert-surface");
+
+    //const surface = root.querySelector(":scope > .window-surface, :scope > #alert-frame");
     const crt = document.getElementById("crt");
     if (!surface || !crt) return;
 
-    const winRect = root.getBoundingClientRect();
+    const winRect = surface.getBoundingClientRect();
     const crtRect = crt.getBoundingClientRect();
 
     surface.style.setProperty("--crt-offset-x", `${crtRect.left - winRect.left}px`);

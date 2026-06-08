@@ -21,6 +21,12 @@ let score;
 let gameOver = false;
 let deadText = "You failed to spoof the needed credentials with foxHound. Data corrupted. All progress loss. Restart foxHound? [Y/N]";
 
+//run state objects
+let runState = null;
+let levelState = null;
+let currentLevel = null;
+let hud = null;
+
 // brick layout config
 const brickW = 75;
 const brickH = 20;
@@ -53,13 +59,14 @@ async function ensureAssets() {
     if (loaded) return;
     loaded = true;
 
+    const crt = document.getElementById("crt");
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "./commands/foxhound/foxhound.css";
     document.head.appendChild(link);
 
     const html = await fetch("./commands/foxhound/foxhound.html").then(r => r.text());
-    document.body.insertAdjacentHTML("beforeend", html);
+    crt.insertAdjacentHTML("afterbegin", html);
 }
 
 function getPhosphor() {
@@ -84,6 +91,11 @@ export default async function () {
     // Can't let the player continue if they haven't repaired help yet.
     if (!helpRepaired) {
         await type("Unknown command.");
+        return;
+    }
+
+    if (!globalThis.DEBUG){
+        await type("Sorry, this command isn't available yet. You'll have to wait until the next update!")
         return;
     }
 
@@ -213,13 +225,20 @@ export function init(onDone = () => { }) {
 // ─── Game state reset ──────────────────────────────────────────────
 
 function resizeCanvas() {
-    const width = Math.floor(window.innerWidth * 0.6);
-    const height = Math.floor(window.innerHeight * 0.8);
+    canvas.width = 730;
+    canvas.height = 480;
 
-    console.log("scale")
-    const element = document.getElementById('foxhound-breakout');
-    element.style.width = `${width}px`;
-    element.style.height = `${height}px`;
+    const baseWidth = 240 + 730 + 240 + 32;
+    const baseHeight = 560;
+    const scale = Math.min(
+        (window.innerWidth - 40) / baseWidth,
+        (window.innerHeight - 40) / baseHeight,
+        1.25
+    );
+
+    document
+        .getElementById("foxhound-wrap")
+        .style.setProperty("--scale", scale);
 }
 
 function resetState() {
