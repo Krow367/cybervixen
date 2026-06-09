@@ -189,15 +189,15 @@ async function sha256Hex(value) {
 } */
 
 export default async function () {
-/*     const pass = await prompt("BETA TESTER ACCESS KEY: ", true);
-    const passHash = await sha256Hex(pass.trim());
-    console.log({ pass, passHash });
+    /*     const pass = await prompt("BETA TESTER ACCESS KEY: ", true);
+        const passHash = await sha256Hex(pass.trim());
+        console.log({ pass, passHash });
+    
+        if (passHash !== FOXHOUND_PASSWORD_HASH) {
+            await type("ACCESS DENIED.");
+            return;
+        } */
 
-    if (passHash !== FOXHOUND_PASSWORD_HASH) {
-        await type("ACCESS DENIED.");
-        return;
-    } */
-    await ensureAssets();
 
     const helpRepaired = localStorage.getItem("helpRepaired") === "true";
 
@@ -208,7 +208,7 @@ export default async function () {
 
     clear();
     runState = createRunState();
-
+    await ensureAssets();
     await new Promise(resolve => {
         setTimeout(() => init(resolve), 50);
     });
