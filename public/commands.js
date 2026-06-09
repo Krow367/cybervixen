@@ -29,10 +29,11 @@ export const commands = new Map([
     ["atabook", base("atabook")],
     ["follow", base("follow")],
     ["theme green", { ...base("theme"), theme: "green" }],
-    ["theme amber", { ...base("theme"), theme: "amber" }],  
-    ["foxhound", base("foxhound")],
+    ["theme amber", { ...base("theme"), theme: "amber" }],
+    ["foxhound", { module: "./commands/underconstruction.js" }],
+    ["betatest", base("foxhound")],
 
     // Aliases
     ["guestbook", { alias: "atabook" }],
-    ["load foxhound", { alias: "foxhound"}],
+    ["load foxhound", { alias: "foxhound" }],
 ]);
