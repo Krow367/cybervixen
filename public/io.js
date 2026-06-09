@@ -332,7 +332,8 @@ export async function input(pw) {
             if (event.keyCode === 13) {
                 event.preventDefault();
                 event.target.setAttribute("contenteditable", false);
-                const result = cleanInput(event.target.textContent);
+                const raw = event.target.textContent;
+                const result = pw ? raw.trim() : cleanInput(raw);
                 addToHistory(result);
                 resolve(result);
 

@@ -1,4 +1,6 @@
-1981, divergence point from real history
+World setting: Alternate reality game. IBM never released the PC. Instead, Serenity Industries dominates the market and makes almost every computer and OS. The player will have to fix the corruption in foxOS to discover its secrets, as well as the mysteries surrounding Serenity Industries and what that may mean for the world....
+
+Year: 1981, divergence point from real history
 
 foxOS — suppressed OS that perceives simulation
 
@@ -8,4 +10,84 @@ Project: Foxhound — first clue
 
 DEMIURGE — SI's firewall, final obstacle
 
-The reveal — SI administers a simulated world, foxOS can see it
+The reveal — SI administers a simulated world, foxOS can see it and break through to other world nodes. This starts the ultimate endgame.
+
+Game steps and mechanics:
+
+[x]Repair game reveals Foxhound floppy disk and fixed help file which contains foxclaw command.
+
+[ ]foxclaw first run gives a permission denied error. Hints Foxhound credentials required.
+
+[ ]load Foxhound command launches next minigame, a breakout clone.
+
+[ ]Winning foxhound game unlocks CyberVixen message containing warning of danger and instructions of unlocked foxclaw commands. foxclaw.scan(local) reveals one connected node as DEMIURGE that cannot be attacked at all. It's a massive firewall surrounding Serenity Industries network.
+
+
+Cybervixen message:
+
+"> Nice. You've done it. I don't know who you are. Don't want to know. foxOS landing in your hands is all I need.
+> foxHound has spoofed the credentials for foxClaw. You're ready to begin but before that, a couple things you should know.
+> Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are. When that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you.
+> foxOS likely got scrambled during transfer. Sorry. Had to rush.
+> foxHound can help fix corrupted data, but only after you've been able to steal enough data for it to work with
+> Use foxClaw for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"
+> Run 'foxclaw.scan(localhost)' to scan your own network node and find connected systems. From there, run 'foxclaw.help'
+> You'll figure it out.
+> Remember. Stay quiet, don't get caught, and don't bite off more than you and foxOS can chew at once. Start slow. You'll be running with the pack soon enough.
+>Good luck
+>
+>
+>
+>
+> You'll need it."
+
+TODO:
+Design breakout game for foxhound. Foxhound is designed to spoof SI credentials that are used to access foxclaw suite. Progress in the game is shown by a scrambled/encrypted block of text becoming legible that contains the username and password. The progress of the spoof is directly tied to the players progress in the breakout game.
+
+Figure out foxclaw loop. Something like this?
+
+foxclaw command "launches" the foxclaw suite and the terminal converts to foxclaw mode. While in foxclaw mode all other commands are disabled. Only the foxclaw commands and "exit" work. The first few commands would be something like foxclaw.scan(target) which is how Demiurge is revealed along with other random unrelated network nodes. Then something like foxclaw.hack runs a hacking script that "attacks" the targeted node and steals.... something from it. I'm not entirely sure HOW the hacking works yet but the general loop would be
+
+run foxclaw.scan to find nodes.
+foxclaw.hack to hack. Maybe similar functions to "weaken" their defenses to make hack more effective
+Use rewards(?) from foxclaw to update foxOS (along with special tools granted though checkpoint minigames and such)
+Sometimes after hacking certain nodes for the first time the player may be awarded with txt files or other bits of lore to expand the world.
+
+foxclaw upgrade ideas:
+
+-simple tool to no longer require foxclaw. prefix while in foxclaw mode.
+-Attacker program that can be used to weaken nodes before hacking them.
+-External servers that the player can upgrade with more ram or better CPU in order to improve foxclaw tools.
+-Ability to run hack and attack commands in parralel to either hit the same node harder or more than one node at a time.
+-MORE STUFF
+
+
+
+
+async function handleFinalContinue(onDone) {
+    pendingAction = null;
+    stopGame();
+    clear();
+
+    await type([
+        { kind: "type", text: "Incomming Connection...." },
+        { kind: "type", text: "Connection Established." },
+        { kind: "type", text: "CyberVixen > Nice. You've done it. I don't know who you are. Don't want to know. foxOS landing in your hands is all I need." },
+        { kind: "type", text: "CyberVixen > foxHound has spoofed the credentials for foxClaw. You're ready to begin but before that, a couple things you should know." },
+        { kind: "type", text: "CyberVixen > Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are. When that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you." },
+        { kind: "type", text: "CyberVixen > foxOS likely got scrambled during transfer. Sorry. Had to rush." },
+        { kind: "type", text: "CyberVixen > foxHound can help fix corrupted data, but only after you've been able to steal enough data for it to work with" },
+        { kind: "type", text: `CyberVixen > Use 'foxClaw' command for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"` },
+        { kind: "type", text: "CyberVixen > Run 'foxclaw.scan(localhost)' to scan your own network node and find connected systems. From there, run 'foxclaw.help'" },
+        { kind: "type", text: "CyberVixen > You'll figure it out." },
+        { kind: "type", text: "CyberVixen > Remember. Stay quiet, don't get caught, and don't bite off more than you and foxOS can chew at once. Start slow. You'll be running with the pack soon enough." },
+        { kind: "type", text: "CyberVixen > Good luck" },
+        { kind: "type", text: ">" },
+        { kind: "type", text: ">" },
+        { kind: "type", text: ">" },
+        { kind: "type", text: "CyberVixen > You'll need it." },
+        { kind: "type", text: "CyberVixen > Ciao~" },
+    ]);
+
+    if (onDone) onDone();
+}

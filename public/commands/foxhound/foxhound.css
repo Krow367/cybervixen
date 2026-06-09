@@ -1,17 +1,23 @@
 #foxhound-wrap {
+    --foxhud-w: 600px;
+    --foxplay-w: 960px;
+    --foxplay-h: 640px;
+    --fox-gap: 16px;
+    --fox-scale: 0.75;
+
     font-family: "VT323", monospace;
     font-size: 1.5rem;
     position: fixed;
     top: 2rem;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scale(var(--fox-scale));
+    transform-origin: top center;
     z-index: 7000;
     color: var(--phosphor);
     display: grid;
-    grid-template-columns: 240px 730px 240px;
-    gap: 1rem;
+    grid-template-columns: var(--foxhud-w) var(--foxplay-w) var(--foxhud-w);
+    gap: var(--fox-gap);
     align-items: start;
-
     width: max-content;
     margin: 0;
 }
@@ -21,7 +27,7 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    min-height: 480px;
+    min-height: var(--foxplay-h);
     min-width: 0;
 }
 
@@ -29,7 +35,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    width: 730px;
+    width: var(--foxplay-w);
     min-width: 0;
 }
 
@@ -54,8 +60,8 @@
 
 #foxhound-breakout {
     display: block;
-    width: 730px;
-    height: 480px;
+    width: var(--foxplay-w);
+    height: var(--foxplay-h);
     border: 1px solid var(--phosphor);
     pointer-events: none;
     box-sizing: border-box;
