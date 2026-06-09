@@ -49,6 +49,13 @@
             rgba(0, 0, 0, 0.3) 100%);
 }
 
+.ascii-art {
+    font-family: "Hack", monospace;
+    white-space: pre;
+    line-height: 1;
+    margin: 0;
+}
+
 #alert-frame {
     color: var(--phosphor);
     text-shadow: 0 0 5px #c8c8c8;
