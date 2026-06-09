@@ -178,26 +178,8 @@ let foxhoundState = loadFoxhoundState();
 
 // ─── Entry point ────────────────────────────────────────────────────
 
-/* const FOXHOUND_PASSWORD_HASH =
-    "287d5f7d0b31257b3066cb8a648f9961d06be36b96d2ec1c16cac805348ba608";
-
-async function sha256Hex(value) {
-    const bytes = new TextEncoder().encode(value);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-} */
 
 export default async function () {
-    /*     const pass = await prompt("BETA TESTER ACCESS KEY: ", true);
-        const passHash = await sha256Hex(pass.trim());
-        console.log({ pass, passHash });
-    
-        if (passHash !== FOXHOUND_PASSWORD_HASH) {
-            await type("ACCESS DENIED.");
-            return;
-        } */
-
 
     const helpRepaired = localStorage.getItem("helpRepaired") === "true";
 
@@ -1265,20 +1247,12 @@ function handleLevelClear() {
 
         if (!foxhoundState.completedOnce) {
             inputLockUntil = performance.now() + 1500;
-            /*             foxhoundState.completedOnce = true;
+                         foxhoundState.completedOnce = true;
                         foxhoundState.credentialUnlocked = true;
-                        saveFoxhoundState(foxhoundState); */
-            alert(
-                `Thanks for playing.
-Unfortunately this doesn't count as a real win.
-You'll have to wait until the full relase for that!
-Thanks for testing, though! 
-Press any key to continue.`,
-                false
-            );
+                        saveFoxhoundState(foxhoundState); 
 
 
-            /*             alert(
+                         alert(
                             `Spoof successful.
             ${getFullCredentialString()}
             foxHound may now access foxClaw.
@@ -1291,7 +1265,7 @@ Press any key to continue.`,
             No corruption detected.
             Press any key to continue.`,
                             false
-                        ); */
+                        ); 
         }
         return;
     }
@@ -1339,15 +1313,15 @@ async function handleFinalContinue(onDone) {
     stopGame();
     clear();
 
-    /*  await type([
-          { kind: "type", text: "Incomming Connection...." },
-          { kind: "type", text: "Connection Established." },
+    await type([
+          { kind: "type", text: "Incomming Connection....", finalWait: 1000, },
+          { kind: "type", text: "Connection Established.", finalWait: 1000,},
           { kind: "type", text: "CyberVixen > Nice. You've done it. I don't know who you are. Don't want to know. foxOS landing in your hands is all I need." },
           { kind: "type", text: "CyberVixen > foxHound has spoofed the credentials for foxClaw. You're ready to begin but before that, a couple things you should know." },
-          { kind: "type", text: "CyberVixen > Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are. When that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you." },
+          { kind: "type", text: "CyberVixen > Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are.\nWhen that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you." },
           { kind: "type", text: "CyberVixen > foxOS likely got scrambled during transfer. Sorry. Had to rush." },
           { kind: "type", text: "CyberVixen > foxHound can help fix corrupted data, but only after you've been able to steal enough data for it to work with" },
-          { kind: "type", text: `CyberVixen > Use 'foxClaw' command for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"` },
+          { kind: "type", text: `CyberVixen > Use the 'foxClaw' command for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"` },
           { kind: "type", text: "CyberVixen > Run 'foxclaw.scan(localhost)' to scan your own network node and find connected systems. From there, run 'foxclaw.help'" },
           { kind: "type", text: "CyberVixen > You'll figure it out." },
           { kind: "type", text: "CyberVixen > Remember. Stay quiet, don't get caught, and don't bite off more than you and foxOS can chew at once. Start slow. You'll be running with the pack soon enough." },
@@ -1357,7 +1331,7 @@ async function handleFinalContinue(onDone) {
           { kind: "type", text: ">" },
           { kind: "type", text: "CyberVixen > You'll need it." },
           { kind: "type", text: "CyberVixen > Ciao~" },
-      ]); */
+      ]);
 
     if (onDone) onDone();
 }

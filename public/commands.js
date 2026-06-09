@@ -30,10 +30,13 @@ export const commands = new Map([
     ["follow", base("follow")],
     ["theme green", { ...base("theme"), theme: "green" }],
     ["theme amber", { ...base("theme"), theme: "amber" }],
-    ["foxhound", { module: "./commands/underconstruction.js" }],
-    ["betatest", base("foxhound")],
+    ["foxhound", base("foxhound")],
+    ["foxclaw", "./commands/underconstruction.js"],
 
     // Aliases
     ["guestbook", { alias: "atabook" }],
     ["load foxhound", { alias: "foxhound" }],
+    ["load project foxhound", { alias: "foxhound" }],
+    ["project foxhound", { alias: "foxhound" }],
+    ["load foxclaw", {alias: "foxclaw"}],
 ]);
