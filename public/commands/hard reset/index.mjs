@@ -59,6 +59,7 @@ export default async function () {
     // ── Both checks passed — wipe data ────────────────────────────
     localStorage.removeItem("commandHistory");
     localStorage.removeItem("helpRepaired");
+    localStorage.removeItem("foxhoundState");
 
     await type([
         { kind: "type", text: "Understood. Deleting data...." },

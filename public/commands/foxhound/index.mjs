@@ -1247,25 +1247,25 @@ function handleLevelClear() {
 
         if (!foxhoundState.completedOnce) {
             inputLockUntil = performance.now() + 1500;
-                         foxhoundState.completedOnce = true;
-                        foxhoundState.credentialUnlocked = true;
-                        saveFoxhoundState(foxhoundState); 
+            foxhoundState.completedOnce = true;
+            foxhoundState.credentialUnlocked = true;
+            saveFoxhoundState(foxhoundState);
 
 
-                         alert(
-                            `Spoof successful.
+            alert(
+                `Spoof successful.
             ${getFullCredentialString()}
             foxHound may now access foxClaw.
             Press any key to continue.`,
-                            false
-                        );
-                    } else {
-                        alert(
-                            `Credential checksum complete.
+                false
+            );
+        } else {
+            alert(
+                `Credential checksum complete.
             No corruption detected.
             Press any key to continue.`,
-                            false
-                        ); 
+                false
+            );
         }
         return;
     }
@@ -1314,24 +1314,24 @@ async function handleFinalContinue(onDone) {
     clear();
 
     await type([
-          { kind: "type", text: "Incomming Connection....", finalWait: 1000, },
-          { kind: "type", text: "Connection Established.", finalWait: 1000,},
-          { kind: "type", text: "CyberVixen > Nice. You've done it. I don't know who you are. Don't want to know. foxOS landing in your hands is all I need." },
-          { kind: "type", text: "CyberVixen > foxHound has spoofed the credentials for foxClaw. You're ready to begin but before that, a couple things you should know." },
-          { kind: "type", text: "CyberVixen > Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are.\nWhen that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you." },
-          { kind: "type", text: "CyberVixen > foxOS likely got scrambled during transfer. Sorry. Had to rush." },
-          { kind: "type", text: "CyberVixen > foxHound can help fix corrupted data, but only after you've been able to steal enough data for it to work with" },
-          { kind: "type", text: `CyberVixen > Use the 'foxClaw' command for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"` },
-          { kind: "type", text: "CyberVixen > Run 'foxclaw.scan(localhost)' to scan your own network node and find connected systems. From there, run 'foxclaw.help'" },
-          { kind: "type", text: "CyberVixen > You'll figure it out." },
-          { kind: "type", text: "CyberVixen > Remember. Stay quiet, don't get caught, and don't bite off more than you and foxOS can chew at once. Start slow. You'll be running with the pack soon enough." },
-          { kind: "type", text: "CyberVixen > Good luck" },
-          { kind: "type", text: ">" },
-          { kind: "type", text: ">" },
-          { kind: "type", text: ">" },
-          { kind: "type", text: "CyberVixen > You'll need it." },
-          { kind: "type", text: "CyberVixen > Ciao~" },
-      ]);
+        { kind: "type", text: "Incomming Connection....", finalWait: 1000, },
+        { kind: "type", text: "Connection Established.", finalWait: 1000, },
+        { kind: "type", text: "CyberVixen > Nice. You've done it. I don't know who you are. Don't want to know. foxOS landing in your hands is all I need.", wait: 20, },
+        { kind: "type", text: "CyberVixen > foxHound has spoofed the credentials for foxClaw. You're ready to begin but before that, a couple things you should know.", wait: 20, },
+        { kind: "type", text: "CyberVixen > Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are.\nWhen that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you.", wait: 20, },
+        { kind: "type", text: "CyberVixen > foxOS likely got scrambled during transfer. Sorry. Had to rush.", wait: 20, },
+        { kind: "type", text: "CyberVixen > foxHound can help fix corrupted data, but only after you've been able to steal enough data for it to work with", wait: 20, },
+        { kind: "type", text: `CyberVixen > Use the 'foxClaw' command for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"`, wait: 20, },
+        { kind: "type", text: "CyberVixen > Run 'foxclaw.scan(localhost)' to scan your own network node and find connected systems. From there, run 'foxclaw.help'", wait: 20, },
+        { kind: "type", text: "CyberVixen > You'll figure it out.", wait: 20, },
+        { kind: "type", text: "CyberVixen > Remember. Stay quiet, don't get caught, and don't bite off more than you and foxOS can chew at once. Start slow. You'll be running with the pack soon enough.", wait: 20, },
+        { kind: "type", text: "CyberVixen > Good luck", wait: 20, },
+        { kind: "type", text: ">", finalWait: 250, },
+        { kind: "type", text: ">", finalWait: 250, },
+        { kind: "type", text: ">", finalWait: 250, },
+        { kind: "type", text: "CyberVixen > You'll need it." },
+        { kind: "type", text: "CyberVixen > Ciao~" },
+    ]);
 
     if (onDone) onDone();
 }
