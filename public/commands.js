@@ -31,7 +31,7 @@ export const commands = new Map([
     ["theme green", { ...base("theme"), theme: "green" }],
     ["theme amber", { ...base("theme"), theme: "amber" }],
     ["foxhound", base("foxhound")],
-    ["foxclaw", "./commands/underconstruction.js"],
+    ["foxclaw", {module: "./commands/underconstruction.js"}],
 
     // Aliases
     ["guestbook", { alias: "atabook" }],
