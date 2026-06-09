@@ -1,5 +1,5 @@
 import { clear } from "../../screen.js";
-import { type, alert } from "../../io.js";
+import { type, alert, prompt } from "../../io.js";
 import { registerGame, abortGame } from "../../games.js";
 import {
     callDebugger,
@@ -24,6 +24,7 @@ let ctx;
 let fgColor;
 let frameId = null;
 let brickBursts = [];
+let awaitingServe = false;
 
 // active game objects
 let ball;
@@ -177,10 +178,8 @@ let foxhoundState = loadFoxhoundState();
 
 // ─── Entry point ────────────────────────────────────────────────────
 
-import { prompt, type } from "../../io.js";
-
 const FOXHOUND_PASSWORD_HASH =
-    "fbec5b7e2ab08ad4baf71587eaa9e71e8f7083fd2cecdfd370c2957a7417496f";
+    "287d5f7d0b31257b3066cb8a648f9961d06be36b96d2ec1c16cac805348ba608";
 
 async function sha256Hex(value) {
     const bytes = new TextEncoder().encode(value);
@@ -190,27 +189,20 @@ async function sha256Hex(value) {
 }
 
 export default async function () {
+    const pass = await prompt("BETA TESTER ACCESS KEY: ", true);
+    const passHash = await sha256Hex(pass.trim());
+    console.log({ pass, passHash });
+
+    if (passHash !== FOXHOUND_PASSWORD_HASH) {
+        await type("ACCESS DENIED.");
+        return;
+    }
     await ensureAssets();
 
     const helpRepaired = localStorage.getItem("helpRepaired") === "true";
 
     if (!helpRepaired) {
         await type("Unknown command.");
-        return;
-    }
-
-    const pass = await prompt("BETA TESTER ACCESS KEY: ", true);
-    const passHash = await sha256Hex(pass.trim());
-
-    if (passHash !== FOXHOUND_PASSWORD_HASH) {
-        await type("ACCESS DENIED.");
-        return;
-    }
-
-    if (!globalThis.DEBUG) {
-        await type(
-            "Sorry, this command isn't available yet. You'll have to wait until the next update!"
-        );
         return;
     }
 
@@ -401,16 +393,8 @@ export function init(onDone = () => { }) {
                 return;
             }
 
-            if (
-                globalThis.DEBUG &&
-                (
-                    e.code === "Digit1" || e.code === "Digit2" || e.code === "Digit3" ||
-                    e.code === "Numpad1" || e.code === "Numpad2" || e.code === "Numpad3"
-                )
-            ) {
-                const digit = e.code.startsWith("Numpad")
-                    ? Number(e.code.replace("Numpad", ""))
-                    : Number(e.code.replace("Digit", ""));
+            if (globalThis.DEBUG && (e.code === "Digit1" || e.code === "Digit2" || e.code === "Digit3")) {
+                const digit = Number(e.code.replace("Digit", ""));
                 const nextIndex = digit - 1;
 
                 if (nextIndex >= 0 && nextIndex < levelDefs.length) {
@@ -420,6 +404,9 @@ export function init(onDone = () => { }) {
             }
 
             if (levelState?.gameOver) {
+                if (performance.now() < inputLockUntil) {
+                    return;
+                }
                 if (pendingAction === "final-complete") {
                     el?.classList.add("hidden");
                     void handleFinalContinue(onDone);
@@ -436,7 +423,10 @@ export function init(onDone = () => { }) {
                 }
                 return;
             }
-
+            if (awaitingServe && !levelState?.gameOver) {
+                awaitingServe = false;
+                launchBall();
+            }
             if (e.key === "ArrowLeft" || e.code === "KeyA") {
                 paddle.left = true;
             } else if (e.key === "ArrowRight" || e.code === "KeyD") {
@@ -876,16 +866,6 @@ function buildFreshBoardAndServe() {
 }
 
 function spawnBallAndPaddleForAttempt() {
-    ball = {
-        x: world.width / 2,
-        y: world.height - 40,
-        dx: 0,
-        dy: 0,
-        r: 8,
-        speedTier: currentLevelDef.startSpeedTier,
-        speed: currentLevelDef.speedTiers[currentLevelDef.startSpeedTier]
-    };
-
     paddle = {
         x: (world.width - defaultSettings.paddle.w) / 2,
         y: world.height - 20,
@@ -898,8 +878,18 @@ function spawnBallAndPaddleForAttempt() {
         prevX: 0
     };
 
+    ball = {
+        x: paddle.x + paddle.w / 2,
+        y: paddle.y - 12,
+        dx: 0,
+        dy: 0,
+        r: 8,
+        speedTier: currentLevelDef.startSpeedTier,
+        speed: currentLevelDef.speedTiers[currentLevelDef.startSpeedTier]
+    };
+
+    awaitingServe = true;
     resetBallProgressForAttempt();
-    launchBall();
 }
 
 function continueLevelFromAttemptLoss() {
@@ -1254,7 +1244,7 @@ function fullyRevealCredentialPart(levelIndex) {
 }
 
 // ─── Run flow ──────────────────────────────────────────────────────
-
+let inputLockUntil = 0;
 function handleLevelClear() {
     levelState.cleared = true;
     levelState.gameOver = true;
@@ -1274,24 +1264,34 @@ function handleLevelClear() {
         pendingAction = "final-complete";
 
         if (!foxhoundState.completedOnce) {
-            foxhoundState.completedOnce = true;
-            foxhoundState.credentialUnlocked = true;
-            saveFoxhoundState(foxhoundState);
+            inputLockUntil = performance.now() + 1500;
+            /*             foxhoundState.completedOnce = true;
+                        foxhoundState.credentialUnlocked = true;
+                        saveFoxhoundState(foxhoundState); */
+            alert(
+                `Thanks for playing.
+Unfortunately this doesn't count as a real win.
+You'll have to wait until the full relase for that!
+Thanks for testing, though! 
+Press any key to continue.`,
+                false
+            );
 
-            alert(
-                `Spoof successful.
-${getFullCredentialString()}
-foxHound may now access foxClaw.
-Press any key to continue.`,
-                false
-            );
-        } else {
-            alert(
-                `Credential checksum complete.
-No corruption detected.
-Press any key to continue.`,
-                false
-            );
+
+            /*             alert(
+                            `Spoof successful.
+            ${getFullCredentialString()}
+            foxHound may now access foxClaw.
+            Press any key to continue.`,
+                            false
+                        );
+                    } else {
+                        alert(
+                            `Credential checksum complete.
+            No corruption detected.
+            Press any key to continue.`,
+                            false
+                        ); */
         }
         return;
     }
@@ -1339,25 +1339,25 @@ async function handleFinalContinue(onDone) {
     stopGame();
     clear();
 
-    await type([
-        { kind: "type", text: "Incomming Connection...." },
-        { kind: "type", text: "Connection Established." },
-        { kind: "type", text: "CyberVixen > Nice. You've done it. I don't know who you are. Don't want to know. foxOS landing in your hands is all I need." },
-        { kind: "type", text: "CyberVixen > foxHound has spoofed the credentials for foxClaw. You're ready to begin but before that, a couple things you should know." },
-        { kind: "type", text: "CyberVixen > Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are. When that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you." },
-        { kind: "type", text: "CyberVixen > foxOS likely got scrambled during transfer. Sorry. Had to rush." },
-        { kind: "type", text: "CyberVixen > foxHound can help fix corrupted data, but only after you've been able to steal enough data for it to work with" },
-        { kind: "type", text: `CyberVixen > Use 'foxClaw' command for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"` },
-        { kind: "type", text: "CyberVixen > Run 'foxclaw.scan(localhost)' to scan your own network node and find connected systems. From there, run 'foxclaw.help'" },
-        { kind: "type", text: "CyberVixen > You'll figure it out." },
-        { kind: "type", text: "CyberVixen > Remember. Stay quiet, don't get caught, and don't bite off more than you and foxOS can chew at once. Start slow. You'll be running with the pack soon enough." },
-        { kind: "type", text: "CyberVixen > Good luck" },
-        { kind: "type", text: ">" },
-        { kind: "type", text: ">" },
-        { kind: "type", text: ">" },
-        { kind: "type", text: "CyberVixen > You'll need it." },
-        { kind: "type", text: "CyberVixen > Ciao~" },
-    ]);
+    /*  await type([
+          { kind: "type", text: "Incomming Connection...." },
+          { kind: "type", text: "Connection Established." },
+          { kind: "type", text: "CyberVixen > Nice. You've done it. I don't know who you are. Don't want to know. foxOS landing in your hands is all I need." },
+          { kind: "type", text: "CyberVixen > foxHound has spoofed the credentials for foxClaw. You're ready to begin but before that, a couple things you should know." },
+          { kind: "type", text: "CyberVixen > Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are. When that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you." },
+          { kind: "type", text: "CyberVixen > foxOS likely got scrambled during transfer. Sorry. Had to rush." },
+          { kind: "type", text: "CyberVixen > foxHound can help fix corrupted data, but only after you've been able to steal enough data for it to work with" },
+          { kind: "type", text: `CyberVixen > Use 'foxClaw' command for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"` },
+          { kind: "type", text: "CyberVixen > Run 'foxclaw.scan(localhost)' to scan your own network node and find connected systems. From there, run 'foxclaw.help'" },
+          { kind: "type", text: "CyberVixen > You'll figure it out." },
+          { kind: "type", text: "CyberVixen > Remember. Stay quiet, don't get caught, and don't bite off more than you and foxOS can chew at once. Start slow. You'll be running with the pack soon enough." },
+          { kind: "type", text: "CyberVixen > Good luck" },
+          { kind: "type", text: ">" },
+          { kind: "type", text: ">" },
+          { kind: "type", text: ">" },
+          { kind: "type", text: "CyberVixen > You'll need it." },
+          { kind: "type", text: "CyberVixen > Ciao~" },
+      ]); */
 
     if (onDone) onDone();
 }
@@ -1394,6 +1394,43 @@ function beginWorldRender() {
 }
 
 function endWorldRender() {
+    ctx.restore();
+}
+
+function drawStartOverlay() {
+    if (!awaitingServe) return;
+
+    const boxW = 560;
+    const boxH = 110;
+    const x = (world.width - boxW) / 2;
+    const y = (world.height - boxH) / 2;
+
+    ctx.save();
+    ctx.strokeStyle = fgColor;
+    ctx.fillStyle = "rgba(0, 0, 0, 0.78)";
+    ctx.lineWidth = 1;
+
+    ctx.beginPath();
+    ctx.rect(x, y, boxW, boxH);
+    ctx.fill();
+    ctx.stroke();
+    ctx.closePath();
+
+    ctx.fillStyle = fgColor;
+    ctx.font = "18px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+        "Use A/D or L/R arrow keys to move paddle.",
+        x + boxW / 2,
+        y + 38
+    );
+    ctx.fillText(
+        "Press any key to begin.",
+        x + boxW / 2,
+        y + 72
+    );
+
     ctx.restore();
 }
 
@@ -1678,7 +1715,7 @@ function drawGlitchBrick(b) {
     }
 
     ctx.restore();
-}   
+}
 
 function drawGhostBrick(b) {
     const x = b.x;
@@ -1840,6 +1877,11 @@ function updatePaddle() {
 }
 
 function updateBall() {
+    if (awaitingServe) {
+        ball.x = paddle.x + paddle.w / 2;
+        ball.y = paddle.y - ball.r - 2;
+        return;
+    }
     ball.x += ball.dx;
     ball.y += ball.dy;
 
@@ -2047,6 +2089,7 @@ function loop() {
         drawPaddle();
         drawBall();
         drawCallout();
+        drawStartOverlay();
         endWorldRender();
 
         renderHud();
