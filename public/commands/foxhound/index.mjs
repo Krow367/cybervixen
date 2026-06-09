@@ -178,7 +178,7 @@ let foxhoundState = loadFoxhoundState();
 
 // ─── Entry point ────────────────────────────────────────────────────
 
-const FOXHOUND_PASSWORD_HASH =
+/* const FOXHOUND_PASSWORD_HASH =
     "287d5f7d0b31257b3066cb8a648f9961d06be36b96d2ec1c16cac805348ba608";
 
 async function sha256Hex(value) {
@@ -186,17 +186,17 @@ async function sha256Hex(value) {
     const hashBuffer = await crypto.subtle.digest("SHA-256", bytes);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-}
+} */
 
 export default async function () {
-    const pass = await prompt("BETA TESTER ACCESS KEY: ", true);
+/*     const pass = await prompt("BETA TESTER ACCESS KEY: ", true);
     const passHash = await sha256Hex(pass.trim());
     console.log({ pass, passHash });
 
     if (passHash !== FOXHOUND_PASSWORD_HASH) {
         await type("ACCESS DENIED.");
         return;
-    }
+    } */
     await ensureAssets();
 
     const helpRepaired = localStorage.getItem("helpRepaired") === "true";
