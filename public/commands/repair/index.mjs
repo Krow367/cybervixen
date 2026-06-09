@@ -152,7 +152,7 @@ function renderBoard() {
 
 // ─── Debug ────────────────────────────────────────────────────────────────────
 
-function debugState() {
+/* function debugState() {
     console.log("=== PUZZLE STATE ===");
     console.log("board:", board);
     console.log("emptyIndex:", emptyIndex);
@@ -163,7 +163,7 @@ function debugState() {
     }
     console.log("grid:\n" + grid);
     console.log("win condition met:", board.every((val, i) => val === solved[i]));
-}
+} */
 
 // ─── Input handling ───────────────────────────────────────────────────────────
 
