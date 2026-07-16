@@ -408,6 +408,7 @@ export function init(onDone = () => { }) {
             if (awaitingServe && !levelState?.gameOver) {
                 awaitingServe = false;
                 launchBall();
+                startLoop();
             }
             if (e.key === "ArrowLeft" || e.code === "KeyA") {
                 paddle.left = true;
@@ -536,6 +537,16 @@ export function init(onDone = () => { }) {
         ]
     });
 }
+
+function startLoop() {
+  if (frameId == null) {
+    lastTime = 0;
+    accumulator = 0;
+    frameId = requestAnimationFrame(loop);
+  }
+}
+
+
 
 // ─── HUD / wrapper scale ───────────────────────────────────────────
 
@@ -2047,8 +2058,10 @@ function shuffleInPlace(arr) {
 
 // ─── Main loop ─────────────────────────────────────────────────────
 
+
 function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
 
     if (!levelState?.gameOver) {
         updatePaddle();
@@ -2056,6 +2069,7 @@ function loop() {
         updateBrickAnomalies();
         updateBricks();
         updateBrickBursts();
+
 
         beginWorldRender();
         drawBricks();
@@ -2066,7 +2080,9 @@ function loop() {
         drawStartOverlay();
         endWorldRender();
 
+
         renderHud();
+
 
         if (callout.timer > 0) callout.timer--;
         frameId = requestAnimationFrame(loop);

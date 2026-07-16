@@ -242,7 +242,7 @@ async function checkWin(onDone) {
     if (localStorage.getItem("helpRepaired")) {
         // First time win — reboot sequence
         await type([
-            { kind: "type", text: "File successfully repaired." },
+            { kind: "type", text: "Help file successfully repaired." },
             { kind: "type", text: "\nSystem Rebooting in.....3" },
             { kind: "replace", index: -1, char: "2", wait: 1000 },
             { kind: "replace", index: -1, char: "1", wait: 1000 },
