@@ -375,6 +375,7 @@ export async function input(pw) {
         inputEl.setAttribute("id", "input");
         if (pw) inputEl.classList.add("password");
         inputEl.setAttribute("contenteditable", true);
+        inputEl.setAttribute("spellcheck", false);
         inputEl.addEventListener("keydown", onKeyDown);
         terminal.appendChild(inputEl);
         inputEl.focus();
