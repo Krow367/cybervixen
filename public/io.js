@@ -319,6 +319,35 @@ export function moveCaretToEnd(el) {
     selection.addRange(range);
 }
 
+
+let audioCtx;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function beep(freq = 680, duration = 0.05, volume = 0.15) {
+  const ctx = initAudio();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = "square";
+  osc.frequency.value = freq;
+  gain.gain.value = volume;
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start();
+  osc.stop(ctx.currentTime + duration);
+}
+
 /**
  * Renders a live terminal input span and resolves the returned Promise with
  * the typed text when the user presses Enter.
@@ -330,6 +359,7 @@ export async function input(pw) {
     return new Promise((resolve) => {
         const onKeyDown = (event) => {
             if (event.keyCode === 13) {
+                beep();
                 event.preventDefault();
                 event.target.setAttribute("contenteditable", false);
                 const result = cleanInput(event.target.textContent);

@@ -1,0 +1,19 @@
+#foxclaw-root {
+  display: block;
+  white-space: pre;
+  color: var(--phosphor, #7CFF7C);
+  font-family: monospace;
+  line-height: 1;
+  position: fixed;
+  z-index: 7000;
+}
+
+.foxclaw-map {
+  margin: 0;
+  white-space: pre;
+}
+
+.foxclaw-hud,
+.foxclaw-log {
+  margin-top: 0.5rem;
+}

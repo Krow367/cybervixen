@@ -63,7 +63,7 @@ export function init(onDone = () => {}) {
 
     document.addEventListener("keydown", (e) => handleKeyDown(e, onDone), { signal });
 
-    debugState();
+   
 }
 
 // ─── Art slicing ──────────────────────────────────────────────────────────────
@@ -150,20 +150,6 @@ function renderBoard() {
     }
 }
 
-// ─── Debug ────────────────────────────────────────────────────────────────────
-
-/* function debugState() {
-    console.log("=== PUZZLE STATE ===");
-    console.log("board:", board);
-    console.log("emptyIndex:", emptyIndex);
-    let grid = "";
-    for (let i = 0; i < ROWS * COLS; i++) {
-        grid += board[i] === 3 ? " _" : " " + board[i];
-        if ((i + 1) % COLS === 0) grid += "\n";
-    }
-    console.log("grid:\n" + grid);
-    console.log("win condition met:", board.every((val, i) => val === solved[i]));
-} */
 
 // ─── Input handling ───────────────────────────────────────────────────────────
 
