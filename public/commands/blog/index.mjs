@@ -5,6 +5,7 @@ let quotes = [
 ];
 
 let output;
+const blogIndex = await fetch("/blog/index.json").then(r => r.json());
 
 function pickOutput() {
   output = quotes[Math.floor(Math.random() * quotes.length)];
@@ -15,6 +16,7 @@ pickOutput();
 
 export { output };
 export default function () {
+  localStorage.setItem("blogIndexSnapshot", JSON.stringify(blogIndex));
   pickOutput();
   openWindow("blog");
   loadBlogPosts();

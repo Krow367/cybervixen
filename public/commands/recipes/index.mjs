@@ -7,7 +7,7 @@ let quotes = [
 
 
 let output;
-
+const recipeIndex = await fetch("/recipes/index.json").then(r => r.json());
 function pickOutput() {
   output = quotes[Math.floor(Math.random() * quotes.length)];
   return output;
@@ -18,6 +18,7 @@ pickOutput();
 export { output }
 
 export default function () {
+  localStorage.setItem("recipeIndexSnapshot", JSON.stringify(recipeIndex));
   pickOutput();
   openWindow("recipes");
   loadRecipeList();

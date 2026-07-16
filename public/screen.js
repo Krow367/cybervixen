@@ -91,13 +91,17 @@ async function on() {
 async function power() {
     await pause(0.5);
     document.getElementById("monitor").classList.toggle("turn-on");
-    
+
 }
 
 export async function boot() {
     clear();
+    const notes = await checkContentUpdates();
     if (globalThis.DEBUG) {
         await type("DEBUG MODE IS ACTIVE! IF YOU SEE THIS, INFORM CYBERVIXEN.\nDEBUG MODE MAY HARM YOUR EXPERIENCE AS MANY PUZZLES\nWILL BE MUCH EASIER TO SOLVE THAN INTENDED!", { wait: 0 });
+        for (const note of notes) {
+            await type(note, { wait: 0 });
+        }
     }
     if (!globalThis.DEBUG) {
         await type(`Serenity Industries(TM) CV-2077 terminal interface`, { initialWait: 2000 });
@@ -128,10 +132,32 @@ export async function boot() {
         await type(`Welcome to FoxOS ver. 1.33.7`, { initialWait: 100 });
         await type(`"Harmony engineered."`, { initialWait: 100 });
         await type(`Try 'HELP' for commands.`, { initialWait: 100 });
+        for (const note of notes) {
+            await type(note, { wait: 0 });
+        }
     }
 
     focusTerminalInput();
     return main();
+}
+
+async function checkContentUpdates() {
+    const notes = [];
+    const blogIndex = await fetch("/blog/index.json").then(r => r.json());
+    const recipeIndex = await fetch("/recipes/index.json").then(r => r.json());
+
+    const savedBlog = JSON.parse(localStorage.getItem("blogIndexSnapshot") || "null");
+    const savedRecipe = JSON.parse(localStorage.getItem("recipeIndexSnapshot") || "null");
+
+    if (savedBlog !== null && JSON.stringify(savedBlog) !== JSON.stringify(blogIndex)) {
+        notes.push("Welcome back — there is a new blog post uploaded from CyberVixen.");
+    }
+
+    if (savedRecipe !== null && JSON.stringify(savedRecipe) !== JSON.stringify(recipeIndex)) {
+        notes.push("Welcome back — there is a new recipe found in system memory.");
+    }
+
+    return notes;
 }
 
 // ─── Main REPL ────────────────────────────────────────────────────────────────
