@@ -348,6 +348,8 @@ function beep(freq = 680, duration = 0.05, volume = 0.15) {
   osc.stop(ctx.currentTime + duration);
 }
 
+
+
 /**
  * Renders a live terminal input span and resolves the returned Promise with
  * the typed text when the user presses Enter.
