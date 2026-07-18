@@ -8,8 +8,17 @@ if (document.readyState === "loading") {
     init();
 }
 
+function shouldRunMobileCheck() {
+    if (sessionStorage.getItem("mobileChecked")) return false;
+    sessionStorage.setItem("mobileChecked", "true");
+    return true;
+}
+
 function init() {
-    if (window.isMobile()) mobileDetected();
+    if (shouldRunMobileCheck() && window.isMobile()) {
+        mobileDetected();
+        
+    }
 }
 
 function mobileDetected() {
