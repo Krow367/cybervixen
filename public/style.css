@@ -332,8 +332,31 @@ div.sourceCode {
 }
 
 .scrollbox-content img {
+  width: 75%;
   height: auto;
-  max-width: 100%;
+  cursor: zoom-in;
+}
+
+.lightbox[hidden] {
+  display: none;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+  padding: 2rem;
+}
+
+.lightbox img {
+  max-width: 92vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  cursor: zoom-out;
 }
 
 pre code,

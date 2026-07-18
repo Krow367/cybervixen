@@ -198,7 +198,7 @@ function focusWindowIfNeeded(root) {
 export function syncWindowBackground(root) {
     if (!root) return;
 
-        const surface =
+    const surface =
         root.matches?.(".window-surface, #alert-frame")
             ? root
             : root.querySelector(":scope > .window-surface, :scope > .alert-surface");
@@ -211,7 +211,7 @@ export function syncWindowBackground(root) {
     const crtRect = crt.getBoundingClientRect();
 
     surface.style.setProperty("--crt-offset-x", `${crtRect.left - winRect.left}px`);
-    surface.style.setProperty("--crt-offset-y", `${crtRect.top  - winRect.top}px`);
+    surface.style.setProperty("--crt-offset-y", `${crtRect.top - winRect.top}px`);
 }
 
 // ─── Z-ordering and active-window tracking ────────────────────────────────────
@@ -237,7 +237,7 @@ export function setActiveWindow(root, { focusTyping = false } = {}) {
     });
 
     root.style.position = "fixed";
-    root.style.zIndex   = String(zCounter);
+    root.style.zIndex = String(zCounter);
 
     // If the window lives inside #crt, re-append it so it renders on top of
     // sibling windows (DOM order matters for same-z siblings).
@@ -288,26 +288,26 @@ function applyInitialWindowPosition(root) {
     const offsetX = 32;
     const offsetY = 24;
 
-    const crt     = document.getElementById("crt");
+    const crt = document.getElementById("crt");
     const crtRect = crt?.getBoundingClientRect();
-    const margin  = 16;
+    const margin = 16;
 
     // Use offsetWidth/Height because getBoundingClientRect returns zeros while
     // the window is hidden; offsetWidth still reflects CSS-declared size.
-    const width  = root.offsetWidth  || 640;
+    const width = root.offsetWidth || 640;
     const height = root.offsetHeight || 480;
 
     // Default starting position: top-left of CRT plus a step based on how
     // many windows have been placed this session.
-let left = (crtRect ? crtRect.left + (crtRect.width  - width)  / 2 : 0) + openCount * offsetX;
-let top  = (crtRect ? crtRect.top  + (crtRect.height - height) / 2 : 0) + openCount * offsetY;
+    let left = (crtRect ? crtRect.left + (crtRect.width - width) / 2 : 0) + openCount * offsetX;
+    let top = (crtRect ? crtRect.top + (crtRect.height - height) / 2 : 0) + openCount * offsetY;
 
     // If there is an already-visible window, cascade off its position.
     const anchor =
         activeWindow &&
-        activeWindow !== root &&
-        isWindowVisible(activeWindow) &&
-        !isWindowMinimized(activeWindow)
+            activeWindow !== root &&
+            isWindowVisible(activeWindow) &&
+            !isWindowMinimized(activeWindow)
             ? activeWindow
             : [...document.querySelectorAll(WINDOW_SELECTOR)]
                 .filter(win =>
@@ -322,22 +322,22 @@ let top  = (crtRect ? crtRect.top  + (crtRect.height - height) / 2 : 0) + openCo
         // Prefer the inline style we set ourselves; fall back to getBoundingClientRect
         // for windows still sitting at their CSS-default position.
         const anchorLeft = parseFloat(anchor.style.left);
-        const anchorTop  = parseFloat(anchor.style.top);
+        const anchorTop = parseFloat(anchor.style.top);
         const anchorRect = anchor.getBoundingClientRect();
 
         left = (Number.isFinite(anchorLeft) ? anchorLeft : anchorRect.left) + offsetX;
-        top  = (Number.isFinite(anchorTop)  ? anchorTop  : anchorRect.top)  + offsetY;
+        top = (Number.isFinite(anchorTop) ? anchorTop : anchorRect.top) + offsetY;
     }
 
     // Clamp inside the CRT boundary.
     if (crtRect) {
         const minLeft = crtRect.left + margin;
-        const minTop  = crtRect.top  + margin;
-        const maxLeft = Math.max(minLeft, crtRect.right  - width  - margin);
-        const maxTop  = Math.max(minTop,  crtRect.bottom - height - margin);
+        const minTop = crtRect.top + margin;
+        const maxLeft = Math.max(minLeft, crtRect.right - width - margin);
+        const maxTop = Math.max(minTop, crtRect.bottom - height - margin);
 
         left = Math.max(minLeft, Math.min(left, maxLeft));
-        top  = Math.max(minTop,  Math.min(top,  maxTop));
+        top = Math.max(minTop, Math.min(top, maxTop));
     }
 
     // Nudge until we are not directly overlapping another window's origin.
@@ -348,30 +348,30 @@ let top  = (crtRect ? crtRect.top  + (crtRect.height - height) / 2 : 0) + openCo
 
     let tries = 0;
     while (tries < 20 && visibleWindows.some(win => {
-        const r  = win.getBoundingClientRect();
+        const r = win.getBoundingClientRect();
         const wl = Number.isFinite(parseFloat(win.style.left))
             ? parseFloat(win.style.left) : r.left;
         const wt = Number.isFinite(parseFloat(win.style.top))
-            ? parseFloat(win.style.top)  : r.top;
+            ? parseFloat(win.style.top) : r.top;
         return Math.abs(wl - left) < 20 && Math.abs(wt - top) < 20;
     })) {
         left += offsetX;
-        top  += offsetY;
+        top += offsetY;
 
         if (crtRect) {
             const minLeft = crtRect.left + margin;
-            const minTop  = crtRect.top  + margin;
-            const maxLeft = Math.max(minLeft, crtRect.right  - width  - margin);
-            const maxTop  = Math.max(minTop,  crtRect.bottom - height - margin);
+            const minTop = crtRect.top + margin;
+            const maxLeft = Math.max(minLeft, crtRect.right - width - margin);
+            const maxTop = Math.max(minTop, crtRect.bottom - height - margin);
 
             if (left > maxLeft) left = minLeft;
-            if (top  > maxTop)  top  = minTop;
+            if (top > maxTop) top = minTop;
         }
         tries++;
     }
 
     root.style.left = `${Math.round(left)}px`;
-    root.style.top  = `${Math.round(top)}px`;
+    root.style.top = `${Math.round(top)}px`;
 
     state.openedOnce = true;
     openCount += 1;
@@ -405,7 +405,7 @@ export function openWindow(idOrRoot, options = {}) {
     ensureWindowSurface(root);
     syncWindowTypingMetadata(root);
 
-    const wasHidden    = root.classList.contains("hidden");
+    const wasHidden = root.classList.contains("hidden");
     const wasMinimized = root.classList.contains("minimized");
 
     root.classList.remove("hidden");
@@ -515,7 +515,7 @@ export function minimizeWindow(idOrRoot) {
  * @returns {() => void}  Cleanup function.
  */
 export function setupWindow(root) {
-    if (!root) return () => {};
+    if (!root) return () => { };
 
     ensureWindowSurface(root);
     syncWindowTypingMetadata(root);
@@ -525,18 +525,18 @@ export function setupWindow(root) {
         root.style.zIndex = "1";
     }
 
-    const titlebar     = root.querySelector(".titlebar");
-    const minimizeBtn  = root.querySelector(".minimize");
-    const closeBtn     = root.querySelector(".close");
+    const titlebar = root.querySelector(".titlebar");
+    const minimizeBtn = root.querySelector(".minimize");
+    const closeBtn = root.querySelector(".close");
     const resizeHandle = root.querySelector("[data-resize]");
 
-    let dragging    = false;
-    let resizing    = false;
-    let startX      = 0;
-    let startY      = 0;
-    let startLeft   = 0;
-    let startTop    = 0;
-    let startWidth  = 0;
+    let dragging = false;
+    let resizing = false;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
+    let startWidth = 0;
     let startHeight = 0;
 
     // Bring the window to front on any mousedown inside it.
@@ -554,10 +554,10 @@ export function setupWindow(root) {
         dragging = true;
 
         const rect = root.getBoundingClientRect();
-        startX    = e.clientX;
-        startY    = e.clientY;
+        startX = e.clientX;
+        startY = e.clientY;
         startLeft = rect.left;
-        startTop  = rect.top;
+        startTop = rect.top;
 
         document.body.style.userSelect = "none";
     };
@@ -567,11 +567,11 @@ export function setupWindow(root) {
         setActiveWindow(root, { focusTyping: false });
         resizing = true;
 
-        const rect   = root.getBoundingClientRect();
-        startX       = e.clientX;
-        startY       = e.clientY;
-        startWidth   = rect.width;
-        startHeight  = rect.height;
+        const rect = root.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = rect.width;
+        startHeight = rect.height;
 
         document.body.style.userSelect = "none";
         e.preventDefault();
@@ -582,12 +582,12 @@ export function setupWindow(root) {
     const onMouseMove = (e) => {
         if (dragging) {
             root.style.left = `${startLeft + (e.clientX - startX)}px`;
-            root.style.top  = `${startTop  + (e.clientY - startY)}px`;
+            root.style.top = `${startTop + (e.clientY - startY)}px`;
             syncWindowBackground(root);
         }
 
         if (resizing) {
-            root.style.width  = `${Math.max(320, startWidth  + (e.clientX - startX))}px`;
+            root.style.width = `${Math.max(320, startWidth + (e.clientX - startX))}px`;
             root.style.height = `${Math.max(220, startHeight + (e.clientY - startY))}px`;
             syncWindowBackground(root);
             // Scrollbar thumb proportions depend on window size.
@@ -641,29 +641,55 @@ export function setupWindow(root) {
         }
     };
 
+    // Blog image handler
+
+    const onBlogImageClick = (e) => {
+        const img = e.target.closest(".scrollbox-content img");
+        if (!img) return;
+        openLightbox(img);
+    };
+
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightbox-img");
+
+    const openLightbox = (img) => {
+        lightboxImg.src = img.dataset.full || img.src;
+        lightboxImg.alt = img.alt || "";
+        lightbox.hidden = false;
+    };
+
+    lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox || e.target === lightboxImg) {
+            closeLightbox();
+        }
+    });
+
+
     // Re-sync background when the browser window itself is resized.
     const onResize = () => syncWindowBackground(root);
 
-    titlebar?.addEventListener("mousedown",  onMouseDown);
+    titlebar?.addEventListener("mousedown", onMouseDown);
     resizeHandle?.addEventListener("mousedown", onResizeMouseDown);
     root.addEventListener("mousedown", onWindowMouseDown);
-    root.addEventListener("click",     onClick);
+    root.addEventListener("click", onClick);
     document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup",   onMouseUp);
-    minimizeBtn?.addEventListener("click",  onMinimize);
-    closeBtn?.addEventListener("click",     onClose);
-    window.addEventListener("resize",       onResize);
+    document.addEventListener("mouseup", onMouseUp);
+    minimizeBtn?.addEventListener("click", onMinimize);
+    closeBtn?.addEventListener("click", onClose);
+    window.addEventListener("resize", onResize);
+    document.addEventListener("click", onBlogImageClick);
 
     return () => {
-        titlebar?.removeEventListener("mousedown",  onMouseDown);
+        titlebar?.removeEventListener("mousedown", onMouseDown);
         resizeHandle?.removeEventListener("mousedown", onResizeMouseDown);
         root.removeEventListener("mousedown", onWindowMouseDown);
-        root.removeEventListener("click",     onClick);
+        root.removeEventListener("click", onClick);
         document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup",   onMouseUp);
-        minimizeBtn?.removeEventListener("click",  onMinimize);
-        closeBtn?.removeEventListener("click",     onClose);
-        window.removeEventListener("resize",       onResize);
+        document.removeEventListener("mouseup", onMouseUp);
+        minimizeBtn?.removeEventListener("click", onMinimize);
+        closeBtn?.removeEventListener("click", onClose);
+        window.removeEventListener("resize", onResize);
+        document.removeEventListener("click", onBlogImageClick);
     };
 }
 
@@ -681,8 +707,19 @@ function handleEscapeKey(event) {
     // If the terminal input is focused and this window doesn't accept typing,
     // the user is typing in the terminal — don't close the window.
     const liveInput = document.querySelector('[contenteditable="true"]');
-    const state     = getWindowState(activeWindow);
+    const state = getWindowState(activeWindow);
     if (document.activeElement === liveInput && !state.acceptsTerminal) return;
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightbox-img");
+    const closeLightbox = () => {
+        lightbox.hidden = true;
+        lightboxImg.src = "";
+    };
+
+    if (!lightbox.hidden) {
+        closeLightbox();
+        return;
+    }
 
     closeWindow(activeWindow);
 }
@@ -775,30 +812,30 @@ export function setupAllWindows(windowIds = []) {
  */
 export function setupFakeScrollbar(root) {
     const viewport = root.querySelector("[data-viewport]");
-    const track    = root.querySelector("[data-track]");
-    const thumb    = root.querySelector("[data-thumb]");
-    const buttons  = root.querySelectorAll("[data-dir]");
+    const track = root.querySelector("[data-track]");
+    const thumb = root.querySelector("[data-thumb]");
+    const buttons = root.querySelectorAll("[data-dir]");
 
     if (!viewport || !track || !thumb) return;
 
     // Tear down any previous instance on this root.
     root._fakeScrollbarCleanup?.();
 
-    let dragging    = false;
-    let startY      = 0;
-    let startTop    = 0;
-    let holdTimer   = null;
+    let dragging = false;
+    let startY = 0;
+    let startTop = 0;
+    let holdTimer = null;
     let holdInterval = null;
 
     const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
     /** Returns current scroll geometry in one object to avoid repeated DOM reads. */
     function metrics() {
-        const trackH      = track.clientHeight;
-        const viewH       = viewport.clientHeight;
-        const scrollH     = viewport.scrollHeight;
-        const maxScroll   = Math.max(0, scrollH - viewH);
-        const thumbH      = maxScroll
+        const trackH = track.clientHeight;
+        const viewH = viewport.clientHeight;
+        const scrollH = viewport.scrollHeight;
+        const maxScroll = Math.max(0, scrollH - viewH);
+        const thumbH = maxScroll
             ? Math.max(24, (viewH / scrollH) * trackH)
             : trackH;
         const maxThumbTop = Math.max(0, trackH - thumbH);
@@ -817,14 +854,14 @@ export function setupFakeScrollbar(root) {
         thumb.style.height = `${thumbH}px`;
 
         if (scrollH <= viewH || !maxScroll) {
-            thumb.style.top     = "0px";
+            thumb.style.top = "0px";
             thumb.style.display = "none";
             return;
         }
 
-        thumb.style.display     = "block";
-        thumb.style.visibility  = "visible";
-        thumb.style.opacity     = "1";
+        thumb.style.display = "block";
+        thumb.style.visibility = "visible";
+        thumb.style.opacity = "1";
 
         const top = (viewport.scrollTop / maxScroll) * maxThumbTop;
         thumb.style.top = `${top}px`;
@@ -857,7 +894,7 @@ export function setupFakeScrollbar(root) {
     function stopHold() {
         clearTimeout(holdTimer);
         clearInterval(holdInterval);
-        holdTimer   = null;
+        holdTimer = null;
         holdInterval = null;
     }
 
@@ -865,7 +902,7 @@ export function setupFakeScrollbar(root) {
     const onThumbMouseDown = (e) => {
         e.preventDefault();
         dragging = true;
-        startY   = e.clientY;
+        startY = e.clientY;
         startTop = thumb.getBoundingClientRect().top - track.getBoundingClientRect().top;
         thumb.classList.add("dragging");
     };
@@ -893,38 +930,38 @@ export function setupFakeScrollbar(root) {
     const onTrackMouseDown = (e) => {
         if (e.target === thumb) return;
 
-        const clickY  = e.clientY - track.getBoundingClientRect().top;
+        const clickY = e.clientY - track.getBoundingClientRect().top;
         const thumbMid = thumb.offsetTop + thumb.offsetHeight / 2;
 
         viewport.scrollTop += clickY < thumbMid
             ? -viewport.clientHeight * 0.9
-            :  viewport.clientHeight * 0.9;
+            : viewport.clientHeight * 0.9;
 
         paintSoon();
     };
 
     const onViewportScroll = () => paint();
-    const onWindowResize   = () => paintSoon();
+    const onWindowResize = () => paintSoon();
 
     thumb.addEventListener("mousedown", onThumbMouseDown);
     document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup",   onMouseUp);
+    document.addEventListener("mouseup", onMouseUp);
     track.addEventListener("mousedown", onTrackMouseDown);
     viewport.addEventListener("scroll", onViewportScroll);
-    window.addEventListener("resize",   onWindowResize);
+    window.addEventListener("resize", onWindowResize);
 
     // Wire up arrow buttons with per-button cleanup handles.
     buttons.forEach((btn) => {
-        const dir        = Number(btn.dataset.dir);
-        const onDown     = () => startHold(dir);
-        const onLeave    = () => stopHold();
-        const onUpBtn    = () => stopHold();
+        const dir = Number(btn.dataset.dir);
+        const onDown = () => startHold(dir);
+        const onLeave = () => stopHold();
+        const onUpBtn = () => stopHold();
         const onClickBtn = (e) => e.preventDefault();
 
-        btn.addEventListener("mousedown",  onDown);
+        btn.addEventListener("mousedown", onDown);
         btn.addEventListener("mouseleave", onLeave);
-        btn.addEventListener("mouseup",    onUpBtn);
-        btn.addEventListener("click",      onClickBtn);
+        btn.addEventListener("mouseup", onUpBtn);
+        btn.addEventListener("click", onClickBtn);
 
         btn._fakeScrollbarHandlers = { onDown, onLeave, onUpBtn, onClickBtn };
     });
@@ -947,20 +984,20 @@ export function setupFakeScrollbar(root) {
     root._fakeScrollbarCleanup = () => {
         thumb.removeEventListener("mousedown", onThumbMouseDown);
         document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup",   onMouseUp);
+        document.removeEventListener("mouseup", onMouseUp);
         track.removeEventListener("mousedown", onTrackMouseDown);
         viewport.removeEventListener("scroll", onViewportScroll);
-        window.removeEventListener("resize",   onWindowResize);
+        window.removeEventListener("resize", onWindowResize);
         resizeObserver.disconnect();
         mutationObserver.disconnect();
 
         buttons.forEach((btn) => {
             const h = btn._fakeScrollbarHandlers;
             if (!h) return;
-            btn.removeEventListener("mousedown",  h.onDown);
+            btn.removeEventListener("mousedown", h.onDown);
             btn.removeEventListener("mouseleave", h.onLeave);
-            btn.removeEventListener("mouseup",    h.onUpBtn);
-            btn.removeEventListener("click",      h.onClickBtn);
+            btn.removeEventListener("mouseup", h.onUpBtn);
+            btn.removeEventListener("click", h.onClickBtn);
             delete btn._fakeScrollbarHandlers;
         });
     };
@@ -998,9 +1035,9 @@ export function createWindow(id, options = {}) {
     if (existing) return existing;
 
     const {
-        title       = "",
+        title = "",
         contentHTML = "",
-        className   = "",
+        className = "",
         width,
         height,
         onOpen,
@@ -1009,9 +1046,9 @@ export function createWindow(id, options = {}) {
 
     // Build the chrome
     const root = document.createElement("div");
-    root.id    = id;
+    root.id = id;
     root.className = ["window", "hidden", className].filter(Boolean).join(" ");
-    if (width)  root.style.width  = width;
+    if (width) root.style.width = width;
     if (height) root.style.height = height;
 
     root.innerHTML = `
@@ -1031,7 +1068,7 @@ export function createWindow(id, options = {}) {
     setupWindow(root);
 
     // Store lifecycle callbacks on the element so openWindow/closeWindow can call them
-    if (onOpen)  root._onOpen  = onOpen;
+    if (onOpen) root._onOpen = onOpen;
     if (onClose) root._onClose = onClose;
 
     return root;
