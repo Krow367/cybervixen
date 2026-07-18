@@ -1,0 +1,84 @@
+<div class="sidebar chat-sidebar">
+    <div class="scrollbox" data-scrollbox>
+        <div class="scrollbox-viewport" data-viewport>
+            <div class="scrollbox-content chat-sidebar-content">
+                <div class="sidebar-section-title">ACTIVE USERS</div>
+                <div class="user-list" id="chat-user-list">
+                    <!-- populated by chat.js -->
+                </div>
+                <div class="sidebar-actions">
+                    <button type="button" class="btn-settings" id="chat-btn-settings">SETTINGS</button>
+                </div>
+            </div>
+        </div>
+        <div class="scrollbar" data-scrollbar>
+            <button class="scrollbar-btn up" type="button" data-dir="-1" aria-label="Scroll up"></button>
+            <div class="scrollbar-track" data-track>
+                <div class="scrollbar-thumb" data-thumb></div>
+            </div>
+            <button class="scrollbar-btn down" type="button" data-dir="1" aria-label="Scroll down"></button>
+        </div>
+    </div>
+</div>
+<div class="content chat-content-pane">
+    <div id="chat-room-view" class="chat-view-active">
+        <!-- iframe.chat Embed Container -->
+        <iframe id="chattable" src="about:blank" width="100%" height="100%" frameborder="0" style="border: none; background: transparent;"></iframe>
+    </div>
+    
+    <div id="chat-settings-view" class="chat-view-hidden" style="display: none; padding: 15px; box-sizing: border-box; height: 100%; overflow-y: auto;">
+        <h2 style="margin-top: 0; color: var(--phosphor); border-bottom: 1px solid var(--phosphor); padding-bottom: 5px;">CHAT SETTINGS</h2>
+        <div class="settings-form" style="display: flex; flex-direction: column; gap: 12px; font-family: inherit;">
+            <div>
+                <label style="display: block; margin-bottom: 4px;">NICKNAME:</label>
+                <input type="text" id="setting-nickname" placeholder="Guest" style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: inherit; padding: 6px; box-sizing: border-box;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 4px;">PROFILE PICTURE URL:</label>
+                <input type="text" id="setting-pfp" placeholder="https://..." style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: inherit; padding: 6px; box-sizing: border-box;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 4px;">PERSONAL WEBSITE URL:</label>
+                <input type="text" id="setting-website" placeholder="https://..." style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: inherit; padding: 6px; box-sizing: border-box;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 4px;">BIO / PROFILE TEXT (MAX 150 CHARS):</label>
+                <textarea id="setting-bio" maxlength="150" rows="3" placeholder="A brief description of yourself..." style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: inherit; padding: 6px; box-sizing: border-box; resize: none;"></textarea>
+            </div>
+            
+            <div style="border-top: 1px solid var(--phosphor); padding-top: 12px; margin-top: 5px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="setting-mute" style="accent-color: var(--phosphor);">
+                    <label for="setting-mute">MUTE CHAT / SOUND EFFECTS</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="setting-overlay-scan" style="accent-color: var(--phosphor);">
+                    <label for="setting-overlay-scan">OVERLAY SCANLINE EFFECT</label>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 4px;">FONT SIZE:</label>
+                    <select id="setting-font-size" style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: inherit; padding: 6px; box-sizing: border-box;">
+                        <option value="14px">14PX - SMALL</option>
+                        <option value="18px" selected>18PX - NORMAL</option>
+                        <option value="22px">22PX - LARGE</option>
+                        <option value="26px">26PX - RETRO GIANT</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; margin-bottom: 4px;">FONT STYLE:</label>
+                    <select id="setting-font-style" style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: inherit; padding: 6px; box-sizing: border-box;">
+                        <option value="'VT323', monospace">VT323 (DEFAULT)</option>
+                        <option value="monospace">SYSTEM MONOSPACE</option>
+                        <option value="'Courier New', Courier, monospace">COURIER NEW</option>
+                        <option value="Arial, Helvetica, sans-serif">SANS-SERIF</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="button" class="btn-save" id="chat-btn-save" style="margin-top: 10px; background: var(--phosphor); color: #000; border: none; font-family: inherit; padding: 10px; font-weight: bold; cursor: pointer;">SAVE & CLOSE</button>
+        </div>
+    </div>
+</div>

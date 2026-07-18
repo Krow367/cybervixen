@@ -1,0 +1,124 @@
+/* Retro IRC / Terminal Style override for iframe.chat */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+/* Main layouts and background */
+body, html, #background, #app, .chat-container, .main-container {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #5bf870 !important;
+    font-family: 'VT323', 'Courier New', Courier, monospace !important;
+    text-transform: none !important;
+    font-size: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+}
+::-webkit-scrollbar-track {
+    background: #000000 !important;
+    border-left: 1px solid #5bf870 !important;
+}
+::-webkit-scrollbar-thumb {
+    background: #5bf870 !important;
+}
+
+/* Hide modern elements */
+.header, .chat-header, .online-list, #users-list, .sidebar, .banner, .ad, .promoted {
+    display: none !important;
+}
+
+/* Messages container */
+.messages-container, .allMessages, #messages {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 8px !important;
+}
+
+/* Individual message styling (Old-school IRC style) */
+.message, .msg, .chat-message {
+    border: none !important;
+    background: transparent !important;
+    padding: 2px 4px !important;
+    margin: 0 0 4px 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    align-items: baseline !important;
+}
+
+/* Message timestamp */
+.time, .timestamp, .msg-time {
+    color: #5bf870 !important;
+    opacity: 0.5 !important;
+    font-size: 14px !important;
+    order: -1 !important;
+}
+
+/* User names / nicks */
+.name, .nickname, .username, .sender, .msg-sender {
+    color: #d614c6 !important; /* hot pink / magenta for names */
+    font-weight: bold !important;
+    text-decoration: none !important;
+}
+.name::after, .nickname::after, .username::after, .sender::after {
+    content: ":" !important;
+    color: #5bf870 !important;
+    margin-left: 1px !important;
+}
+
+/* Message text content */
+.text, .msg-text, .message-content, .msgBody {
+    color: #5bf870 !important;
+    font-size: 18px !important;
+    word-break: break-word !important;
+}
+
+/* Text input and send controls */
+.input-area, .chat-input-container, #input-container {
+    background: #000000 !important;
+    border-top: 2px solid #5bf870 !important;
+    padding: 8px !important;
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+}
+
+input, textarea, .text-input, #input, .input {
+    background: #000000 !important;
+    border: 1px solid #5bf870 !important;
+    color: #5bf870 !important;
+    font-family: 'VT323', monospace !important;
+    font-size: 18px !important;
+    padding: 6px 10px !important;
+    flex: 1 !important;
+    outline: none !important;
+}
+
+input:focus, textarea:focus, #input:focus {
+    border-color: #d614c6 !important;
+    box-shadow: 0 0 5px rgba(214, 20, 198, 0.5) !important;
+}
+
+button, .send-btn, #send, .btn {
+    background: #5bf870 !important;
+    color: #000000 !important;
+    border: none !important;
+    font-family: 'VT323', monospace !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    padding: 6px 16px !important;
+    cursor: pointer !important;
+}
+
+button:hover, .send-btn:hover {
+    background: #d614c6 !important;
+    color: #ffffff !important;
+}

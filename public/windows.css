@@ -498,3 +498,40 @@ a:visited {
 .link32 {
   grid-area: ff;
 }
+
+/* Chat window overlay-scanline support */
+.window.overlay-scanline {
+  z-index: 10001 !important;
+}
+
+/* Chat layout overrides */
+#chat .sidebar {
+  flex: 0 0 20% !important;
+}
+.chat-sidebar {
+  border-right: 1px solid var(--phosphor);
+}
+.sidebar-section-title {
+  padding: 8px;
+  font-weight: bold;
+  border-bottom: 1px solid var(--phosphor);
+  text-transform: uppercase;
+}
+.user-item:hover {
+  background: rgba(91, 248, 112, 0.1) !important;
+}
+.btn-settings {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--phosphor);
+  color: var(--phosphor);
+  font-family: inherit;
+  font-size: 16px;
+  padding: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.btn-settings:hover {
+  background: var(--phosphor);
+  color: #000;
+}

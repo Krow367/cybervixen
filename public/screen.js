@@ -188,11 +188,12 @@ export function clear(screen = document.querySelector(".terminal")) {
 async function init() {
     // Fetch each window's content HTML then build the window programmatically.
     // The .html files contain only the inner body markup — no chrome.
-    const [blogHTML, recipesHTML, aboutHTML, linksHTML] = await Promise.all([
+    const [blogHTML, recipesHTML, aboutHTML, linksHTML, chatHTML] = await Promise.all([
         fetch("./commands/blog/blog.html").then(r => r.text()),
         fetch("./commands/recipes/recipes.html").then(r => r.text()),
         fetch("./commands/about/about.html").then(r => r.text()),
         fetch("./commands/links/links.html").then(r => r.text()),
+        fetch("./commands/chat/chat.html").then(r => r.text()),
     ]);
 
     createWindow("blog", {
@@ -215,6 +216,11 @@ async function init() {
     createWindow("links", {
         title: "web.exe - Capturing your data, one strand at a time",
         contentHTML: linksHTML,
+    });
+
+    createWindow("chat", {
+        title: "SRC.EXE - SERENITY RELAY CHAT - YOU CHAT. WE READ.",
+        contentHTML: chatHTML,
     });
     const artHTML = await fetch("./commands/repair/repair.html").then(r => r.text());
     document.body.insertAdjacentHTML("beforeend", artHTML);

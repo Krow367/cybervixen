@@ -32,6 +32,7 @@ export const commands = new Map([
     ["theme amber", { ...base("theme"), theme: "amber" }],
     ["foxhound", base("foxhound")],
     ["foxclaw", { module: "./foxClaw/index.js"}],
+    ["chat", base("chat")],
 
     // Aliases
     ["guestbook", { alias: "atabook" }],
