@@ -331,6 +331,11 @@ div.sourceCode {
 
 }
 
+.scrollbox-content img {
+  height: auto;
+  max-width: 100%;
+}
+
 pre code,
 pre.sourceCode code {
     font-size: inherit;
