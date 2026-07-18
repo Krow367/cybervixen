@@ -36,22 +36,31 @@
   background-color: transparent !important;
 }
 
-/* Top Row: Log and Calc */
-.foxclaw-top-row {
-  display: flex;
-  gap: 8px;
-  height: 110px;
-  flex-shrink: 0;
-  text-transform: none !important;
-}
-
-/* Bottom Row: Map and Sidebar */
+/* Bottom Row: Viewport column (logs+map stacked) and right Sidebar */
 .foxclaw-bottom-row {
   display: flex;
   gap: 8px;
   flex: 1;
   min-height: 0;
   text-transform: none !important;
+}
+
+/* Viewport column: logs stacked above the map */
+.foxclaw-viewport-col {
+  flex: 7;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Log strip above map — compact, fixed height */
+.foxclaw-log-strip {
+  display: flex;
+  gap: 8px;
+  height: 110px;
+  flex-shrink: 0;
 }
 
 .foxclaw-panel {
@@ -68,17 +77,21 @@
 
 .log-panel  { flex: 7; }
 .calc-panel { flex: 3; }
-.map-panel  { flex: 7; min-width: 0; min-height: 0; }
+
+/* Map panel fills remaining height in the viewport column */
+.map-panel  { flex: 1; min-width: 0; min-height: 0; }
 
 .foxclaw-sidebar {
   flex: 3;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
 }
 
-.status-panel  { height: 120px; flex-shrink: 0; }
-.reserved-panel { flex: 1; }
+/* Status auto-sizes to its content; no hard cap */
+.status-panel  { flex-shrink: 0; }
+.reserved-panel { flex: 1; min-height: 0; }
 
 /* Panel header — hidden (no border) when empty, e.g. map mode */
 .panel-header {
@@ -108,6 +121,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow: visible;
 }
 
 .status-row {
@@ -133,7 +147,18 @@
 
 .reserved-row {
   font-size: calc(1.7vh * var(--fc-scale));
+  white-space: pre;
 }
+
+/* ASCII durability bar in the Parts pane */
+.dur-bar-wrap {
+  font-size: calc(1.6vh * var(--fc-scale));
+  white-space: pre;
+  line-height: 1.2;
+}
+
+.dur-bar-fill  { color: inherit; }
+.dur-bar-empty { color: rgba(124,255,124,0.25); }
 
 .foxclaw-map {
   margin: auto;

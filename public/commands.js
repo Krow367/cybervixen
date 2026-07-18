@@ -31,12 +31,12 @@ export const commands = new Map([
     ["theme green", { ...base("theme"), theme: "green" }],
     ["theme amber", { ...base("theme"), theme: "amber" }],
     ["foxhound", base("foxhound")],
-    ["foxclaw", {module: "./commands/underconstruction.js"}],
+    ["foxclaw", { module: "./foxClaw/index.js"}],
 
     // Aliases
     ["guestbook", { alias: "atabook" }],
     ["load foxhound", { alias: "foxhound" }],
     ["load project foxhound", { alias: "foxhound" }],
     ["project foxhound", { alias: "foxhound" }],
-    ["load foxclaw", {alias: "foxclaw"}],
+    ["load foxclaw", { alias: "foxclaw" }],
 ]);
