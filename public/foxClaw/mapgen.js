@@ -20,7 +20,7 @@ export function carveNetworkLevel({ nodeCount = 8, securityRating = 1 } = {}) {
     const baseNodeCount = Math.max(6, Math.floor(nodeCount * sizeMultiplier));
 
     const graph = createNetworkGraph(baseNodeCount, topology);
-    placeNetworkNodes(graph.nodes);
+    placeNetworkNodes(graph.nodes, topology);
 
     const margin = 4;
     const width  = Math.max(...graph.nodes.map(n => n.x + n.w)) + margin;
@@ -54,15 +54,55 @@ function createNetworkGraph(count, topology) {
         else if (i === count - 2) type = "firewall"; // gateway before core
         else if (Math.random() < 0.2) type = "cache";
 
-        // Varied Room Shapes and Sizes (rect, square, circle/cross)
-        const shapeType = i === 0 ? "rect" : ["rect", "square", "cross", "circle"][randInt(0, 3)];
-        let w = randInt(8, 12);
-        let h = randInt(8, 12);
-        if (type === "core") { w = randInt(14, 18); h = randInt(14, 18); }
-        if (type === "entry") { w = 6; h = 6; }
-        if (shapeType === "square") {
-            const size = randInt(8, 11);
-            w = size; h = size;
+        let shapeType = "rect";
+        let w = 8, h = 8;
+
+        if (topology === "ring") {
+            // Ring levels have smooth, circular nodes reflecting data loops
+            shapeType = "circle";
+            if (type === "entry") { w = 8; h = 8; }
+            else if (type === "core") { w = 14; h = 14; }
+            else if (type === "firewall") { w = 12; h = 12; }
+            else if (type === "cache") { w = 10; h = 10; }
+            else { w = 8; h = 8; }
+        } else if (topology === "star") {
+            // Star levels have a massive cross-shaped central hub and square satellites
+            if (type === "firewall") {
+                shapeType = "cross";
+                w = 14; h = 14;
+            } else {
+                shapeType = "square";
+                if (type === "entry") { w = 6; h = 6; }
+                else if (type === "core") { w = 12; h = 12; }
+                else if (type === "cache") { w = 10; h = 10; }
+                else { w = 8; h = 8; }
+            }
+        } else if (topology === "mesh") {
+            // Mesh levels have sharp rectangular matrices representing grids
+            shapeType = Math.random() < 0.5 ? "square" : "rect";
+            if (type === "entry") { w = 6; h = 6; }
+            else if (type === "core") { w = 13; h = 13; }
+            else {
+                w = randInt(8, 12);
+                h = randInt(8, 12);
+                if (shapeType === "square") {
+                    const size = randInt(8, 10);
+                    w = size; h = size;
+                }
+            }
+        } else {
+            // Line topology (Bus/Chain) gets a hybrid linear structure with various shapes
+            shapeType = ["rect", "square", "circle", "cross"][randInt(0, 3)];
+            if (type === "entry") { w = 6; h = 6; }
+            else if (type === "core") { w = 12; h = 12; }
+            else {
+                w = randInt(8, 12);
+                h = randInt(8, 12);
+                if (shapeType === "square") {
+                    const size = randInt(8, 11);
+                    w = size; h = size;
+                }
+            }
         }
 
         nodes.push({
@@ -79,8 +119,6 @@ function createNetworkGraph(count, topology) {
 
     // Build connections based on network topology
     if (topology === "star") {
-        // Center node is firewall (count-2) or a main hub. Let's make the firewall node the center hub
-        // that all other nodes must connect through to reach the core.
         const centerIdx = count - 2; // Firewall node
         // Connect entry to center
         link(nodes[0], nodes[centerIdx]);
@@ -91,19 +129,15 @@ function createNetworkGraph(count, topology) {
             link(nodes[i], nodes[centerIdx]);
         }
     } else if (topology === "ring") {
-        // Ring topology: 0 -> 1 -> 2 -> ... -> firewall -> core -> 0
         for (let i = 0; i < count; i++) {
             link(nodes[i], nodes[(i + 1) % count]);
         }
     } else if (topology === "mesh") {
-        // Partial mesh: Chain them first to ensure connectivity, then add extra links
         for (let i = 0; i < count - 1; i++) {
             link(nodes[i], nodes[i + 1]);
         }
-        // Add random links, but avoid bypassing the firewall gating the core (nodes[count-1])
         for (let i = 0; i < count; i++) {
             for (let j = i + 2; j < count; j++) {
-                // Core (count-1) should ONLY be connected to Firewall (count-2) to ensure Firewall blocks it.
                 if (j === count - 1 && i !== count - 2) continue;
                 if (Math.random() < 0.25) {
                     link(nodes[i], nodes[j]);
@@ -111,8 +145,6 @@ function createNetworkGraph(count, topology) {
             }
         }
     } else {
-        // Line / Chain topology
-        // Ensure Firewall node (count-2) is the ONLY path to Core (count-1)
         for (let i = 0; i < count - 1; i++) {
             link(nodes[i], nodes[i + 1]);
         }
@@ -128,18 +160,50 @@ function link(a, b) {
 
 // ── Room Placement ───────────────────────────────────────────────────────────
 
-function placeNetworkNodes(nodes) {
-    const margin = 2;
-    let currentX = margin;
+function placeNetworkNodes(nodes, topology) {
+    const margin = 4;
 
-    // Linear distribution left-to-right to naturally space topology nodes out
-    nodes.forEach(n => {
-        n.x = currentX + randInt(4, 8);
-        n.y = randInt(-6, 6);
-        currentX = n.x + n.w;
-    });
+    if (topology === "star") {
+        // Star Layout: Place the Firewall hub in the center, arrange satellites in a circle around it
+        const centerNode = nodes.find(n => n.type === "firewall") || nodes[0];
+        centerNode.x = 22;
+        centerNode.y = 22;
 
-    // Resolve overlaps
+        const satellites = nodes.filter(n => n !== centerNode);
+        satellites.forEach((n, idx) => {
+            const angle = (idx * 2 * Math.PI) / satellites.length;
+            const radius = 16;
+            n.x = Math.round(centerNode.x + Math.cos(angle) * radius - n.w / 2);
+            n.y = Math.round(centerNode.y + Math.sin(angle) * radius - n.h / 2);
+        });
+    } else if (topology === "ring") {
+        // Ring Layout: Arrange all nodes in a clean circular perimeter loop
+        nodes.forEach((n, idx) => {
+            const angle = (idx * 2 * Math.PI) / nodes.length;
+            const radius = 18;
+            n.x = Math.round(22 + Math.cos(angle) * radius - n.w / 2);
+            n.y = Math.round(22 + Math.sin(angle) * radius - n.h / 2);
+        });
+    } else if (topology === "mesh") {
+        // Mesh Layout: Grid placement (e.g. 3 columns grid) with slight jittering
+        const cols = 3;
+        nodes.forEach((n, idx) => {
+            const r = Math.floor(idx / cols);
+            const c = idx % cols;
+            const spacingX = 16;
+            const spacingY = 16;
+            n.x = margin + c * spacingX + randInt(-1, 1);
+            n.y = margin + r * spacingY + randInt(-1, 1);
+        });
+    } else {
+        // Line Layout: Straight sequence flow
+        nodes.forEach((n, idx) => {
+            n.x = margin + idx * 13 + randInt(-1, 1);
+            n.y = 12 + randInt(-3, 3);
+        });
+    }
+
+    // Resolve overlaps (secondary safety check)
     for (let a = 0; a < nodes.length; a++) {
         for (let b = a + 1; b < nodes.length; b++) {
             if (rectsOverlap(nodes[a], nodes[b])) {

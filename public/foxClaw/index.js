@@ -48,6 +48,24 @@ export default async function () {
         return;
     }
 
+    let credentialUnlocked = false;
+    try {
+        const savedState = localStorage.getItem("foxhoundState");
+        if (savedState) {
+            const parsed = JSON.parse(savedState);
+            credentialUnlocked = !!parsed.credentialUnlocked;
+        }
+    } catch (e) {
+        console.error("Error reading foxhoundState", e);
+    }
+
+    if (!credentialUnlocked) {
+        await type("ERROR: Access Denied.");
+        await type("Serenity Industries credentials required.");
+        await type("Please report yourself to the nearest Citizen Order Officer for violation of Serenity Industries net access terms of service.");
+        return;
+    }
+
     await ensureAssets();
     clear();
     await new Promise(resolve => setTimeout(() => init(resolve), 50));
