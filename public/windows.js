@@ -41,6 +41,19 @@ let openCount = 0;
  */
 let onFocusChangeCallback = null;
 
+// ─── Module-level lightbox helpers ───────────────────────────────────────────
+
+/**
+ * Closes the global blog-image lightbox. Defined at module scope so it can be
+ * called from both the lightbox click handler in setupWindow and from handleEscapeKey.
+ */
+function closeLightbox() {
+    const lightbox = document.getElementById("lightbox");
+    const lightboxImg = document.getElementById("lightbox-img");
+    if (lightbox) lightbox.hidden = true;
+    if (lightboxImg) lightboxImg.src = "";
+}
+
 // ─── Focus-change bridge ───────────────────────────────────────────────────────
 
 /**
@@ -698,6 +711,9 @@ export function setupWindow(root) {
 /**
  * Handles the Escape key: closes the currently active window unless the main
  * terminal input has focus (so Escape can still be used in the terminal).
+ * Chat windows handle their own escape via capture-phase listeners registered
+ * in index.mjs and call stopImmediatePropagation(), so this handler won't run
+ * for those cases.
  */
 function handleEscapeKey(event) {
     if (event.key !== "Escape") return;
@@ -709,14 +725,9 @@ function handleEscapeKey(event) {
     const liveInput = document.querySelector('[contenteditable="true"]');
     const state = getWindowState(activeWindow);
     if (document.activeElement === liveInput && !state.acceptsTerminal) return;
-    const lightbox = document.getElementById("lightbox");
-    const lightboxImg = document.getElementById("lightbox-img");
-    const closeLightbox = () => {
-        lightbox.hidden = true;
-        lightboxImg.src = "";
-    };
 
-    if (!lightbox.hidden) {
+    const lightbox = document.getElementById("lightbox");
+    if (lightbox && !lightbox.hidden) {
         closeLightbox();
         return;
     }

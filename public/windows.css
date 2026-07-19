@@ -17,7 +17,7 @@
   left: 12vw;
   width: 76vw;
   height: 72vh;
-  z-index: 5;
+  z-index: 5; /* Default: below scanlines (z-index 8888/9999) */
   display: block;
   overflow: hidden;
   color: var(--phosphor);
@@ -172,7 +172,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1rem;
-  font-size: clamp(1rem, 2cqw, 2rem);
+  font-size: 1.2rem;
   background: var(--window-tint);
   border-right: 1px solid rgba(var(--phosphor-rgb), 0.4);
 }
@@ -500,8 +500,10 @@ a:visited {
 }
 
 /* Chat window overlay-scanline support */
+/* Default: window sits below scanlines (z-index 20000/19999)             */
+/* Toggling "OVERLAY SCANLINE EFFECT" lifts the window above them.       */
 .window.overlay-scanline {
-  z-index: 10001 !important;
+  z-index: 30000 !important;
 }
 
 /* Chat layout overrides */
@@ -517,9 +519,13 @@ a:visited {
   border-bottom: 1px solid var(--phosphor);
   text-transform: uppercase;
 }
+.user-item {
+  font-size: 1.2rem !important;
+}
 .user-item:hover {
   background: rgba(91, 248, 112, 0.1) !important;
 }
+
 .btn-settings {
   width: 100%;
   background: transparent;
@@ -534,4 +540,41 @@ a:visited {
 .btn-settings:hover {
   background: var(--phosphor);
   color: #000;
+}
+
+/* Chat view height linking overrides */
+.chat-content-pane {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  position: relative !important;  /* allows absolute positioning of corner btn */
+}
+
+#chat-room-view {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  position: relative !important; /* needed for overlay positioning */
+  overscroll-behavior: contain !important;
+}
+
+#chattable {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Settings view fills the full content pane */
+#chat-settings-view {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  overscroll-behavior: contain !important;
 }
