@@ -20,14 +20,14 @@ async function printAsciiArt(path) {
 
 export default async function () {
     if (!localStorage.getItem("helpRepaired")) {
-        await type("THE MACHINE OFFERS WHAT LITTLE HELP IT CAN... \nAvailable commands:\nhelp, clear, blog, recipes, about, atabook, links, follow, balls:;̷͓͆X̴͓͒:̷̲̋^̶̱̒!̶̛͉$̶͎̈_̵̪͑\̷̻͝*̴̠̓~̴̝̚!̵̢̐>̷̗̈́@̶͖̉#̶̫̈́'̶̣̐,̴̱̔~̵̀ͅ▒̷̬̅:̶̢̽|̵͉̈́7̵̡̚(̶͎̿^̵̳̿*̵̢̅2̶̤̈́9̸͓͐-̷̘͛_̴̯̈&̷̥̿-̸̣̓&̷̧̿<̴̗͆\nERROR: FILE CORRUPTED. UNABLE TO DISPLAY ALL COMMANDS\nPlease run 'repair' to fix corrupted file.");
+        await type("THE MACHINE OFFERS WHAT LITTLE HELP IT CAN... \nAvailable commands:\nhelp, clear, blog, recipes, about, atabook, links, follow, chat, balls:;̷͓͆X̴͓͒:̷̲̋^̶̱̒!̶̛͉$̶͎̈_̵̪͑\̷̻͝*̴̠̓~̴̝̚!̵̢̐>̷̗̈́@̶͖̉#̶̫̈́'̶̣̐,̴̱̔~̵̀ͅ▒̷̬̅:̶̢̽|̵͉̈́7̵̡̚(̶͎̿^̵̳̿*̵̢̅2̶̤̈́9̸͓͐-̷̘͛_̴̯̈&̷̥̿-̸̣̓&̷̧̿<̴̗͆\nERROR: FILE CORRUPTED. UNABLE TO DISPLAY ALL COMMANDS\nPlease run 'repair' to fix corrupted file.");
     } else if (!localStorage.getItem("foxhoundState")) {
-        await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, balls");
+        await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, chat, balls");
         await type("hard reset, theme [amber/green], follow, load [program]");
 
         await printAsciiArt("./commands/repair/repair.html");
     } else {
-                await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, balls");
+                await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, chat, balls");
         await type("hard reset, theme [amber/green], follow, load [program]");
 
         await printAsciiArt("./commands/repair/repair.html");

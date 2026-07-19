@@ -142,77 +142,6 @@ function playDialUpSound() {
     hissSource.stop(hissTime + hissDuration);
 }
 
-function renderUserList(win, users = []) {
-    const container = win.querySelector("#chat-user-list");
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    const list = Array.isArray(users) ? users : Object.values(users);
-    const localName = window.chattable?.user?.name;
-    const localFlair = window.chattable?.user?.flair || localStorage.getItem("flair");
-    
-    list.forEach(user => {
-        const userName = typeof user === "string" ? user : (user?.name || "Anonymous");
-        const item = document.createElement("div");
-        item.className = "user-item";
-        item.style.padding = "6px 8px";
-        item.style.borderBottom = "1px solid rgba(var(--phosphor-rgb, 91, 248, 112), 0.15)";
-        item.style.fontSize = "1.1rem";
-        item.style.color = "var(--phosphor)";
-        item.style.display = "flex";
-        item.style.alignItems = "center";
-        item.style.gap = "8px";
-
-        const nameSpan = document.createElement("span");
-        nameSpan.textContent = userName;
-        item.appendChild(nameSpan);
-
-        // Determine user flair dynamically based on context
-        let userFlair = null;
-        if (user && typeof user === "object" && user.flair) {
-            userFlair = user.flair;
-        } else {
-            const userNameLower = userName.toLowerCase();
-            if (userNameLower === "cybervixen") {
-                userFlair = "owner";
-            } else if (localName && userNameLower === localName.toLowerCase()) {
-                userFlair = localFlair;
-            }
-        }
-
-        // Render user flair badge if present
-        if (userFlair) {
-            const flairSpan = document.createElement("span");
-            flairSpan.style.fontSize = "0.75em";
-            flairSpan.style.fontWeight = "bold";
-            flairSpan.style.textTransform = "uppercase";
-            flairSpan.style.padding = "0 4px";
-            
-            const flair = userFlair.toLowerCase();
-            if (flair === "owner") {
-                flairSpan.textContent = "[OWNER]";
-                flairSpan.style.color = "#FF3333";
-                flairSpan.style.textShadow = "0 0 3px #FF3333";
-            } else if (flair === "mod" || flair === "moderator") {
-                flairSpan.textContent = "[MOD]";
-                flairSpan.style.color = "var(--phosphor, #5bf870)";
-                flairSpan.style.textShadow = "0 0 3px var(--phosphor, #5bf870)";
-            } else if (flair === "tester" || flair === "beta") {
-                flairSpan.textContent = "[TESTER]";
-                flairSpan.style.color = "var(--phosphor, #5bf870)";
-                flairSpan.style.textShadow = "0 0 3px var(--phosphor, #5bf870)";
-            } else {
-                flairSpan.textContent = `[${userFlair.toUpperCase()}]`;
-                flairSpan.style.color = "var(--phosphor, #5bf870)";
-            }
-            item.appendChild(flairSpan);
-        }
-
-        container.appendChild(item);
-    });
-}
-
 export default async function () {
     // Ensure chat window frame is loaded and appended to DOM immediately
     await ensureWindowCreated("chat");
@@ -304,10 +233,6 @@ export default async function () {
         }, 100);
     };
 
-    const onUsersUpdate = (list) => {
-        renderUserList(win, list);
-    };
-
     win._onClose = () => {
         if (iframe) iframe.src = "about:blank";
         document.removeEventListener("keydown", handleKeyDown, true);
@@ -316,40 +241,13 @@ export default async function () {
             document.removeEventListener("keydown", agreeKeyHandler, true);
             agreeKeyHandler = null;
         }
-        if (window.chattable) {
-            window.chattable.off("connection", onUsersUpdate);
-        }
         clearTimeout(escapeConfirmTimer);
         hideConfirm();
     };
 
-    const loadAndInit = () => {
-        if (window.chattable && typeof window.chattable.initialize === "function") {
-            window.chattable.loaded = false;
-            window.chattable.settings.initialized = false;
-            if (window.chattableLoadingLoop) {
-                clearInterval(window.chattableLoadingLoop);
-            }
-
-            if (iframe && (iframe.src === "about:blank" || !iframe.src)) {
-                iframe.src = "https://iframe.chat/embed?chat=39818112";
-            }
-
-            window.chattable.off("connection", onUsersUpdate);
-            window.chattable.on("connection", onUsersUpdate);
-
-            window.chattable.initialize({ stylesheet: "/commands/chat/chattable.css" });
-        }
-    };
-
-    const isLibraryLoaded = window.chattable && typeof window.chattable.initialize === "function";
-    if (!isLibraryLoaded) {
-        const script = document.createElement("script");
-        script.src = "https://iframe.chat/scripts/main.min.js";
-        script.onload = loadAndInit;
-        document.head.appendChild(script);
-    } else {
-        loadAndInit();
+    // Load static KiwiIRC client iframe on demand
+    if (iframe && (iframe.src === "about:blank" || !iframe.src)) {
+        iframe.src = "./kiwi/index.html";
     }
 
     // Bind agreement logic based on session state

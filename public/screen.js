@@ -190,6 +190,8 @@ async function init() {
         registerLazyWindow("chat", {
             title: "SRC.EXE - SERENITY RELAY CHAT - YOU CHAT. WE READ.",
             url: "./commands/chat/chat.html",
+            width: "79vw",
+            height: "75vh",
         });
 
         // Start boot sequence immediately without blocking
