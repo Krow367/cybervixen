@@ -1,18 +1,5 @@
 /**
- * screen.js — Terminal Display & Boot Sequence
- *
- * Responsible for:
- *   - The power-on / boot animation sequence.
- *   - The main terminal read-eval-print loop (REPL).
- *   - Helper functions: clear(), getScreen().
- *   - Routing keyboard focus between the terminal and windows.
- *   - Initialising the window manager on page load.
- *
- * Imports FROM: io.js, windows.js
- * Imported BY:  command modules
- *
- * Dependency chain (no cycles):
- *   windows.js  ←  io.js  ←  screen.js  ←  command modules
+ * screen.js — Terminal Display & Boot Sequence (Streamlined)
  */
 
 import { parse, type, prompt, input, loadBlogPosts, loadRecipeList } from "./io.js";
@@ -22,12 +9,11 @@ import {
     closeWindow,
     minimizeWindow,
     setupWindow,
-    setupAllWindows,
     createWindow,
     setupGlobalFocusBehavior,
     setOnFocusChange,
-    isWindowVisible,
-    isWindowMinimized,
+    registerLazyWindow,
+    ensureWindowCreated
 } from "./windows.js";
 
 globalThis.DEBUG =
@@ -56,8 +42,6 @@ setOnFocusChange((host) => {
     }
 });
 
-// ─── Terminal helpers ─────────────────────────────────────────────────────────
-
 function getTerminal() {
     return document.querySelector(DEFAULT_TERMINAL_SELECTOR);
 }
@@ -70,8 +54,6 @@ function focusTerminalInput() {
     getLiveInput()?.focus();
     activeTypingHost = null;
 }
-
-// ─── Public typing-host API ───────────────────────────────────────────────────
 
 export function getTypingHost() {
     return activeTypingHost || getTerminal();
@@ -90,8 +72,7 @@ async function on() {
 
 async function power() {
     await pause(0.5);
-    document.getElementById("monitor").classList.toggle("turn-on");
-
+    document.getElementById("monitor")?.classList.toggle("turn-on");
 }
 
 export async function boot() {
@@ -102,18 +83,14 @@ export async function boot() {
         for (const note of notes) {
             await type(note, { wait: 0 });
         }
-    }
-    if (!globalThis.DEBUG) {
-        await type(`Serenity Industries(TM) CV-2077 terminal interface`, { initialWait: 2000 });
-        await type(`Loading.....`, { initialWait: 500 });
-    }
-
-    if (!globalThis.DEBUG) {
+    } else {
+        await type("Serenity Industries(TM) CV-2077 terminal interface", { initialWait: 2000 });
+        await type("Loading.....", { initialWait: 500 });
         await type(`
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠙⠻⢶⣄⡀⠀⠀⠀⢀⣤⠶⠛⠛⡇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣇⠀⠀⣙⣿⣦⣤⣴⣿⣁⠀⠀⣸⠇⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣡⣾⣿⣿⣿⣿⣿⣿⣿⣷⣌⠋⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⣷⣄⡈⢻⣿⡟⢁⣠⣾⣿⣦⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⣿⣷⣄⡈⢻⣿⟁⢁⣠⣾⣿⣦⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⠘⣿⠃⣿⣿⣿⣿⡏⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠈⠛⣰⠿⣆⠛⠁⠀⡀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿⣦⠀⠘⠛⠋⠀⣴⣿⠁⠀⠀⠀⠀⠀
@@ -129,9 +106,9 @@ export async function boot() {
             hideCursor: true,
         });
 
-        await type(`Welcome to FoxOS ver. 1.33.7`, { initialWait: 100 });
-        await type(`"Harmony engineered."`, { initialWait: 100 });
-        await type(`Try 'HELP' for commands.`, { initialWait: 100 });
+        await type("Welcome to FoxOS ver. 1.33.7", { initialWait: 100 });
+        await type('"Harmony engineered."', { initialWait: 100 });
+        await type("Try 'HELP' for commands.", { initialWait: 100 });
         for (const note of notes) {
             await type(note, { wait: 0 });
         }
@@ -143,20 +120,25 @@ export async function boot() {
 
 async function checkContentUpdates() {
     const notes = [];
-    const blogIndex = await fetch("/blog/index.json").then(r => r.json());
-    const recipeIndex = await fetch("/recipes/index.json").then(r => r.json());
+    try {
+        const [blogIndex, recipeIndex] = await Promise.all([
+            fetch("/blog/index.json").then(r => r.json()),
+            fetch("/recipes/index.json").then(r => r.json())
+        ]);
 
-    const savedBlog = JSON.parse(localStorage.getItem("blogIndexSnapshot") || "null");
-    const savedRecipe = JSON.parse(localStorage.getItem("recipeIndexSnapshot") || "null");
+        const savedBlog = JSON.parse(localStorage.getItem("blogIndexSnapshot") || "null");
+        const savedRecipe = JSON.parse(localStorage.getItem("recipeIndexSnapshot") || "null");
 
-    if (savedBlog !== null && JSON.stringify(savedBlog) !== JSON.stringify(blogIndex)) {
-        notes.push("Welcome back — there is a new blog post uploaded from CyberVixen.");
+        if (savedBlog !== null && JSON.stringify(savedBlog) !== JSON.stringify(blogIndex)) {
+            notes.push("Welcome back — there is a new blog post uploaded from CyberVixen.");
+        }
+
+        if (savedRecipe !== null && JSON.stringify(savedRecipe) !== JSON.stringify(recipeIndex)) {
+            notes.push("Welcome back — there is a new recipe found in system memory.");
+        }
+    } catch (e) {
+        console.error("Content update check failed:", e);
     }
-
-    if (savedRecipe !== null && JSON.stringify(savedRecipe) !== JSON.stringify(recipeIndex)) {
-        notes.push("Welcome back — there is a new recipe found in system memory.");
-    }
-
     return notes;
 }
 
@@ -174,59 +156,60 @@ export async function main() {
 
 // ─── DOM helpers ──────────────────────────────────────────────────────────────
 
-/**
- * Clears all content from the terminal (or a given element).
- *
- * @param {Element} [screen=.terminal]
- */
 export function clear(screen = document.querySelector(".terminal")) {
-    screen.innerHTML = "";
+    if (screen) screen.innerHTML = "";
 }
 
 // ─── Initialisation ───────────────────────────────────────────────────────────
 
 async function init() {
-    // Fetch each window's content HTML then build the window programmatically.
-    // The .html files contain only the inner body markup — no chrome.
-    const [blogHTML, recipesHTML, aboutHTML, linksHTML, chatHTML] = await Promise.all([
-        fetch("./commands/blog/blog.html").then(r => r.text()),
-        fetch("./commands/recipes/recipes.html").then(r => r.text()),
-        fetch("./commands/about/about.html").then(r => r.text()),
-        fetch("./commands/links/links.html").then(r => r.text()),
-        fetch("./commands/chat/chat.html").then(r => r.text()),
-    ]);
+    try {
+        // Register lazy-loaded windows
+        registerLazyWindow("blog", {
+            title: "BLOG.EXE - RAMBLINGS OF A MAD FOX",
+            url: "./commands/blog/blog.html",
+            onOpen: loadBlogPosts,
+        });
 
-    createWindow("blog", {
-        title: "BLOG.EXE - RAMBLINGS OF A MAD FOX",
-        contentHTML: blogHTML,
-        onOpen: loadBlogPosts,
-    });
+        registerLazyWindow("recipes", {
+            title: "cookbook.exe - cyber industries(TM) is not responsible for house fires",
+            url: "./commands/recipes/recipes.html",
+            onOpen: loadRecipeList,
+        });
 
-    createWindow("recipes", {
-        title: "cookbook.exe - cyber industries(TM) is not responsible for house fires",
-        contentHTML: recipesHTML,
-        onOpen: loadRecipeList,
-    });
+        registerLazyWindow("about", {
+            title: "neko.exe",
+            url: "./commands/about/about.html",
+        });
 
-    createWindow("about", {
-        title: "neko.exe",
-        contentHTML: aboutHTML,
-    });
+        registerLazyWindow("links", {
+            title: "web.exe - Capturing your data, one strand at a time",
+            url: "./commands/links/links.html",
+        });
 
-    createWindow("links", {
-        title: "web.exe - Capturing your data, one strand at a time",
-        contentHTML: linksHTML,
-    });
+        registerLazyWindow("chat", {
+            title: "SRC.EXE - SERENITY RELAY CHAT - YOU CHAT. WE READ.",
+            url: "./commands/chat/chat.html",
+        });
 
-    createWindow("chat", {
-        title: "SRC.EXE - SERENITY RELAY CHAT - YOU CHAT. WE READ.",
-        contentHTML: chatHTML,
-    });
-    const artHTML = await fetch("./commands/repair/repair.html").then(r => r.text());
-    document.body.insertAdjacentHTML("beforeend", artHTML);
+        // Start boot sequence immediately without blocking
+        setupGlobalFocusBehavior();
+        on();
 
-    setupGlobalFocusBehavior();
-    on();
+        // Prefetch window templates in the background concurrently
+        ["blog", "recipes", "about", "links", "chat"].forEach(id => ensureWindowCreated(id));
+
+        // Fetch and append repair asset asynchronously
+        fetch("./commands/repair/repair.html")
+            .then(r => r.text())
+            .then(artHTML => {
+                document.body.insertAdjacentHTML("beforeend", artHTML);
+            })
+            .catch(e => console.error("Failed to load repair HTML:", e));
+
+    } catch (e) {
+        console.error("Initialization failed:", e);
+    }
 }
 
 if (document.readyState === "complete") {

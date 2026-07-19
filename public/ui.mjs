@@ -1,14 +1,8 @@
-//You know, I don't even remember what this was supposed to be used for. Leaving it in anyway, because fuck it.
-function fly(event) {
-	event.target.classList.toggle("fly");
-}
+/**
+ * ui.mjs — UI utilities (Streamlined)
+ */
 
 export function handleClick(event) {
-	if (event) {
-		event.preventDefault();
-	}
-	let input = document.querySelector("[contenteditable='true']");
-	if (input) {
-		input.focus();
-	}
+    if (event) event.preventDefault();
+    document.querySelector("[contenteditable='true']")?.focus();
 }

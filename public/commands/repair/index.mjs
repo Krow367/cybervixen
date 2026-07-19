@@ -59,7 +59,7 @@ export function init(onDone = () => {}) {
 
     tileContents = sliceArt();
     shuffle();
-    renderBoard();
+    renderBoard(onDone);
 
     document.addEventListener("keydown", (e) => handleKeyDown(e, onDone), { signal });
 
@@ -115,7 +115,7 @@ function shuffle() {
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 
-function renderBoard() {
+function renderBoard(onDone) {
     const terminal  = document.querySelector(".terminal");
     let puzzleGrid  = document.getElementById("puzzle-grid");
 
@@ -135,7 +135,7 @@ function renderBoard() {
         } else {
             div.className = "puzzle-tile";
             div.textContent = tileContents[board[i]];
-            div.addEventListener("click", () => handleClick(i));
+            div.addEventListener("click", () => handleClick(i, onDone));
         }
         puzzleGrid.appendChild(div);
     }
@@ -183,11 +183,11 @@ async function handleKeyDown(e, onDone) {
     board[emptyIndex] = board[validMove];
     board[validMove]  = 3;
     emptyIndex        = validMove;
-    renderBoard();
+    renderBoard(onDone);
     checkWin(onDone);
 }
 
-function handleClick(i) {
+function handleClick(i, onDone) {
     const leftTile  = emptyIndex - 1;
     const rightTile = emptyIndex + 1;
     const aboveTile = emptyIndex - COLS;
@@ -202,7 +202,8 @@ function handleClick(i) {
     board[emptyIndex] = board[i];
     board[i]          = 3;
     emptyIndex        = i;
-    renderBoard();
+    renderBoard(onDone);
+    checkWin(onDone);
 }
 
 // ─── Win condition ────────────────────────────────────────────────────────────

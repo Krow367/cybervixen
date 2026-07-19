@@ -1,80 +1,47 @@
 /**
- * io.js — Input / Output & Command Parser
- *
- * Responsible for:
- *   - The typewriter effect used to print text to the terminal.
- *   - Reading keyboard input from the terminal's contenteditable span.
- *   - Command history (localStorage-backed).
- *   - Parsing and dispatching terminal commands via commands.js registry.
- *
- * Imports FROM: windows.js, commands.js
- * Imported BY:  screen.js, command modules
- *
- * Dependency chain (no cycles):
- *   windows.js  ←  io.js  ←  screen.js  ←  command modules
+ * io.js — Input / Output & Command Parser (Streamlined)
  */
 
 import pause from "./pause.js";
-import { handleClick } from "./ui.mjs";
 import { openWindow, setupFakeScrollbar, syncWindowBackground } from "./windows.js";
 import { commands } from "./commands.js";
+
 export { openWindow };
 
 // ─── Command history ──────────────────────────────────────────────────────────
 
-function getHistory() {
-    const storage = localStorage.getItem("commandHistory");
-    if (!storage) return [];
+const prev = (() => {
     try {
-        const json = JSON.parse(storage);
-        return Array.isArray(json) ? json : [];
+        const storage = localStorage.getItem("commandHistory");
+        return JSON.parse(storage) || [];
     } catch {
         return [];
     }
-}
+})();
+let historyIndex = -1;
+let tmp = "";
 
 function addToHistory(cmd) {
-    prev = [cmd, ...prev];
+    if (!cmd) return;
+    prev.unshift(cmd);
     historyIndex = -1;
     tmp = "";
     try {
         localStorage.setItem("commandHistory", JSON.stringify(prev));
-    } catch { /* storage quota — silently ignore */ }
+    } catch { /* storage quota exceeded */ }
 }
-
-let prev = getHistory();
-let historyIndex = -1;
-let tmp = "";
 
 // ─── Typed-block tracking ─────────────────────────────────────────────────────
 
-/**
- * A "typed block" represents one call to type(). It contains the container
- * div (.typer) and an array of line state objects, each tracking the line's
- * DOM element and every character span within it. Keeping references here
- * allows later calls to replace individual characters in-place.
- *
- * Structure: { typer: Element, lines: Array<{ el: Element, chars: Array<Element> }> }
- */
 const typedBlocks = [];
 
-// ─── DOM character helpers ────────────────────────────────────────────────────
-
-/**
- * Converts a raw character into the appropriate DOM node:
- *   "\n" → <br>
- *   " "  → <span class="char"> with &nbsp;
- *   other → <span class="char"> with the literal character
- */
 function getChar(char) {
     if (typeof char !== "string") return null;
-
     if (char === "\n") return document.createElement("br");
 
     const span = document.createElement("span");
-    span.classList.add("char");
+    span.className = "char";
     span.dataset.char = char;
-
     if (char === " ") {
         span.innerHTML = "&nbsp;";
     } else {
@@ -91,7 +58,7 @@ function createTypedBlock(typer) {
 
 function createTypedLine(block) {
     const line = document.createElement("div");
-    line.classList.add("typed-line");
+    line.className = "typed-line";
     const lineState = { el: line, chars: [] };
     block.lines.push(lineState);
     block.typer.appendChild(line);
@@ -99,16 +66,14 @@ function createTypedLine(block) {
 }
 
 function resolveBlock(blockRef = -1) {
-    if (typeof blockRef !== "number") return blockRef || null;
-    const index = blockRef < 0 ? typedBlocks.length + blockRef : blockRef;
-    return typedBlocks[index] || null;
+    const idx = blockRef < 0 ? typedBlocks.length + blockRef : blockRef;
+    return typedBlocks[idx] || null;
 }
 
 function resolveLine(block, lineRef = -1) {
     if (!block) return null;
-    if (typeof lineRef !== "number") return lineRef || null;
-    const index = lineRef < 0 ? block.lines.length + lineRef : lineRef;
-    return block.lines[index] || null;
+    const idx = lineRef < 0 ? block.lines.length + lineRef : lineRef;
+    return block.lines[idx] || null;
 }
 
 function appendCharToLine(lineState, char) {
@@ -121,10 +86,6 @@ function appendCharToLine(lineState, char) {
     return node;
 }
 
-/**
- * Replaces the character span at a given index within a line.
- * Supports negative indices: -1 = last char, -2 = second to last, etc.
- */
 function replaceCharInLine(lineState, index, char) {
     if (!lineState) return null;
     const i = index < 0 ? lineState.chars.length + index : index;
@@ -144,48 +105,43 @@ function normalizeWait(wait, payload) {
 // ─── Core typing engine ───────────────────────────────────────────────────────
 
 async function typeStringIntoBlock(text, block, options, container) {
-    const { wait = 30, lineWait = 100 } = options;
-
+    const { wait = 30, lineWait = 100, getSkip } = options;
     let lineState = createTypedLine(block);
 
     for (const char of text.split("")) {
+        const skip = getSkip?.();
         if (char === "\n") {
             lineState.el.appendChild(document.createElement("br"));
             scroll(container);
-            const newlineDelay = normalizeWait(wait, { char, line: lineState, block });
-            if (newlineDelay) await pause(newlineDelay / 1000);
-            if (lineWait) await pause(lineWait / 1000);
+            if (!skip && wait > 0) {
+                const newlineDelay = normalizeWait(wait, { char, line: lineState, block });
+                if (newlineDelay) await pause(newlineDelay / 1000);
+                if (lineWait) await pause(lineWait / 1000);
+            }
             lineState = createTypedLine(block);
             continue;
         }
 
         appendCharToLine(lineState, char);
-        scroll(container);
-
-        const charDelay = normalizeWait(wait, { char, line: lineState, block });
-        if (charDelay) await pause(charDelay / 1000);
+        if (wait > 0 && !skip) {
+            scroll(container);
+            const charDelay = normalizeWait(wait, { char, line: lineState, block });
+            if (charDelay) {
+                // Add natural key press jitter (±20% variation)
+                const jitter = Math.random() * 0.4 + 0.8;
+                await pause((charDelay * jitter) / 1000);
+            }
+        }
     }
+
+    scroll(container);
 }
 
-/**
- * Executes an array of typed operations in sequence.
- *
- * Supported operation kinds:
- *   "type"    — type a string with optional per-op wait overrides
- *   "replace" — replace a single char in an existing line (supports negative index)
- *   "pause"   — wait without typing
- *
- * Example:
- *   await type([
- *     { kind: "type",    text: "Rebooting in.....3" },
- *     { kind: "replace", index: -1, char: "2", wait: 1000 },
- *     { kind: "replace", index: -1, char: "1", wait: 1000 },
- *     { kind: "replace", index: -1, char: "0", wait: 1000 },
- *   ]);
- */
 async function runTypeOps(ops, block, options, container) {
+    const { getSkip } = options;
     for (const op of ops) {
         if (!op) continue;
+        const skip = getSkip?.();
 
         if (typeof op === "string") {
             await typeStringIntoBlock(op, block, options, container);
@@ -206,13 +162,15 @@ async function runTypeOps(ops, block, options, container) {
             const targetLine = resolveLine(targetBlock, op.line ?? -1);
             replaceCharInLine(targetLine, op.index ?? -1, op.char ?? " ");
             scroll(container);
-            const delay = normalizeWait(op.wait ?? options.wait ?? 0, { op, block: targetBlock, line: targetLine });
-            if (delay) await pause(delay / 1000);
+            if (!skip) {
+                const delay = normalizeWait(op.wait ?? options.wait ?? 0, { op, block: targetBlock, line: targetLine });
+                if (delay) await pause(delay / 1000);
+            }
             continue;
         }
 
-        if (op.kind === "pause") {
-            if (op.wait) await pause(op.wait / 1000);
+        if (op.kind === "pause" && op.wait && !skip) {
+            await pause(op.wait / 1000);
         }
     }
 }
@@ -220,8 +178,8 @@ async function runTypeOps(ops, block, options, container) {
 export async function alert(text, options = {}) {
     const frame = document.getElementById("alert-frame");
     const body = document.getElementById("ab");
-    const { remove = false, } = options;
-    if (frame.classList.contains("hidden")) {
+    const { remove = false } = options;
+    if (frame && frame.classList.contains("hidden")) {
         frame.classList.remove("hidden");
         syncWindowBackground(frame);
         body.innerHTML = text;
@@ -230,32 +188,12 @@ export async function alert(text, options = {}) {
             frame.classList.add("hidden");
         }
     }
-
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-/**
- * Types the given text into a terminal container with a typewriter effect.
- *
- * @param {string|string[]|Object[]} text
- *   A plain string, array of strings, or array of operation objects.
- *
- * @param {Object}  [options]
- * @param {number|Function} [options.wait=30]         Delay (ms) between characters.
- * @param {number}  [options.initialWait=1000]         Delay (ms) before starting.
- * @param {number}  [options.lineWait=100]             Extra delay (ms) after each newline.
- * @param {number}  [options.finalWait=500]            Delay (ms) after finishing.
- * @param {boolean} [options.hideCursor=false]         Hide the blinking cursor while typing.
- *
- * @param {Element} [container]  Target element; defaults to .terminal.
- */
-export async function type(
-    text,
-    options = {},
-    container = document.querySelector(".terminal")
-) {
-    if (!text) return;
+export async function type(text, options = {}, container = document.querySelector(".terminal")) {
+    if (!text || !container) return;
 
     const {
         wait = 30,
@@ -266,35 +204,45 @@ export async function type(
     } = options;
 
     const typer = document.createElement("div");
-    typer.classList.add("typer", "active");
-    if (hideCursor) typer.classList.add("no-cursor");
-
+    typer.className = `typer active${hideCursor ? " no-cursor" : ""}`;
     container.appendChild(typer);
 
     const block = createTypedBlock(typer);
 
-    if (initialWait) await pause(initialWait / 1000);
+    let skip = false;
+    const skipHandler = () => {
+        skip = true;
+    };
+    window.addEventListener("keydown", skipHandler);
+    window.addEventListener("mousedown", skipHandler);
+
+    const runOptions = {
+        ...options,
+        wait,
+        lineWait,
+        getSkip: () => skip
+    };
+
+    if (initialWait && !skip) await pause(initialWait / 1000);
 
     if (Array.isArray(text) && text.every(item => typeof item === "string")) {
         for (const t of text) {
-            await typeStringIntoBlock(t, block, { ...options, wait, lineWait }, container);
-            if (lineWait) await pause(lineWait / 1000);
+            await typeStringIntoBlock(t, block, runOptions, container);
+            if (lineWait && !skip) await pause(lineWait / 1000);
         }
     } else if (Array.isArray(text)) {
-        await runTypeOps(text, block, { ...options, wait, lineWait }, container);
+        await runTypeOps(text, block, runOptions, container);
     } else {
-        await typeStringIntoBlock(text, block, { ...options, wait, lineWait }, container);
+        await typeStringIntoBlock(text, block, runOptions, container);
     }
 
-    await pause(finalWait / 1000);
+    if (finalWait && !skip) await pause(finalWait / 1000);
+    typer.classList.remove("active", "no-cursor");
 
-    typer.classList.remove("active");
-    if (hideCursor) typer.classList.remove("no-cursor");
+    window.removeEventListener("keydown", skipHandler);
+    window.removeEventListener("mousedown", skipHandler);
 }
 
-/**
- * Returns true when the keyCode is a printable character.
- */
 export function isPrintable(keycode) {
     return (
         (keycode > 47 && keycode < 58) ||
@@ -306,11 +254,8 @@ export function isPrintable(keycode) {
     );
 }
 
-/**
- * Moves the browser caret to the end of a contenteditable element.
- */
 export function moveCaretToEnd(el) {
-    if (!document.createRange) return;
+    if (!window.getSelection) return;
     const range = document.createRange();
     range.selectNodeContents(el);
     range.collapse(false);
@@ -319,180 +264,148 @@ export function moveCaretToEnd(el) {
     selection.addRange(range);
 }
 
-
 let audioCtx;
-
 function initAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-  return audioCtx;
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+    return audioCtx;
 }
 
 function beep(freq = 680, duration = 0.05, volume = 0.15) {
-  const ctx = initAudio();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
+    try {
+        const ctx = initAudio();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-  osc.type = "square";
-  osc.frequency.value = freq;
-  gain.gain.value = volume;
+        osc.type = "square";
+        osc.frequency.value = freq;
+        gain.gain.value = volume;
 
-  osc.connect(gain);
-  gain.connect(ctx.destination);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
 
-  osc.start();
-  osc.stop(ctx.currentTime + duration);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+    } catch { /* browser blocked audio or not supported */ }
 }
 
-
-
-/**
- * Renders a live terminal input span and resolves the returned Promise with
- * the typed text when the user presses Enter.
- *
- * @param {boolean} [pw=false]  If true, masks input as a password.
- * @returns {Promise<string>}
- */
 export async function input(pw) {
     return new Promise((resolve) => {
+        const terminal = document.querySelector(".terminal");
+        if (!terminal) return resolve("");
+
+        const inputEl = document.createElement("span");
+        inputEl.id = "input";
+        if (pw) {
+            inputEl.classList.add("password");
+            inputEl.style.webkitTextSecurity = "disc";
+            inputEl.style.textSecurity = "disc";
+        }
+        inputEl.setAttribute("contenteditable", "true");
+        inputEl.setAttribute("spellcheck", "false");
+
         const onKeyDown = (event) => {
-            if (event.keyCode === 13) {
+            if (event.key === "Enter") {
                 beep();
                 event.preventDefault();
-                event.target.setAttribute("contenteditable", false);
-                const result = cleanInput(event.target.textContent);
+                inputEl.setAttribute("contenteditable", "false");
+                inputEl.removeEventListener("keydown", onKeyDown);
+                const result = cleanInput(inputEl.textContent);
                 addToHistory(result);
                 resolve(result);
-
-            } else if (event.keyCode === 38) {
-                if (historyIndex === -1) tmp = event.target.textContent;
-                historyIndex = Math.min(prev.length - 1, historyIndex + 1);
-                event.target.textContent = prev[historyIndex];
-                if (pw) _maskInput(event.target);
-                moveCaretToEnd(event.target);
-
-            } else if (event.keyCode === 40) {
-                historyIndex = Math.max(-1, historyIndex - 1);
-                event.target.textContent = prev[historyIndex] || tmp;
-                if (pw) _maskInput(event.target);
-                moveCaretToEnd(event.target);
-
-            } else if (event.keyCode === 8) {
-                if (event.target.textContent.length === 1) {
-                    event.preventDefault();
-                    event.target.innerHTML = "";
-                }
-                if (pw) requestAnimationFrame(() => _maskInput(event.target));
-
-            } else if (isPrintable(event.keyCode) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+            } else if (event.key === "ArrowUp") {
                 event.preventDefault();
-                const keyCode = event.keyCode;
-                const chrCode = keyCode - 48 * Math.floor(keyCode / 48);
-                const chr = String.fromCharCode(96 <= keyCode ? chrCode : keyCode);
-                const span = document.createElement("span");
-                span.classList.add("char");
-                span.textContent = chr;
-                event.target.appendChild(span);
-                if (pw) _maskInput(event.target);
-                moveCaretToEnd(event.target);
+                if (historyIndex === -1) tmp = inputEl.textContent;
+                historyIndex = Math.min(prev.length - 1, historyIndex + 1);
+                if (historyIndex >= 0) {
+                    inputEl.textContent = prev[historyIndex];
+                    moveCaretToEnd(inputEl);
+                }
+            } else if (event.key === "ArrowDown") {
+                event.preventDefault();
+                historyIndex = Math.max(-1, historyIndex - 1);
+                inputEl.textContent = historyIndex === -1 ? tmp : prev[historyIndex];
+                moveCaretToEnd(inputEl);
             }
         };
 
-        const terminal = document.querySelector(".terminal");
-        const inputEl = document.createElement("span");
-        inputEl.setAttribute("id", "input");
-        if (pw) inputEl.classList.add("password");
-        inputEl.setAttribute("contenteditable", true);
-        inputEl.setAttribute("spellcheck", false);
         inputEl.addEventListener("keydown", onKeyDown);
         terminal.appendChild(inputEl);
         inputEl.focus();
     });
 }
 
-function _maskInput(el) {
-    el.setAttribute("data-pw", Array(el.textContent.length).fill("*").join(""));
-}
-
-/**
- * Looks up a raw command string in the commands registry and dispatches it.
- * Resolves aliases, loads the module, runs its default export.
- *
- * @param {string} rawInput
- */
 export async function parse(rawInput) {
     const cmd = cleanInput(rawInput);
     if (!cmd) return;
 
-    // Validate: only word characters, spaces, hyphens
     if (!/^[\w\s-]+$/.test(cmd)) throw new Error("Invalid command.");
 
-    // Look up in registry, following one level of alias
-    let entry = commands.get(cmd);
-    if (!entry) throw new Error(`Unknown command: ${cmd}`);
-    if (entry.alias) {
-        entry = commands.get(entry.alias);
-        if (!entry) throw new Error(`Unknown command: ${cmd}`);
-    }
-
-    // Naughty word filter
+    // Filter naughty words first so they are correctly intercepted
     const naughty = ["fuck", "shit", "die", "ass", "cunt"];
     if (naughty.some(word => cmd.includes(word))) {
         throw new Error("Please don't use that language");
     }
 
-    // Load the module
-    let module;
-    try {
-        module = await import(entry.module);
-    } catch (e) {
-        console.error(e);
-        e.message = e instanceof TypeError
-            ? `Unknown command: ${cmd}`
-            : "Error while executing command";
-        throw e;
+    const parts = cmd.split(/\s+/);
+    const cmdName = parts[0];
+    const args = parts.slice(1);
+
+    // Match full command string first for registry compatibility
+    let entry = commands.get(cmd);
+    if (!entry) {
+        entry = commands.get(cmdName);
     }
 
-    // Load any CSS the module declares
+    if (!entry) throw new Error(`Unknown command: ${cmd}`);
+
+    if (entry.alias) {
+        const aliasEntry = commands.get(entry.alias);
+        if (!aliasEntry) throw new Error(`Unknown command: ${cmd}`);
+        entry = aliasEntry;
+    }
+
+    const runtimeEntry = {
+        ...entry,
+        args,
+        theme: entry.theme || args[0]
+    };
+
+    let module;
+    try {
+        module = await import(runtimeEntry.module);
+    } catch (e) {
+        console.error(e);
+        throw new Error(e instanceof TypeError ? `Unknown command: ${cmd}` : "Error while executing command");
+    }
+
     module.stylesheets?.forEach(name => {
-        const dir = entry.module.replace("/index.mjs", "");
+        const dir = runtimeEntry.module.replace("/index.mjs", "");
         _addStylesheet(`${dir}/${name}.css`);
     });
 
-    await type(module.output);
+    if (module.output) await type(module.output);
     await pause();
-    await module.default?.(entry);
+    await module.default?.(runtimeEntry);
 }
 
 export function cleanInput(input) {
-    return input.toLowerCase().trim();
+    return input ? input.toLowerCase().trim() : "";
 }
 
 export function scroll(el = document.querySelector(".terminal")) {
-    el.scrollTop = el.scrollHeight;
+    if (el) el.scrollTop = 10000000;
 }
 
-/**
- * Types a prompt string then immediately awaits user input.
- *
- * @param {string}  text
- * @param {boolean} [pw=false]
- * @returns {Promise<string>}
- */
 export async function prompt(text, pw = false) {
     await type(text);
     return input(pw);
 }
 
-/**
- * Resolves when the user next presses any key or clicks anywhere.
- *
- * @returns {Promise<void>}
- */
 export async function waitForKey() {
     return new Promise((resolve) => {
         const handle = () => {
@@ -505,10 +418,8 @@ export async function waitForKey() {
     });
 }
 
-// ─── Internal helpers ─────────────────────────────────────────────────────────
-
 function _addStylesheet(href) {
-    if (document.querySelector(`link[href="${href}"]`)) return; // already loaded
+    if (document.querySelector(`link[href="${href}"]`)) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.type = "text/css";
@@ -520,20 +431,18 @@ function _addStylesheet(href) {
 
 let _recipesSetupDone = false;
 
-/**
- * Fetches recipes/index.json and populates the sidebar with links.
- * The sidebar click handler is also attached here on first call.
- * Safe to call multiple times — setup only runs once.
- */
 export async function loadRecipeList() {
     const win = document.getElementById("recipes");
     if (!win) return;
+
+    if (win.classList.contains("loading-template")) {
+        await new Promise(resolve => win.addEventListener("template-loaded", resolve, { once: true }));
+    }
 
     const sidebar = win.querySelector("[data-sidebar-content]");
     const content = win.querySelector("[data-content]");
     if (!sidebar) return;
 
-    // Wire the sidebar click listener once
     if (!_recipesSetupDone) {
         _recipesSetupDone = true;
         sidebar.addEventListener("click", async (e) => {
@@ -562,24 +471,19 @@ export async function loadRecipeList() {
 let _blogSetupDone = false;
 let _blogLoaded = false;
 
-/**
- * Fetches blog/index.json, loads each post file in order, appends them
- * into the single scrolling content pane, and populates the sidebar
- * with anchor links that scroll to each post.
- *
- * The sidebar click listener is also attached here on first call.
- * Safe to call multiple times — posts are only loaded once.
- */
 export async function loadBlogPosts() {
     const win = document.getElementById("blog");
     if (!win) return;
+
+    if (win.classList.contains("loading-template")) {
+        await new Promise(resolve => win.addEventListener("template-loaded", resolve, { once: true }));
+    }
 
     const sidebar = win.querySelector("[data-sidebar-content]");
     const content = win.querySelector("[data-content]");
     const viewport = win.querySelector(".content [data-viewport]");
     if (!sidebar || !content) return;
 
-    // Wire the sidebar click listener once
     if (!_blogSetupDone) {
         _blogSetupDone = true;
         sidebar.addEventListener("click", (e) => {
@@ -591,21 +495,21 @@ export async function loadBlogPosts() {
         });
     }
 
-    // Posts are only fetched and appended once
     if (_blogLoaded) return;
     _blogLoaded = true;
 
     const files = await fetch("/blog/index.json").then(r => r.json());
 
-    for (const name of files) {
-        const html = await fetch(`/blog/${name}`).then(r => r.text());
+    // Fetch all post templates in parallel
+    const postsHTML = await Promise.all(
+        files.map(name => fetch(`/blog/${name}`).then(r => r.text()))
+    );
 
-        // Parse the fragment to find the first element with an id — used as scroll target
+    files.forEach((name, index) => {
+        const html = postsHTML[index];
         const tmp = document.createElement("div");
         tmp.innerHTML = html;
         const firstId = tmp.querySelector("[id]")?.id ?? name.replace(".html", "");
-
-        // Derive a human-readable label from the filename (e.g. "6-01-26" → "6.01.26")
         const label = name.replace(".html", "").replaceAll("-", ".");
 
         content.insertAdjacentHTML("beforeend", html);
@@ -613,8 +517,7 @@ export async function loadBlogPosts() {
             "beforeend",
             `<p><a href="#" data-anchor="#${firstId}">${label}</a></p>`
         );
-    }
+    });
 
-    // Refresh fake scrollbars now that content has been injected
     win.querySelectorAll("[data-scrollbox]").forEach(setupFakeScrollbar);
 }

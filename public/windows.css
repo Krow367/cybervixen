@@ -9,6 +9,17 @@
   z-index: auto;
 }
 
+.window-loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  font-size: 1.5rem;
+  color: var(--phosphor);
+  text-shadow: 0 0 5px var(--phosphor);
+}
+
 
 .window {
   container: window / inline-size;
@@ -542,14 +553,13 @@ a:visited {
   color: #000;
 }
 
-/* Chat view height linking overrides */
 .chat-content-pane {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
   padding: 0 !important;
   overflow: hidden !important;
-  background: transparent !important;
+  background: var(--window-tint) !important;
   position: relative !important;  /* allows absolute positioning of corner btn */
 }
 
@@ -577,4 +587,79 @@ a:visited {
   overflow-y: auto !important;
   box-sizing: border-box !important;
   overscroll-behavior: contain !important;
+}
+
+/* Welcome Splash rules overlay overrides */
+#chat-splash {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--window-tint), var(--window-tint)),
+    var(--crt-phosphor),
+    linear-gradient(#041106, #041106);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: 100vw 100vh, 100vw 100vh, 100vw 100vh;
+  background-position:
+    0 0,
+    var(--crt-offset-x, 0px) var(--crt-offset-y, 0px),
+    var(--crt-offset-x, 0px) var(--crt-offset-y, 0px);
+  color: var(--phosphor);
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: center;
+  z-index: 20;
+  text-shadow: 0 0 4px var(--phosphor);
+}
+
+#chat-splash .splash-title {
+  font-weight: bold;
+  font-size: 1.6rem;
+  margin-bottom: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+#chat-splash .rules-box {
+  max-width: 550px;
+  font-size: 1.2rem;
+  margin-bottom: 35px;
+  line-height: 1.5;
+  text-align: left;
+  border: 1px solid var(--phosphor);
+  padding: 25px;
+  background: rgba(0, 5, 0, 0.8);
+}
+
+#chat-splash .rules-title {
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 1px solid var(--phosphor);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  letter-spacing: 0.03em;
+  font-size: 1.3rem;
+}
+
+#chat-splash .agree-btn {
+  background: transparent;
+  border: 1px solid var(--phosphor);
+  color: var(--phosphor);
+  font-family: inherit;
+  font-size: 1.25rem;
+  padding: 14px 28px;
+  cursor: pointer;
+  text-shadow: inherit;
+  outline: none;
+  letter-spacing: 0.05em;
+  transition: background 0.2s;
+}
+
+#chat-splash .agree-btn:hover {
+  background: var(--phosphor);
+  color: #000;
 }
