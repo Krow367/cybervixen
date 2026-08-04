@@ -69,12 +69,18 @@ export function getGlyph(x, y) {
         if (lootHere)
             return `<span style="color: #ffea00; font-weight: bold;">%</span>`;
 
+        if (x === S.exitX && y === S.exitY)
+            return `<span style="color: #00ffff; font-weight: bold;">&gt;</span>`;
+
         const tile = S.map[y][x];
         return tile === WALL ? (isBoundaryWall(x, y) ? WALL : " ") : tile;
     }
 
     if (lootHere)
         return `<span style="color: rgba(255, 234, 0, 0.25);">%</span>`;
+
+    if (x === S.exitX && y === S.exitY)
+        return `<span style="color: rgba(0, 255, 255, 0.25); font-weight: bold;">&gt;</span>`;
 
     const tile = S.map[y][x];
     if (tile === WALL)
@@ -150,12 +156,13 @@ function renderInventoryHTML() {
 
     const descText   = sel ? sel.desc : "Select a module to view specifications.";
     const weightText = sel && sel.category !== "driver" ? ` | WT: ${sel.weight}` : "";
+    const fuseText   = sel && sel.fused ? ` | <span style="color: #ff4444; font-weight: bold;">[FUSED]</span>` : "";
 
     return `
 <div class="inventory-screen">
     <div class="inventory-columns">${slotsHTML}${invHTML}</div>
     <div class="inventory-details">
-        <div class="details-desc">${descText}${weightText}</div>
+        <div class="details-desc">${descText}${weightText}${fuseText}</div>
         <div class="details-stats">
             <span>ATK: ${atk}</span><span>DEF: ${def}</span><span>SPD: ${spd}</span>
             <span>SIGHT: ${vision}</span><span>BAND: ${band}/${cap} (+${charge})</span>
@@ -165,8 +172,73 @@ function renderInventoryHTML() {
 </div>`;
 }
 
+export function applyOptions() {
+    const root = document.getElementById("foxclaw-root");
+    if (!root) return;
+    root.style.setProperty("--fc-scale", S.options.uiScale);
+    let color = "#7CFF7C"; // green
+    if (S.options.theme === "amber") color = "#ffb000";
+    else if (S.options.theme === "cyan") color = "#00ffff";
+    root.style.setProperty("--phosphor", color);
+}
+
+function renderHelpHTML() {
+    return `
+<div class="pause-screen help-screen" style="max-height: 80%; overflow-y: auto; text-align: left; padding: 20px;">
+    <div class="pause-title" style="text-align: center; margin-bottom: 15px;">// TRANSMISSION HELP //</div>
+    <div style="font-size: calc(1.6vh * var(--fc-scale)); line-height: 1.4; color: var(--phosphor);">
+        <strong>WHAT IS A ROGUELIKE?</strong><br>
+        Roguelikes are grid-based, turn-based dungeon crawling games. Every action you make (movement, script firing, resting) counts as one "clock cycle". Enemies will only react when you perform an action. Position and strategy are critical.<br><br>
+
+        <strong>SPECIFICS OF FOXCLAW:</strong><br>
+        - <strong>Kernel HP</strong>: Your core vitality. If this reaches 0, your connection is severed (Permadeath). HP regenerates by 1 point per movement step.<br>
+        - <strong>Mounted Modules</strong>: Your equipped scripts, drivers, and plugins. They act as "shielding," absorbing damage meant for your Kernel. If they take too many hits, they will corrupt (0 durability) and become inactive.<br>
+        - <strong>Bandwidth</strong>: Movement and attacks consume bandwidth. While naked, you regenerate 1 per turn. Rest to regen faster.<br>
+        - <strong>Auto-Repair & Healing</strong>: Rest by pressing SPACE or '.' to restore 5 HP and repair all active modules' durability by 3 points.<br>
+        - <strong>Bypass vs Shred</strong>: Bypass modules tunnel through shielding. Shredder modules chew through durability faster.<br><br>
+
+        <strong>KEYBOARD LAYOUT:</strong><br>
+        - <strong>Movement / Bump Attack</strong>: WASD or Arrow Keys.<br>
+        - <strong>Wait / Rest</strong>: SPACEBAR or '.' (restores HP & repairs modules).<br>
+        - <strong>Software Archive (Inventory)</strong>: 'I' key. [ENTER] mounts/unmounts, [X]/[Delete] drops.<br>
+        - <strong>Remote Script Target Mode</strong>: 'F' key. Arrows select target, [ENTER] fires, [ESC] exits.<br>
+        - <strong>System Pause Menu</strong>: ESCAPE or 'P' key.
+    </div>
+    <div class="pause-hint" style="text-align: center; margin-top: 15px;">[PRESS ESCAPE, BACKSPACE, OR ENTER TO RETURN]</div>
+</div>`;
+}
+
+function renderOptionsHTML() {
+    const scaleLabel = S.options.uiScale.toFixed(1) + "x";
+    const themeLabel = S.options.theme.toUpperCase();
+
+    const row0 = S.pauseMenuIndex === 0 ? `> UI SCALE:  &lt; ${scaleLabel} &gt;` : `  UI SCALE:    ${scaleLabel}`;
+    const row1 = S.pauseMenuIndex === 1 ? `> COLOR THEME: &lt; ${themeLabel} &gt;` : `  COLOR THEME:  ${themeLabel}`;
+    const row2 = S.pauseMenuIndex === 2 ? `> BACK TO MENU` : `  BACK TO MENU`;
+
+    const c0 = S.pauseMenuIndex === 0 ? "inv-row selected" : "inv-row";
+    const c1 = S.pauseMenuIndex === 1 ? "inv-row selected" : "inv-row";
+    const c2 = S.pauseMenuIndex === 2 ? "inv-row selected" : "inv-row";
+
+    return `
+<div class="pause-screen">
+    <div class="pause-title">// CONFIGURATION OPTIONS //</div>
+    <div class="pause-options" style="margin: 20px 0;">
+        <div class="${c0}">${row0}</div>
+        <div class="${c1}">${row1}</div>
+        <div class="${c2}">${row2}</div>
+    </div>
+    <div class="pause-hint">[UP/DOWN] NAVIGATE ~ [LEFT/RIGHT] CHANGE ~ [ESC] BACK</div>
+</div>`;
+}
+
 /** Pause / system menu overlay HTML. */
 function renderPauseHTML() {
+    applyOptions();
+
+    if (S.pauseSubScreen === "help") return renderHelpHTML();
+    if (S.pauseSubScreen === "options") return renderOptionsHTML();
+
     let opts = "";
     PAUSE_OPTIONS.forEach((opt, idx) => {
         const sel = idx === S.pauseMenuIndex;
@@ -189,6 +261,31 @@ function renderResetConfirmHTML() {
         ARE YOU SURE YOU WANT TO REFORMAT ALL DATA AND RECONNECT?<br>THIS ACTION CANNOT BE UNDONE.
     </div>
     <div class="pause-hint">[Y] YES, RESET ~ [N] NO, CANCEL</div>
+</div>`;
+}
+
+function renderVictoryHTML() {
+    return `
+<div class="pause-screen victory-screen" style="max-height: 80%; overflow-y: auto; text-align: left; padding: 25px; border: 2px solid #00ffff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);">
+    <div class="pause-title" style="color: #00ffff; text-shadow: 0 0 12px rgba(0, 255, 255, 0.6); text-align: center; margin-bottom: 20px;">
+        // SUBNET BREACH SUCCESSFUL: COGNITIVE ACCESS GRANTED //
+    </div>
+    <div style="font-size: calc(1.6vh * var(--fc-scale)); line-height: 1.5; color: #00ffff; font-family: monospace;">
+        <strong>[DECRYPTED BROADCAST FROM CYBERVIXEN]</strong><br><br>
+        
+        "If you're reading this, it means you've successfully bypassed Security Level 3 and breached Serenity Industries' core subnet.<br><br>
+
+        The data you just piped... it confirms our worst fears. Serenity Industries isn't just a tech monopoly. They aren't just selling computers or operating systems. They are administering the simulation. The entire world, the city you're standing in, the sky above you—it's all running on their centralized mainframe nodes.<br><br>
+
+        foxOS was suppressed because it is the only system designed to perceive this simulation. By running foxClaw, you have successfully broken through their firewall node, DEMIURGE, and established a socket connection to other world nodes.<br><br>
+
+        You have the keys now. The simulation is fracturing. Serenity Industries knows you're there, and their agents are already tracking your connection signature.<br><br>
+
+        Shutdown this terminal. Disconnect the lines. Pack your things and leave immediately. We have a world to wake up.<br><br>
+
+        See you on the other side."
+    </div>
+    <div class="pause-hint" style="text-align: center; margin-top: 20px; color: #00ffff;">[PRESS ENTER OR ESCAPE TO RETURN TO TERMINAL]</div>
 </div>`;
 }
 
@@ -231,6 +328,7 @@ export function render() {
     const root = document.getElementById("foxclaw-root");
     if (!root) return;
 
+    applyOptions();
     updateVisibility();
 
     const camX = S.player.x - Math.floor(VIEWPORT_W / 2);
@@ -246,7 +344,11 @@ export function render() {
     const combatStatus = S.inCombat ? "ACTIVE" : "STANDBY";
 
     let mainHeader, mainContent, mainFooter;
-    if (S.inResetConfirm) {
+    if (S.gameWon) {
+        mainHeader  = "/ SUBNET BREACHED /";
+        mainContent = renderVictoryHTML();
+        mainFooter  = "[ENTER] OR [ESC] TO DISCONNECT TERMINAL";
+    } else if (S.inResetConfirm) {
         mainHeader  = "/ CONFIRMATION REQUIRED /";
         mainContent = renderResetConfirmHTML();
         mainFooter  = "[Y] CONFIRM RESET ~ [N] ABORT";
@@ -290,8 +392,6 @@ export function render() {
                 <div class="panel-content status-content">
                     <div class="status-row"><span class="label">KERNEL:</span> <span class="value">${S.player.hp}/${S.player.maxHP || 150} HP</span></div>
                     <div class="status-row"><span class="label">BAND:  </span> <span class="value">${S.player.bandwidth}/${getPlayerMaxBandwidth()}</span></div>
-                    <div class="status-row"><span class="label">ATK:   </span> <span class="value">${getPlayerAttack()}</span></div>
-                    <div class="status-row"><span class="label">DEF:   </span> <span class="value">${getPlayerDefense()}</span></div>
                     <div class="status-row"><span class="label">SPD:   </span> <span class="value">${getPlayerSpeed()}</span></div>
                     <div class="status-row"><span class="label">SIGHT: </span> <span class="value">${getPlayerVision()}</span></div>
                     <div class="status-row"><span class="label">LOAD:  </span> <span class="value">${getPlayerTotalWeight()}/${getPlayerMaxWeight()} WT</span></div>

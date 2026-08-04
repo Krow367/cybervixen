@@ -45,6 +45,16 @@ export let targetY = 0;
 
 export let inPauseMenu    = false;
 export let pauseMenuIndex = 0;
+export let pauseSubScreen = null; // null, "help", "options"
+export let options = {
+    uiScale: 1.0,
+    theme: "green"
+};
+
+export let securityLevel = 1;
+export let exitX = 0;
+export let exitY = 0;
+export let gameWon = false;
 
 // ── Gameplay flags ────────────────────────────────────────────────────────────
 export let gameOver      = false;
@@ -75,6 +85,12 @@ export function setTargetX(v)            { targetX = v; }
 export function setTargetY(v)            { targetY = v; }
 export function setInPauseMenu(v)        { inPauseMenu = v; }
 export function setPauseMenuIndex(v)     { pauseMenuIndex = v; }
+export function setPauseSubScreen(v)     { pauseSubScreen = v; }
+export function setOptions(v)            { options = v; }
+export function setSecurityLevel(v)      { securityLevel = v; }
+export function setExitX(v)              { exitX = v; }
+export function setExitY(v)              { exitY = v; }
+export function setGameWon(v)            { gameWon = v; }
 export function setGameOver(v)           { gameOver = v; }
 export function setPendingAction(v)      { pendingAction = v; }
 export function setInCombat(v)           { inCombat = v; }
@@ -89,15 +105,22 @@ export function pushCombatRaw(text)  { combatLog.push(text); }
 // RESET — wipes everything and generates a fresh game world
 // =============================================================================
 
-export function resetState() {
+export function resetState(nextLevel = false) {
     gameOver      = false;
     pendingAction = null;
     inCombat      = false;
     heldKeys.clear();
     inPauseMenu    = false;
     pauseMenuIndex = 0;
+    pauseSubScreen = null;
+    gameWon       = false;
 
-    const generated = carveNetworkLevel({ nodeCount: randInt(6, 9) });
+    if (!nextLevel) {
+        securityLevel = 1;
+    }
+
+    const nodeCount = randInt(5, 7) + securityLevel * 2;
+    const generated = carveNetworkLevel({ nodeCount });
     map   = generated.map;
     graph = generated.graph;
     mapW  = generated.width;
@@ -114,38 +137,50 @@ export function resetState() {
     targetY = 0;
 
     const spawn = spawnAtEntry(graph, map);
-    player = {
-        x: spawn.x, y: spawn.y,
-        hp: 150, maxHP: 150,
-        type: "player",
-        bandwidth: 0,
-        equipped: null // alias — player uses module-level `equipped`
-    };
+    
+    if (!nextLevel) {
+        player = {
+            x: spawn.x, y: spawn.y,
+            hp: 250, maxHP: 250,
+            type: "player",
+            bandwidth: 0,
+            equipped: null // alias — player uses module-level `equipped`
+        };
 
-    inventory = [
-        { ...ITEM_DB["ping_flood.sh"] },
-        { ...ITEM_DB["firewall_bypass"] },
-        { ...ITEM_DB["overclock_mod"] }
-    ];
-    equipped = {
-        script:    [ { ...ITEM_DB["backdoor.sh"] }, null ],
-        bandwidth: [ { ...ITEM_DB["sat_link"] } ],
-        driver:    [ { ...ITEM_DB["standard_driver"] }, null ],
-        plugin:    [ null, null ]
-    };
+        inventory = [
+            { ...ITEM_DB["ping_flood.sh"] },
+            { ...ITEM_DB["firewall_bypass"] },
+            { ...ITEM_DB["overclock_mod"] }
+        ];
+        equipped = {
+            script:    [ { ...ITEM_DB["backdoor.sh"] }, null ],
+            bandwidth: [ { ...ITEM_DB["sat_link"] } ],
+            driver:    [ { ...ITEM_DB["standard_driver"] } ],
+            plugin:    [ null, null ]
+        };
+        player.equipped = equipped;
 
-    // Point player's equipped reference at the module-level object so
-    // getEntity* functions work symmetrically on both player and enemies.
-    player.equipped  = equipped;
+        player.bandwidth = 100 + equipped.bandwidth.reduce(
+            (cap, b) => cap + (b && b.durability > 0 ? (b.capacity || 0) : 0), 0
+        );
 
-    // Inline initial bandwidth — avoids importing stats.js (circular dependency).
-    // sat_link has capacity:10, so starting bandwidth = 10.
-    player.bandwidth = equipped.bandwidth.reduce(
-        (cap, b) => cap + (b && b.durability > 0 ? (b.capacity || 0) : 0), 0
-    );
+        messages  = ["Modules online. Use WASD or Arrow Keys to move."];
+        combatLog = ["COMBAT LOG STANDBY"];
+    } else {
+        player.x = spawn.x;
+        player.y = spawn.y;
+        player.bandwidth = 100 + equipped.bandwidth.reduce(
+            (cap, b) => cap + (b && b.durability > 0 ? (b.capacity || 0) : 0), 0
+        );
+        messages.push(`SYSTEM: Subnet connection established. Security level increased to ${securityLevel}.`);
+    }
 
-    messages  = ["Modules online. Use WASD or Arrow Keys to move."];
-    combatLog = ["COMBAT LOG STANDBY"];
+    const coreNode = graph.nodes.find(n => n.type === "core");
+    if (coreNode) {
+        const center = nodeCenter(coreNode);
+        exitX = center.x;
+        exitY = center.y;
+    }
 
     loot = [];
     for (let i = 0; i < randInt(4, 6); i++) {
@@ -161,9 +196,13 @@ export function resetState() {
         if (n.type === "firewall") {
             type = "firewall"; // Guaranteed Firewall boss at the gateway node
         } else {
-            type = n.type === "core"  ? pick(["crawler", "sentinel"])             :
-                   n.type === "cache" ? pick(["sniffer",  "sentinel"])             :
-                                        pick(["daemon",   "watchdog", "sniffer"]);
+            if (securityLevel === 1) {
+                type = n.type === "core" ? "sniffer" : pick(["daemon", "watchdog"]);
+            } else if (securityLevel === 2) {
+                type = n.type === "core" ? "sentinel" : pick(["daemon", "watchdog", "sniffer"]);
+            } else {
+                type = n.type === "core" ? "crawler" : pick(["sniffer", "sentinel", "crawler"]);
+            }
         }
         const pos = isFloor(map[c.y]?.[c.x]) ? c : findEnemySpawn(graph, map, spawn);
         enemies.push(spawnEnemy(type, pos));

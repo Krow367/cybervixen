@@ -55,51 +55,51 @@ function createNetworkGraph(count, topology) {
         else if (Math.random() < 0.2) type = "cache";
 
         let shapeType = "rect";
-        let w = 8, h = 8;
+        let w = 12, h = 12;
 
         if (topology === "ring") {
             // Ring levels have smooth, circular nodes reflecting data loops
             shapeType = "circle";
-            if (type === "entry") { w = 8; h = 8; }
-            else if (type === "core") { w = 14; h = 14; }
-            else if (type === "firewall") { w = 12; h = 12; }
-            else if (type === "cache") { w = 10; h = 10; }
-            else { w = 8; h = 8; }
+            if (type === "entry") { w = 12; h = 12; }
+            else if (type === "core") { w = 22; h = 22; }
+            else if (type === "firewall") { w = 18; h = 18; }
+            else if (type === "cache") { w = 16; h = 16; }
+            else { w = 12; h = 12; }
         } else if (topology === "star") {
             // Star levels have a massive cross-shaped central hub and square satellites
             if (type === "firewall") {
                 shapeType = "cross";
-                w = 14; h = 14;
+                w = 20; h = 20;
             } else {
                 shapeType = "square";
-                if (type === "entry") { w = 6; h = 6; }
-                else if (type === "core") { w = 12; h = 12; }
-                else if (type === "cache") { w = 10; h = 10; }
-                else { w = 8; h = 8; }
+                if (type === "entry") { w = 10; h = 10; }
+                else if (type === "core") { w = 18; h = 18; }
+                else if (type === "cache") { w = 14; h = 14; }
+                else { w = 12; h = 12; }
             }
         } else if (topology === "mesh") {
             // Mesh levels have sharp rectangular matrices representing grids
             shapeType = Math.random() < 0.5 ? "square" : "rect";
-            if (type === "entry") { w = 6; h = 6; }
-            else if (type === "core") { w = 13; h = 13; }
+            if (type === "entry") { w = 10; h = 10; }
+            else if (type === "core") { w = 18; h = 18; }
             else {
-                w = randInt(8, 12);
-                h = randInt(8, 12);
+                w = randInt(12, 17);
+                h = randInt(12, 17);
                 if (shapeType === "square") {
-                    const size = randInt(8, 10);
+                    const size = randInt(12, 15);
                     w = size; h = size;
                 }
             }
         } else {
             // Line topology (Bus/Chain) gets a hybrid linear structure with various shapes
             shapeType = ["rect", "square", "circle", "cross"][randInt(0, 3)];
-            if (type === "entry") { w = 6; h = 6; }
-            else if (type === "core") { w = 12; h = 12; }
+            if (type === "entry") { w = 10; h = 10; }
+            else if (type === "core") { w = 18; h = 18; }
             else {
-                w = randInt(8, 12);
-                h = randInt(8, 12);
+                w = randInt(12, 18);
+                h = randInt(12, 18);
                 if (shapeType === "square") {
-                    const size = randInt(8, 11);
+                    const size = randInt(12, 16);
                     w = size; h = size;
                 }
             }
@@ -161,18 +161,18 @@ function link(a, b) {
 // ── Room Placement ───────────────────────────────────────────────────────────
 
 function placeNetworkNodes(nodes, topology) {
-    const margin = 4;
+    const margin = 6;
 
     if (topology === "star") {
         // Star Layout: Place the Firewall hub in the center, arrange satellites in a circle around it
         const centerNode = nodes.find(n => n.type === "firewall") || nodes[0];
-        centerNode.x = 22;
-        centerNode.y = 22;
+        centerNode.x = 35;
+        centerNode.y = 35;
 
         const satellites = nodes.filter(n => n !== centerNode);
         satellites.forEach((n, idx) => {
             const angle = (idx * 2 * Math.PI) / satellites.length;
-            const radius = 16;
+            const radius = 30;
             n.x = Math.round(centerNode.x + Math.cos(angle) * radius - n.w / 2);
             n.y = Math.round(centerNode.y + Math.sin(angle) * radius - n.h / 2);
         });
@@ -180,9 +180,9 @@ function placeNetworkNodes(nodes, topology) {
         // Ring Layout: Arrange all nodes in a clean circular perimeter loop
         nodes.forEach((n, idx) => {
             const angle = (idx * 2 * Math.PI) / nodes.length;
-            const radius = 18;
-            n.x = Math.round(22 + Math.cos(angle) * radius - n.w / 2);
-            n.y = Math.round(22 + Math.sin(angle) * radius - n.h / 2);
+            const radius = 32;
+            n.x = Math.round(35 + Math.cos(angle) * radius - n.w / 2);
+            n.y = Math.round(35 + Math.sin(angle) * radius - n.h / 2);
         });
     } else if (topology === "mesh") {
         // Mesh Layout: Grid placement (e.g. 3 columns grid) with slight jittering
@@ -190,16 +190,16 @@ function placeNetworkNodes(nodes, topology) {
         nodes.forEach((n, idx) => {
             const r = Math.floor(idx / cols);
             const c = idx % cols;
-            const spacingX = 16;
-            const spacingY = 16;
-            n.x = margin + c * spacingX + randInt(-1, 1);
-            n.y = margin + r * spacingY + randInt(-1, 1);
+            const spacingX = 26;
+            const spacingY = 26;
+            n.x = margin + c * spacingX + randInt(-2, 2);
+            n.y = margin + r * spacingY + randInt(-2, 2);
         });
     } else {
         // Line Layout: Straight sequence flow
         nodes.forEach((n, idx) => {
-            n.x = margin + idx * 13 + randInt(-1, 1);
-            n.y = 12 + randInt(-3, 3);
+            n.x = margin + idx * 20 + randInt(-2, 2);
+            n.y = 20 + randInt(-5, 5);
         });
     }
 
@@ -291,15 +291,29 @@ function carveCorridor(map, a, b) {
     let guard = 0;
     const limit = map.length * map[0].length * 4;
 
+    const carveWidth = 2; // Make corridors 2-tiles wide
+
+    const carveTile = (cx, cy) => {
+        for (let dy = 0; dy < carveWidth; dy++) {
+            for (let dx = 0; dx < carveWidth; dx++) {
+                const py = cy + dy;
+                const px = cx + dx;
+                if (map[py]?.[px] !== undefined) {
+                    map[py][px] = randomFloorGlyph();
+                }
+            }
+        }
+    };
+
     while (x !== tx && guard++ < limit) {
-        if (map[y]?.[x] !== undefined) map[y][x] = randomFloorGlyph();
+        carveTile(x, y);
         x += Math.sign(tx - x);
     }
     while (y !== ty && guard++ < limit) {
-        if (map[y]?.[x] !== undefined) map[y][x] = randomFloorGlyph();
+        carveTile(x, y);
         y += Math.sign(ty - y);
     }
-    if (map[y]?.[x] !== undefined) map[y][x] = randomFloorGlyph();
+    carveTile(x, y);
 }
 
 function centerOf(node) {

@@ -14,7 +14,7 @@ export const PLAYER = "@";
 export const MAX_INVENTORY = 5;
 
 // ── Pause menu options ───────────────────────────────────────────────────────
-export const PAUSE_OPTIONS = ["RESUME", "RESET", "QUIT TO TERMINAL"];
+export const PAUSE_OPTIONS = ["RESUME", "HELP", "OPTIONS", "RESTART", "QUIT TO TERMINAL"];
 
 // Ordered equipped-slot definitions shared by render and key handler.
 // Bandwidth is listed first; groups delimit category sections.
@@ -22,8 +22,7 @@ export const SLOT_KEYS = [
     { cat: "bandwidth", label: "SLOT",   idx: 0, group: "BANDWIDTH" },
     { cat: "script",    label: "SLOT 1", idx: 0, group: "SCRIPTS"   },
     { cat: "script",    label: "SLOT 2", idx: 1, group: null        },
-    { cat: "driver",    label: "SLOT 1", idx: 0, group: "DRIVERS"   },
-    { cat: "driver",    label: "SLOT 2", idx: 1, group: null        },
+    { cat: "driver",    label: "SLOT",   idx: 0, group: "DRIVERS"   },
     { cat: "plugin",    label: "SLOT 1", idx: 0, group: "PLUGINS"   },
     { cat: "plugin",    label: "SLOT 2", idx: 1, group: null        },
 ];
@@ -36,68 +35,83 @@ export const SLOT_KEYS = [
 export const ITEM_DB = {
     // ── Scripts (offensive; low shielding — tools, not armour) ───────────────
     "backdoor.sh":   { name: "backdoor.sh",   category: "script",    subcategory: "local",
-                       attack: 12, weight: 1, cost: 0,
-                       shielding: 0.05, durability: 10, maxDurability: 10,
-                       desc: "Melee script (+12 ATK). Shielding: 5%." },
+                       attack: 4, weight: 1, cost: 0,
+                       shred: 0.20,
+                       shielding: 0.05, durability: 100, maxDurability: 100,
+                       desc: "Melee script (+4 ATK). Shred Rating: +20%." },
 
     "bruteforce.py": { name: "bruteforce.py", category: "script",    subcategory: "local",
-                       attack: 20, weight: 3, cost: 0,
-                       shielding: 0.05, durability: 8, maxDurability: 8,
-                       desc: "Heavy melee script (+20 ATK). Shielding: 5%." },
+                       attack: 7, weight: 3, cost: 0,
+                       shred: 0.50,
+                       shielding: 0.05, durability: 80, maxDurability: 80,
+                       desc: "Heavy melee script (+7 ATK). Shred Rating: +50%." },
 
     "ping_flood.sh": { name: "ping_flood.sh", category: "script",    subcategory: "remote",
-                       attack: 10, range: 4, weight: 1, cost: 2,
-                       shielding: 0.05, durability: 12, maxDurability: 12,
-                       desc: "Ranged (Rng 4, +10 ATK, Cost 2). Shielding: 5%." },
+                       attack: 3, range: 4, weight: 1, cost: 2,
+                       bypass: 0.15,
+                       shielding: 0.05, durability: 120, maxDurability: 120,
+                       desc: "Ranged (Rng 4, +3 ATK, Cost 2). Bypass Rating: +15%." },
 
     "syn_flood.sh":  { name: "syn_flood.sh",  category: "script",    subcategory: "remote",
-                       attack: 18, range: 3, weight: 2, cost: 4,
-                       shielding: 0.05, durability: 10, maxDurability: 10,
-                       desc: "Ranged (Rng 3, +18 ATK, Cost 4). Shielding: 5%." },
+                       attack: 6, range: 3, weight: 2, cost: 4,
+                       bypass: 0.35,
+                       shielding: 0.05, durability: 100, maxDurability: 100,
+                       desc: "Ranged (Rng 3, +6 ATK, Cost 4). Bypass Rating: +35%." },
 
     // ── Bandwidth (medium shielding — buffer layer) ───────────────────────────
     "fiber_optic_link": { name: "Fiber Optic", category: "bandwidth",
-                          capacity: 20, chargeRate: 2, weight: 1,
-                          shielding: 0.20, durability: 15, maxDurability: 15,
-                          desc: "+20 bandwidth cap, +2 charge. Shielding: 20%." },
+                          capacity: 100, chargeRate: 10, weight: 1,
+                          shielding: 0.30, durability: 150, maxDurability: 150,
+                          desc: "+100 bandwidth cap, +10 charge. Shielding: 30%." },
 
     "sat_link":         { name: "Sat Link",    category: "bandwidth",
-                          capacity: 10, chargeRate: 5, weight: 2,
-                          shielding: 0.25, durability: 12, maxDurability: 12,
-                          desc: "+10 bandwidth cap, +5 charge. Shielding: 25%." },
+                          capacity: 50, chargeRate: 20, weight: 2,
+                          shielding: 0.35, durability: 120, maxDurability: 120,
+                          desc: "+50 bandwidth cap, +20 charge. Shielding: 35%." },
 
     // ── Drivers (high shielding — kernel wrapper, absorbs the most hits) ──────
     // speed: 100-base scale — 100 = default, 160 = 60% faster, 60 = 40% slower.
     "standard_driver": { name: "Standard Driver", category: "driver",
                          maxWeight: 15, speed: 100,
-                         shielding: 0.35, durability: 20, maxDurability: 20,
-                         desc: "+15 carry cap. Speed: 100. Shielding: 35%." },
+                         shielding: 0.55, durability: 200, maxDurability: 200,
+                         desc: "+15 carry cap. Speed: 100. Shielding: 55%." },
 
     "crawler_driver":  { name: "Crawler Driver",  category: "driver",
                          maxWeight: 25, speed: 60,
-                         shielding: 0.45, durability: 30, maxDurability: 30,
-                         desc: "+25 carry cap. Speed: 60. Shielding: 45%." },
+                         shielding: 0.65, durability: 300, maxDurability: 300,
+                         desc: "+25 carry cap. Speed: 60. Shielding: 65%." },
 
     "sprinter_driver": { name: "Sprinter Driver", category: "driver",
                          maxWeight: 8, speed: 160,
-                         shielding: 0.20, durability: 14, maxDurability: 14,
-                         desc: "+8 carry cap. Speed: 160. Shielding: 20%." },
+                         shielding: 0.40, durability: 140, maxDurability: 140,
+                         desc: "+8 carry cap. Speed: 160. Shielding: 40%." },
 
     // ── Plugins (medium shielding — utility buffers) ──────────────────────────
     "firewall_bypass": { name: "Firewall Bypass", category: "plugin",
-                         defense: 8, weight: 1,
-                         shielding: 0.30, durability: 16, maxDurability: 16,
-                         desc: "+8 DEF. Shielding: 30%." },
+                         defense: 3, weight: 1,
+                         shielding: 0.40, durability: 160, maxDurability: 160,
+                         desc: "+3 DEF. Shielding: 40%." },
 
     "overclock_mod":   { name: "Overclock Mod",   category: "plugin",
-                         attack: 6, defense: -3, weight: 1,
-                         shielding: 0.10, durability: 12, maxDurability: 12,
-                         desc: "+6 ATK, -3 DEF. Shielding: 10%." },
+                         attack: 2, defense: -2, weight: 1,
+                         fused: true,
+                         shielding: 0.20, durability: 120, maxDurability: 120,
+                         desc: "+2 ATK, -2 DEF. FUSE-LOCKED: Corrupted on unmount." },
 
     "optics_scanner":  { name: "Optics Scanner",  category: "plugin",
                          vision: 4, weight: 1,
-                         shielding: 0.15, durability: 14, maxDurability: 14,
-                         desc: "+4 sight. Shielding: 15%." }
+                         shielding: 0.30, durability: 140, maxDurability: 140,
+                         desc: "+4 sight. Shielding: 30%." },
+
+    "corrosive_injector": { name: "Corrosive Injector", category: "plugin",
+                            shred: 0.25, weight: 2,
+                            shielding: 0.25, durability: 100, maxDurability: 100,
+                            desc: "Injects acid. Shred Rating: +25%." },
+
+    "tunneling_bridge":   { name: "Tunneling Bridge", category: "plugin",
+                            bypass: 0.20, weight: 2,
+                            shielding: 0.25, durability: 100, maxDurability: 100,
+                            desc: "Bypasses firewalls. Bypass Rating: +20%." }
 };
 
 // =============================================================================
@@ -110,7 +124,7 @@ export const enemyDefs = {
     // d — basic melee attacker. Slow, predictable.
     daemon: {
         glyph: "d", color: "#ca0202ff",
-        hp: 20, maxHP: 20, speed: 100, vision: 5,
+        hp: 10, maxHP: 10, speed: 100, vision: 5,
         defaultLoadout: {
             script:    [{ ...ITEM_DB["backdoor.sh"] }, null],
             bandwidth: [null],
@@ -122,7 +136,7 @@ export const enemyDefs = {
     // w — fast pursuit hunter. Low HP, high speed, keen senses.
     watchdog: {
         glyph: "w", color: "#e8a020ff",
-        hp: 15, maxHP: 15, speed: 160, vision: 10,
+        hp: 8, maxHP: 8, speed: 160, vision: 10,
         defaultLoadout: {
             script:    [{ ...ITEM_DB["backdoor.sh"] }, null],
             bandwidth: [null],
@@ -134,7 +148,7 @@ export const enemyDefs = {
     // ? — remote attacker. Fragile but shoots from distance.
     sniffer: {
         glyph: "?", color: "#00d4ffff",
-        hp: 12, maxHP: 12, speed: 80, vision: 12,
+        hp: 6, maxHP: 6, speed: 80, vision: 12,
         defaultLoadout: {
             script:    [{ ...ITEM_DB["ping_flood.sh"] }, { ...ITEM_DB["syn_flood.sh"] }],
             bandwidth: [{ ...ITEM_DB["sat_link"] }],
@@ -146,7 +160,7 @@ export const enemyDefs = {
     // C — slow armoured brawler. High HP, heavy shielding, brutal melee.
     crawler: {
         glyph: "C", color: "#8b0000ff",
-        hp: 45, maxHP: 45, speed: 50, vision: 4,
+        hp: 18, maxHP: 18, speed: 50, vision: 4,
         defaultLoadout: {
             script:    [{ ...ITEM_DB["bruteforce.py"] }, null],
             bandwidth: [null],
@@ -158,7 +172,7 @@ export const enemyDefs = {
     // S — defensive guardian. Mixed melee/ranged, high DEF.
     sentinel: {
         glyph: "S", color: "#ff6600ff",
-        hp: 30, maxHP: 30, speed: 75, vision: 9,
+        hp: 14, maxHP: 14, speed: 75, vision: 9,
         defaultLoadout: {
             script:    [{ ...ITEM_DB["syn_flood.sh"] }, { ...ITEM_DB["backdoor.sh"] }],
             bandwidth: [{ ...ITEM_DB["fiber_optic_link"] }],
@@ -170,7 +184,7 @@ export const enemyDefs = {
     // F — apex threat. Fast, tanky, all weapons online.
     firewall: {
         glyph: "F", color: "#ff8800ff",
-        hp: 60, maxHP: 60, speed: 120, vision: 8,
+        hp: 25, maxHP: 25, speed: 120, vision: 8,
         defaultLoadout: {
             script:    [{ ...ITEM_DB["syn_flood.sh"] }, { ...ITEM_DB["bruteforce.py"] }],
             bandwidth: [{ ...ITEM_DB["fiber_optic_link"] }],

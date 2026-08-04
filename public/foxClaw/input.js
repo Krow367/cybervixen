@@ -6,7 +6,7 @@ import * as S from "./state.js";
 import { PAUSE_OPTIONS, SLOT_KEYS, MAX_INVENTORY } from "./data.js";
 import { clamp }                                    from "./utils.js";
 import { render }                                   from "./render.js";
-import { attack, pushMessage, pushCombat }          from "./combat.js";
+import { executeSequentialAttacks, pushMessage, pushCombat }          from "./combat.js";
 import { enemyTurn, hasLineOfSight }                from "./ai.js";
 import { saveGame, loadGame, wipeSave }                       from "./save.js";
 import {
@@ -21,6 +21,16 @@ import { resetState } from "./state.js";
 
 export function handleKeyDown(e, onDone, stopGame) {
     const key = e.key.toLowerCase();
+
+    if (S.gameWon) {
+        if (e.key === "Enter" || e.key === "Escape") {
+            S.setGameWon(false);
+            wipeSave();
+            if (stopGame) stopGame();
+            else window.location.reload();
+        }
+        return;
+    }
 
     if (S.gameOver) {
         if (key === "y") {
@@ -67,25 +77,103 @@ function handleResetConfirmKeys(e, key) {
 // =============================================================================
 
 function handlePauseKeys(e, key, onDone, stopGame) {
-    if (e.key === "Escape") { S.setInPauseMenu(false); render(); return; }
+
+    // ── Help Sub-Screen ──────────────────────────────────────────────────────
+    if (S.pauseSubScreen === "help") {
+        if (e.key === "Escape" || e.key === "Backspace" || e.key === "Enter" || key === "p") {
+            S.setPauseSubScreen(null);
+            S.setPauseMenuIndex(1); // Return to HELP option
+        }
+        render();
+        return;
+    }
+
+    // ── Options Sub-Screen ───────────────────────────────────────────────────
+    if (S.pauseSubScreen === "options") {
+        const OPTS_COUNT = 3; // Scale, Theme, Back
+        if (e.key === "Escape" || key === "p") {
+            S.setPauseSubScreen(null);
+            S.setPauseMenuIndex(2); // Return to OPTIONS option
+            render();
+            return;
+        }
+
+        if (e.key === "ArrowUp" || key === "w") {
+            S.setPauseMenuIndex((S.pauseMenuIndex - 1 + OPTS_COUNT) % OPTS_COUNT);
+        }
+        if (e.key === "ArrowDown" || key === "s") {
+            S.setPauseMenuIndex((S.pauseMenuIndex + 1) % OPTS_COUNT);
+        }
+
+        const scales = [1.0, 1.3, 1.6];
+        const themes = ["green", "amber", "cyan"];
+
+        if (S.pauseMenuIndex === 0) {
+            let idx = scales.indexOf(S.options.uiScale);
+            if (idx === -1) idx = 1;
+            if (e.key === "ArrowLeft" || key === "a") {
+                S.options.uiScale = scales[(idx - 1 + scales.length) % scales.length];
+            }
+            if (e.key === "ArrowRight" || key === "d") {
+                S.options.uiScale = scales[(idx + 1) % scales.length];
+            }
+        } else if (S.pauseMenuIndex === 1) {
+            let idx = themes.indexOf(S.options.theme);
+            if (idx === -1) idx = 0;
+            if (e.key === "ArrowLeft" || key === "a") {
+                S.options.theme = themes[(idx - 1 + themes.length) % themes.length];
+            }
+            if (e.key === "ArrowRight" || key === "d") {
+                S.options.theme = themes[(idx + 1) % themes.length];
+            }
+        } else if (S.pauseMenuIndex === 2) {
+            if (e.key === "Enter") {
+                S.setPauseSubScreen(null);
+                S.setPauseMenuIndex(2); // Return to OPTIONS option
+            }
+        }
+        render();
+        return;
+    }
+
+    // ── Main Pause Menu ──────────────────────────────────────────────────────
+    if (e.key === "Escape" || key === "p") {
+        S.setInPauseMenu(false);
+        render();
+        return;
+    }
 
     if (e.key === "ArrowUp"   || key === "w")
         S.setPauseMenuIndex((S.pauseMenuIndex - 1 + PAUSE_OPTIONS.length) % PAUSE_OPTIONS.length);
-    else if (e.key === "ArrowDown" || key === "s")
+    if (e.key === "ArrowDown" || key === "s")
         S.setPauseMenuIndex((S.pauseMenuIndex + 1) % PAUSE_OPTIONS.length);
-    else if (e.key === "Enter")
-        return handlePauseMenuSelect(onDone, stopGame);
 
+    if (e.key === "Enter") {
+        const choice = PAUSE_OPTIONS[S.pauseMenuIndex];
+        if (choice === "RESUME") {
+            S.setInPauseMenu(false);
+        } else if (choice === "HELP") {
+            S.setPauseSubScreen("help");
+            S.setPauseMenuIndex(0);
+        } else if (choice === "OPTIONS") {
+            S.setPauseSubScreen("options");
+            S.setPauseMenuIndex(0);
+        } else if (choice === "RESTART") {
+            wipeSave();
+            S.resetState();
+            S.setInPauseMenu(false);
+        } else if (choice === "QUIT TO TERMINAL") {
+            wipeSave();
+            if (stopGame) {
+                stopGame();
+            } else {
+                alert("Exiting foxClaw connection...", () => {
+                    window.location.reload();
+                });
+            }
+        }
+    }
     render();
-}
-
-function handlePauseMenuSelect(onDone, stopGame) {
-    const choice = PAUSE_OPTIONS[S.pauseMenuIndex];
-    S.setInPauseMenu(false);
-
-    if (choice === "RESUME")           { render(); return; }
-    if (choice === "RESET")             { S.setInResetConfirm(true); render(); return; }
-    if (choice === "SAVE AND QUIT TO TERMINAL") { saveGame(); stopGame(onDone); return; }
 }
 
 // =============================================================================
@@ -108,6 +196,22 @@ function handleInventoryKeys(e, key) {
 
     if (e.key === "Enter") { handleInventoryAction(); return; }
 
+    if (key === "x" || e.key === "Delete" || e.key === "Backspace") {
+        if (S.inventorySection === "inventory") {
+            const item = S.inventory[S.inventoryIndex];
+            if (item) {
+                S.inventory.splice(S.inventoryIndex, 1);
+                S.loot.push({ x: S.player.x, y: S.player.y, item });
+                pushMessage(`SYSTEM: Dropped module [${item.name}] on the floor.`);
+                S.setInventoryIndex(Math.min(S.inventoryIndex, Math.max(0, S.inventory.length - 1)));
+            }
+        } else {
+            pushMessage("SYSTEM WARNING: Unmount module before dropping.");
+        }
+        render();
+        return;
+    }
+
     render();
 }
 
@@ -125,10 +229,9 @@ function equipFromInventory() {
     const item = S.inventory[S.inventoryIndex];
     if (!item) return;
 
-    const maxSlots = item.category === "bandwidth" ? 1 : 2;
+    const maxSlots = (item.category === "bandwidth" || item.category === "driver") ? 1 : 2;
     const slotIdx  = S.equipped[item.category].findIndex((v, i) => i < maxSlots && v === null);
     if (slotIdx === -1) { pushMessage(`NO VACANT SLOT FOR ${(item.category ?? "???").toUpperCase()}.`); return; }
-    if (S.inventory.length >= MAX_INVENTORY) { pushMessage("ARCHIVE FULL: Cannot equip — no free archive slots."); return; }
 
     S.inventory.splice(S.inventoryIndex, 1);
     S.equipped[item.category][slotIdx] = item;
@@ -147,8 +250,13 @@ function unequipToInventory() {
     if (S.inventory.length >= MAX_INVENTORY) { pushMessage("ARCHIVE FULL: Cannot unmount — no free archive slots."); return; }
 
     S.equipped[slot.cat][slot.idx] = null;
+    if (item.fused) {
+        item.durability = 0;
+        pushMessage(`SYSTEM WARNING: Fused module [${item.name}] was corrupted on unmount.`);
+    } else {
+        pushMessage(`SYSTEM: Unmounted module [${item.name}].`);
+    }
     S.inventory.push(item);
-    pushMessage(`SYSTEM: Unmounted module [${item.name}].`);
 }
 
 // =============================================================================
@@ -164,12 +272,18 @@ function handleTargetKeys(e, key) {
     }
 
     let dx = 0, dy = 0;
-    if (e.key === "ArrowUp"    || key === "w") dy = -1;
-    if (e.key === "ArrowDown"  || key === "s") dy =  1;
-    if (e.key === "ArrowLeft"  || key === "a") dx = -1;
-    if (e.key === "ArrowRight" || key === "d") dx =  1;
+    let isMove = false;
 
-    if (dx !== 0 || dy !== 0) {
+    if (e.key === "ArrowUp" || key === "w" || e.key === "Numpad8" || key === "8" || key === "k") { dx = 0; dy = -1; isMove = true; }
+    else if (e.key === "ArrowDown" || key === "s" || e.key === "Numpad2" || key === "2" || key === "j") { dx = 0; dy = 1; isMove = true; }
+    else if (e.key === "ArrowLeft" || key === "a" || e.key === "Numpad4" || key === "4" || key === "h") { dx = -1; dy = 0; isMove = true; }
+    else if (e.key === "ArrowRight" || key === "d" || e.key === "Numpad6" || key === "6" || key === "l") { dx = 1; dy = 0; isMove = true; }
+    else if (e.key === "Numpad7" || key === "7" || key === "y") { dx = -1; dy = -1; isMove = true; }
+    else if (e.key === "Numpad9" || key === "9" || key === "u") { dx = 1; dy = -1; isMove = true; }
+    else if (e.key === "Numpad1" || key === "1" || key === "b") { dx = -1; dy = 1; isMove = true; }
+    else if (e.key === "Numpad3" || key === "3" || key === "n") { dx = 1; dy = 1; isMove = true; }
+
+    if (isMove) {
         S.setTargetX(clamp(S.targetX + dx, 0, S.mapW - 1));
         S.setTargetY(clamp(S.targetY + dy, 0, S.mapH - 1));
         render();
@@ -180,22 +294,18 @@ function handleTargetKeys(e, key) {
 }
 
 function fireRemoteScript() {
-    const script = S.equipped.script.find(s => s && s.subcategory === "remote" && s.durability > 0);
-    if (!script) { S.setInTargetMode(false); render(); return; }
-
-    if (S.player.bandwidth < (script.cost || 0)) { pushMessage("SYSTEM: INSUFFICIENT BANDWIDTH."); return; }
-
     const enemy = S.enemies.find(e => e.alive && e.x === S.targetX && e.y === S.targetY);
-    if (!enemy) { pushMessage("No target detected at coordinate."); return; }
+    if (!enemy) { pushMessage("No target detected at coordinate."); S.setInTargetMode(false); render(); return; }
 
     const dist = Math.abs(S.targetX - S.player.x) + Math.abs(S.targetY - S.player.y);
-    if (dist > script.range)  { pushMessage("SYSTEM: Target out of transmission range."); return; }
-    if (!hasLineOfSight(S.player.x, S.player.y, S.targetX, S.targetY))
-        { pushMessage("SYSTEM: Transmission path blocked."); return; }
+    if (!hasLineOfSight(S.player.x, S.player.y, S.targetX, S.targetY)) {
+        pushMessage("SYSTEM: Transmission path blocked.");
+        S.setInTargetMode(false);
+        render();
+        return;
+    }
 
-    S.player.bandwidth -= script.cost || 0;
-    pushCombat(`Fired ${script.name} at ${enemy.type}.`);
-    attack(S.player, enemy);
+    executeSequentialAttacks(S.player, enemy, dist);
 
     S.setInTargetMode(false);
     S.player.bandwidth = Math.min(getPlayerMaxBandwidth(), S.player.bandwidth + getPlayerBandwidthCharge());
@@ -236,17 +346,38 @@ function handleNormalKeys(e, key) {
         return;
     }
 
-    const isMoveKey = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)
-                   || ["w","a","s","d"].includes(key);
+    if (key === " " || key === ".") {
+        pushMessage("SYSTEM: Rested. Auto-repair active.");
+        if (S.equipped) {
+            Object.values(S.equipped).flat().forEach(m => {
+                if (m && m.durability > 0 && m.durability < m.maxDurability) {
+                    m.durability = Math.min(m.maxDurability, m.durability + 3);
+                }
+            });
+        }
+        S.player.bandwidth = Math.min(getPlayerMaxBandwidth(), S.player.bandwidth + getPlayerBandwidthCharge());
+        enemyTurn();
+        render();
+        return;
+    }
+
+    let dx = 0, dy = 0;
+    let isMoveKey = false;
+
+    if (e.key === "ArrowUp" || key === "w" || e.key === "Numpad8" || key === "8" || key === "k") { dx = 0; dy = -1; isMoveKey = true; }
+    else if (e.key === "ArrowDown" || key === "s" || e.key === "Numpad2" || key === "2" || key === "j") { dx = 0; dy = 1; isMoveKey = true; }
+    else if (e.key === "ArrowLeft" || key === "a" || e.key === "Numpad4" || key === "4" || key === "h") { dx = -1; dy = 0; isMoveKey = true; }
+    else if (e.key === "ArrowRight" || key === "d" || e.key === "Numpad6" || key === "6" || key === "l") { dx = 1; dy = 0; isMoveKey = true; }
+    else if (e.key === "Numpad7" || key === "7" || key === "y") { dx = -1; dy = -1; isMoveKey = true; }
+    else if (e.key === "Numpad9" || key === "9" || key === "u") { dx = 1; dy = -1; isMoveKey = true; }
+    else if (e.key === "Numpad1" || key === "1" || key === "b") { dx = -1; dy = 1; isMoveKey = true; }
+    else if (e.key === "Numpad3" || key === "3" || key === "n") { dx = 1; dy = 1; isMoveKey = true; }
+
     if (!isMoveKey) return;
     if (S.inCombat && (e.repeat || S.heldKeys.has(e.code))) return;
 
     S.heldKeys.add(e.code);
-
-    if (e.key === "ArrowUp"    || key === "w") tryMove( 0, -1);
-    if (e.key === "ArrowDown"  || key === "s") tryMove( 0,  1);
-    if (e.key === "ArrowLeft"  || key === "a") tryMove(-1,  0);
-    if (e.key === "ArrowRight" || key === "d") tryMove( 1,  0);
+    tryMove(dx, dy);
 }
 
 // =============================================================================
@@ -261,7 +392,9 @@ function tryMove(dx, dy) {
 
     const enemy = S.enemies.find(e => e.alive && e.x === nx && e.y === ny);
     if (enemy) {
-        attack(S.player, enemy);
+        executeSequentialAttacks(S.player, enemy, 1);
+
+        // Ticks proceed: charge bandwidth
         S.player.bandwidth = Math.min(getPlayerMaxBandwidth(), S.player.bandwidth + getPlayerBandwidthCharge());
         if (enemy.alive) {
             enemyTurn();
@@ -276,9 +409,40 @@ function tryMove(dx, dy) {
         return;
     }
 
+    // Movement consumes 1 bandwidth
+    const moveCost = 1;
+    if (S.player.bandwidth < moveCost) {
+        pushMessage("SYSTEM ERROR: INSUFFICIENT BANDWIDTH TO EXECUTE DRIVER INSTRUCTION.");
+        return;
+    }
+
+    S.player.bandwidth -= moveCost;
     S.player.x = nx;
     S.player.y = ny;
+
+    if (S.player.x === S.exitX && S.player.y === S.exitY) {
+        const firewall = S.enemies.find(e => e.alive && e.type === "firewall");
+        if (firewall) {
+            pushMessage("GATEWAY FIREWALL ONLINE: Access to Core denied.");
+        } else {
+            if (S.securityLevel === 3) {
+                S.setGameWon(true);
+                pushMessage("SYSTEM: Final breach successful. Loading broadcast...");
+            } else {
+                const nextSec = S.securityLevel + 1;
+                pushMessage(`SYSTEM: Subnet cleared. Transitioning to Security Level ${nextSec}...`);
+                // Subnet transition bonus: heal 50 HP (precious healing between levels)
+                S.player.hp = Math.min(S.player.maxHP, S.player.hp + 50);
+                S.setSecurityLevel(nextSec);
+                S.resetState(true);
+            }
+            render();
+            return;
+        }
+    }
+
     pickUpLoot();
+    // Ticks proceed: charge bandwidth
     S.player.bandwidth = Math.min(getPlayerMaxBandwidth(), S.player.bandwidth + getPlayerBandwidthCharge());
     enemyTurn();
     render();

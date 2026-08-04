@@ -4,9 +4,10 @@
 
 import * as S from "./state.js";
 import { getPlayerSpeed, getEntitySpeed, getEntityVision } from "./stats.js";
-import { attack }  from "./combat.js";
+import { executeSequentialAttacks }  from "./combat.js";
 import { isFloor } from "./utils.js";
 import { WALL }    from "./data.js";
+import { saveGame } from "./save.js";
 
 /**
  * Executes one turn for all living enemies.
@@ -29,7 +30,7 @@ export function enemyTurn() {
 
         // Zero-speed enemies: melee-only, act when adjacent regardless of ticks
         if (enemySpeed <= 0) {
-            if (isAdjacent(enemy, S.player)) { seenPlayer = true; attack(enemy, S.player); }
+            if (isAdjacent(enemy, S.player)) { seenPlayer = true; executeSequentialAttacks(enemy, S.player, 1); }
             continue;
         }
 
@@ -39,7 +40,7 @@ export function enemyTurn() {
 
             if (isAdjacent(enemy, S.player)) {
                 seenPlayer = true;
-                attack(enemy, S.player);
+                executeSequentialAttacks(enemy, S.player, 1);
                 continue;
             }
 
@@ -50,15 +51,18 @@ export function enemyTurn() {
 
             if (remoteScript && dist <= remoteScript.range && canSee(enemy, S.player)) {
                 seenPlayer = true;
-                attack(enemy, S.player);
+                executeSequentialAttacks(enemy, S.player, dist);
             } else if (dist <= vision && canSee(enemy, S.player)) {
                 seenPlayer = true;
-                moveToward(enemy, S.player);
+                if (enemy.type !== "firewall") {
+                    moveToward(enemy, S.player);
+                }
             }
         }
     }
 
     S.setInCombat(seenPlayer);
+    saveGame();
 }
 
 // ── Movement helpers ──────────────────────────────────────────────────────────
@@ -68,6 +72,16 @@ function moveToward(enemy, player) {
     const dx = Math.sign(player.x - enemy.x);
     const dy = Math.sign(player.y - enemy.y);
 
+    // Try diagonal step first if both dx and dy are non-zero
+    if (dx !== 0 && dy !== 0) {
+        if (isCellOpen(enemy.x + dx, enemy.y + dy)) {
+            enemy.x += dx;
+            enemy.y += dy;
+            return;
+        }
+    }
+
+    // Fallback to orthogonal steps
     for (const pos of [{ x: enemy.x + dx, y: enemy.y }, { x: enemy.x, y: enemy.y + dy }]) {
         if (isCellOpen(pos.x, pos.y)) {
             enemy.x = pos.x;

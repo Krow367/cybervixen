@@ -379,6 +379,14 @@ export async function parse(rawInput) {
     try {
         module = await import(runtimeEntry.module);
     } catch (e) {
+        console.error("DYNAMIC IMPORT ERROR DETAILS:", {
+            message: e.message,
+            stack: e.stack,
+            fileName: e.fileName,
+            lineNumber: e.lineNumber,
+            columnNumber: e.columnNumber,
+            modulePath: runtimeEntry.module
+        });
         console.error(e);
         throw new Error(e instanceof TypeError ? `Unknown command: ${cmd}` : "Error while executing command");
     }
