@@ -565,3 +565,51 @@ blockquote {
   border: solid 2px var(--phosphor);
   border-left: none;
 }
+
+/* ─── Mobile Responsiveness ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .chat-sidebar {
+    flex: 0 0 140px !important;
+    min-width: 120px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .chat-sidebar-header {
+    padding: 6px 8px !important;
+    font-size: 1rem !important;
+  }
+
+  #foxnet-messages {
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+
+  .foxnet-msg-item {
+    padding: 6px 10px !important;
+  }
+
+  #foxnet-input-bar {
+    padding: 4px 6px !important;
+    min-height: 40px !important;
+  }
+
+  #foxnet-message-input {
+    font-size: 1rem !important;
+  }
+
+  #foxnet-btn-send {
+    padding: 4px 8px !important;
+    font-size: 0.95rem !important;
+  }
+
+  #foxnet-context-menu {
+    min-width: 130px !important;
+    font-size: 0.95rem !important;
+  }
+
+  #foxnet-dialog-modal > div,
+  #foxnet-commands-modal > div {
+    padding: 14px !important;
+    max-width: 96% !important;
+  }
+}

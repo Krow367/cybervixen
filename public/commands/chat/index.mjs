@@ -683,13 +683,7 @@ function setupContextMenuEvents() {
 
     let targetMsgEl = null;
 
-    container.addEventListener("contextmenu", (e) => {
-        const msgEl = e.target.closest(".foxnet-msg-item");
-        if (!msgEl || !msgEl._msgData) return;
-
-        e.preventDefault();
-        e.stopPropagation();
-
+    const openMenuAt = (msgEl, clientX, clientY) => {
         targetMsgEl = msgEl;
         const msgData = msgEl._msgData;
         const sender = msgData.sender || "";
@@ -704,8 +698,8 @@ function setupContextMenuEvents() {
 
         // Position menu inside parent container
         const parentRect = container.parentNode.getBoundingClientRect();
-        let left = e.clientX - parentRect.left;
-        let top = e.clientY - parentRect.top;
+        let left = clientX - parentRect.left;
+        let top = clientY - parentRect.top;
 
         if (left + 160 > parentRect.width) left = parentRect.width - 165;
         if (top + 160 > parentRect.height) top = parentRect.height - 165;
@@ -714,6 +708,49 @@ function setupContextMenuEvents() {
         menu.style.top = `${top}px`;
         menu.style.display = "block";
         activeContextMenu = menu;
+    };
+
+    container.addEventListener("contextmenu", (e) => {
+        const msgEl = e.target.closest(".foxnet-msg-item");
+        if (!msgEl || !msgEl._msgData) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        openMenuAt(msgEl, e.clientX, e.clientY);
+    });
+
+    // Touchscreen Long-Press Listener for Mobile (500ms)
+    let touchTimer = null;
+    let touchStartPos = { x: 0, y: 0 };
+
+    container.addEventListener("touchstart", (e) => {
+        const msgEl = e.target.closest(".foxnet-msg-item");
+        if (!msgEl || !msgEl._msgData) return;
+        const touch = e.touches[0];
+        touchStartPos = { x: touch.clientX, y: touch.clientY };
+
+        touchTimer = setTimeout(() => {
+            openMenuAt(msgEl, touchStartPos.x, touchStartPos.y);
+        }, 500);
+    }, { passive: true });
+
+    container.addEventListener("touchmove", (e) => {
+        if (touchTimer && e.touches[0]) {
+            const touch = e.touches[0];
+            const dist = Math.hypot(touch.clientX - touchStartPos.x, touch.clientY - touchStartPos.y);
+            if (dist > 10) {
+                clearTimeout(touchTimer);
+                touchTimer = null;
+            }
+        }
+    }, { passive: true });
+
+    container.addEventListener("touchend", () => {
+        if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
     });
 
     document.addEventListener("click", () => {

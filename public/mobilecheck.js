@@ -108,6 +108,7 @@ function mobileDetected() {
             Where would you like to go?</p>
             <button class="mobile-btn" id="btn-recipes">Recipes</button>
             <button class="mobile-btn" id="btn-links">Links</button>
+            <button class="mobile-btn" id="btn-chat">foxNet Chat</button>
             <button class="mobile-btn secondary" id="btn-continue">Continue Anyway</button>
         </div>
     `;
@@ -119,6 +120,15 @@ function mobileDetected() {
 
     document.getElementById("btn-links").addEventListener("click", () => {
         window.location.href = "/mobile-links.html";
+    });
+
+    document.getElementById("btn-chat").addEventListener("click", () => {
+        overlay.remove();
+        if (typeof window.openWindow === "function") {
+            window.openWindow("chat");
+        } else {
+            window.location.href = "/index.html?open=chat";
+        }
     });
 
     document.getElementById("btn-continue").addEventListener("click", () => {
