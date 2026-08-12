@@ -467,7 +467,7 @@ function updateMessageDOM(msgEl, msg) {
             <div class="foxnet-msg-body" style="color: #E6E6FA; font-style: italic;">${escapeHTML(msg.text)}</div>
         `;
     } else {
-        const senderColor = isOwner ? "#FF3366" : (isMod ? "#FFD700" : (isVip ? "#00FFFF" : "var(--phosphor)"));
+        const senderColor = "var(--phosphor)";
         let roleBadge = '';
         if (isOwner) {
             roleBadge = '<small style="color: #FF0000; text-shadow: 0 0 4px #FF0000;">[owner]</small> ';
@@ -1173,25 +1173,25 @@ export function playModemAudio() {
 
 export async function runModemConnectionSequence() {
     if (globalThis.DEBUG) {
-        await type("DEBUG MODE: Fast-tracking modem connection to foxNet...\n", { wait: 0 });
+        await type("DEBUG MODE: Fast-tracking modem connection to foxNet...", { wait: 0 });
         return;
     }
 
     playModemAudio();
     await type([
-        { kind: "type", text: "Establishing Connection to Serenity Relay Servers.....\n", wait: 12 },
-        { kind: "pause", wait: 1400 },
-        { kind: "type", text: "Connection found. Beginning Handshake...\n", wait: 12 },
-        { kind: "pause", wait: 1400 },
-        { kind: "type", text: "[!] Warning: Signal intercept in progress...\n", wait: 12 },
-        { kind: "pause", wait: 1400 },
-        { kind: "type", text: "[!] Bypassing Serenity daemons...\n", wait: 12 },
-        { kind: "pause", wait: 1400 },
-        { kind: "type", text: "Serenity Gateway Dropped.\n", wait: 12 },
+        { kind: "type", text: "Establishing Connection to Serenity Relay Servers.....", wait: 12 },
         { kind: "pause", wait: 1200 },
-        { kind: "type", text: "New connection established: foxNet Relay Node #39818112\n", wait: 12 },
-        { kind: "pause", wait: 500 },
-        { kind: "type", text: "CyberVixen > Too easy. Welcome to the foxNet, friend.\n\n", wait: 12 },
+        { kind: "type", text: "Connection found. Beginning Handshake...", wait: 12 },
+        { kind: "pause", wait: 1400 },
+        { kind: "type", text: "[!] Warning: Signal intercept in progress...", wait: 12 },
+        { kind: "pause", wait: 1200 },
+        { kind: "type", text: "[!] Bypassing Serenity daemons...", wait: 12 },
+        { kind: "pause", wait: 1200 },
+        { kind: "type", text: "Serenity Gateway Dropped.", wait: 12 },
+        { kind: "pause", wait: 1000 },
+        { kind: "type", text: "New connection established: foxNet Relay Node", wait: 16 },
+        { kind: "pause", wait: 600 },
+        { kind: "type", text: "CyberVixen > Too easy. Welcome to the foxNet, friend.", wait: 12 },
     ]);
 }
 
