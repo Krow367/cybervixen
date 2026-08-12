@@ -16,11 +16,12 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html, body {
+        html, body, body.mobile-chat-body {
             width: 100%;
             height: 100%;
             height: 100dvh;
-            background: black;
+            background-color: #0a0a0a !important;
+            background: #0a0a0a !important;
             color: var(--phosphor);
             font-family: 'VT323', "Courier New", monospace;
             overflow: hidden;
@@ -31,6 +32,8 @@
             flex-direction: column;
             width: 100%;
             height: 100%;
+            background-color: #0a0a0a !important;
+            background: #0a0a0a !important;
         }
 
         header {
@@ -136,7 +139,7 @@
         }
     </style>
 </head>
-<body>
+<body class="mobile-chat-body">
     <div id="mobile-chat-app">
         <header>
             <a href="index.html" class="back">← Exit</a>

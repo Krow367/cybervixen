@@ -20,7 +20,7 @@
   --phosphor-rgb: 255, 229, 98;
 }
 
-html, body, #main, #input, #nameEntry, .allMessages, .msgWrapper {
+html:not(:has(.mobile-chat-body)), body:not(.mobile-chat-body), #main, #input, #nameEntry, .allMessages, .msgWrapper {
   background-color: transparent !important;
   background: transparent !important;
   color: var(--phosphor) !important;
@@ -200,6 +200,12 @@ body::after {
   color: var(--phosphor) !important;
   text-shadow: 0 0 3px var(--phosphor) !important;
   font-weight: bold;
+}
+
+/* Hide iframe background so container shows through */
+body:not(.mobile-chat-body) {
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 #main {
