@@ -326,19 +326,22 @@ a:visited {
     linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)) padding-box;
 }
 
+  flex: 1;
+  border-right: 1px solid var(--phosphor);
+  border-bottom: 1px solid var(--phosphor);
+  background: var(--window-bg);
+}
+
 .scrollbar-thumb {
   position: absolute;
-  top: 0;
   left: 0;
-  z-index: 3;
-  display: block;
-  width: 100%;
+  right: 0;
   min-height: 24px;
   border: 1px solid var(--phosphor);
-  border-right: 0;
-  background: rgba(var(--phosphor-rgb), 0.78);
+  border-left: 0;
+  background: rgba(var(--phosphor-rgb), 0.18);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
-  cursor: url("img/grab.png"), grab;
+  cursor: url("/img/grab.png"), grab;
 }
 
 .scrollbar-thumb::before {
@@ -350,7 +353,7 @@ a:visited {
 }
 
 .scrollbar-thumb.dragging {
-  cursor: url("img/grab.png"), grabbing;
+  cursor: url("/img/grab.png"), grabbing;
 }
 
 .resize-handle {
@@ -361,33 +364,33 @@ a:visited {
 
   width: 14px;
   height: 14px;
-  cursor: url("img/resize.png"), nwse-resize;
+  cursor: url("/img/resize.png"), nwse-resize;
 }
 
 /* Amber theme cursor overrides */
 :root[data-theme="amber"] .window-header,
 :root[data-theme="amber"] .title-bar {
-  cursor: url("img/grab_amber.png"), move;
+  cursor: url("/img/grab_amber.png"), move;
 }
 
 :root[data-theme="amber"] .buttons button {
-  cursor: url("img/curosr_amber.png"), auto;
+  cursor: url("/img/curosr_amber.png"), auto;
 }
 
 :root[data-theme="amber"] .scrollbar-btn {
-  cursor: url("img/pointer_amber.png"), pointer;
+  cursor: url("/img/pointer_amber.png"), pointer;
 }
 
 :root[data-theme="amber"] .scrollbar-thumb {
-  cursor: url("img/grab_amber.png"), grab;
+  cursor: url("/img/grab_amber.png"), grab;
 }
 
 :root[data-theme="amber"] .scrollbar-thumb.dragging {
-  cursor: url("img/grab_amber.png"), grabbing;
+  cursor: url("/img/grab_amber.png"), grabbing;
 }
 
 :root[data-theme="amber"] .resize-handle {
-  cursor: url("img/resize_amber.png"), nwse-resize;
+  cursor: url("/img/resize_amber.png"), nwse-resize;
 }
 
 /* Existing links layout */

@@ -106,15 +106,14 @@
 }
 
 
-body {
-    background: #111;
-    margin: 0;
-    font-family: sans-serif;
-    cursor: url("img/curosr.png"), auto;
+:root {
+  --cursor-default: url("/img/curosr.png"), auto;
+  --cursor-pointer: url("/img/pointer.png"), pointer;
 }
 
-:root[data-theme="amber"] body {
-    cursor: url("img/curosr_amber.png"), auto;
+:root[data-theme="amber"] {
+  --cursor-default: url("/img/curosr_amber.png"), auto;
+  --cursor-pointer: url("/img/pointer_amber.png"), pointer;
 }
 
 html {
@@ -122,12 +121,15 @@ html {
     scrollbar-width: none;
 }
 
-a {
-    cursor: url("img/pointer.png"), auto;
+body {
+    background: #111;
+    margin: 0;
+    font-family: sans-serif;
+    cursor: var(--cursor-default);
 }
 
-:root[data-theme="amber"] a {
-    cursor: url("img/pointer_amber.png"), auto;
+a, button, input[type="button"], input[type="submit"], [role="button"], .cursor-pointer {
+    cursor: var(--cursor-pointer);
 }
 
 html::-webkit-scrollbar {
