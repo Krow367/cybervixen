@@ -52,6 +52,14 @@
             <input type="range" id="setting-fontsize-slider" min="1" max="5" step="1" value="3" style="width: 100%; cursor: pointer; accent-color: var(--phosphor);">
         </div>
 
+        <!-- Audio Sound Toggle Section -->
+        <div class="settings-group" style="border: 1px solid rgba(var(--phosphor-rgb), 0.3); padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 3px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;">
+                <input type="checkbox" id="setting-audio-toggle" checked style="accent-color: var(--phosphor); cursor: pointer;">
+                <span>ENABLE AUDIO BEEPS & CHIMES</span>
+            </label>
+        </div>
+
         <div id="settings-status-msg" style="font-size: 0.85rem; color: var(--phosphor); min-height: 1.2em; text-align: center;"></div>
     </div>
 
@@ -102,7 +110,15 @@
     </div>
 
     <!-- Right-Click Message Context Menu -->
-    <div id="foxnet-context-menu" style="position: absolute; display: none; z-index: 10000; background: rgba(0, 0, 0, 0.95); border: 1px solid var(--phosphor); box-shadow: 0 0 12px rgba(var(--phosphor-rgb), 0.4); border-radius: 3px; padding: 4px; font-family: 'VT323', monospace; color: var(--phosphor); min-width: 140px;">
+    <div id="foxnet-context-menu" style="position: fixed; display: none; z-index: 10000; background: rgba(0, 0, 0, 0.95); border: 1px solid var(--phosphor); box-shadow: 0 0 12px rgba(var(--phosphor-rgb), 0.4); border-radius: 3px; padding: 4px; font-family: 'VT323', monospace; color: var(--phosphor); min-width: 155px;">
+        <div id="ctx-reactions-row" style="display: flex; gap: 2px; padding: 4px 6px; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.4); justify-content: space-between; font-size: 1.1rem;">
+            <span class="ctx-emoji" data-emoji="👍" style="cursor: pointer; padding: 1px 3px; border-radius: 2px;" title="React 👍">👍</span>
+            <span class="ctx-emoji" data-emoji="🔥" style="cursor: pointer; padding: 1px 3px; border-radius: 2px;" title="React 🔥">🔥</span>
+            <span class="ctx-emoji" data-emoji="💀" style="cursor: pointer; padding: 1px 3px; border-radius: 2px;" title="React 💀">💀</span>
+            <span class="ctx-emoji" data-emoji="❤️" style="cursor: pointer; padding: 1px 3px; border-radius: 2px;" title="React ❤️">❤️</span>
+            <span class="ctx-emoji" data-emoji="🤖" style="cursor: pointer; padding: 1px 3px; border-radius: 2px;" title="React 🤖">🤖</span>
+            <span class="ctx-emoji" data-emoji="🦊" style="cursor: pointer; padding: 1px 3px; border-radius: 2px;" title="React 🦊">🦊</span>
+        </div>
         <div class="ctx-item" id="ctx-quote" style="padding: 4px 8px; cursor: pointer; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ QUOTE MESSAGE ]</div>
         <div class="ctx-item" id="ctx-whisper" style="padding: 4px 8px; cursor: pointer; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ WHISPER USER ]</div>
         <div class="ctx-item" id="ctx-edit" style="padding: 4px 8px; cursor: pointer; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3); display: none;">[ EDIT MESSAGE ]</div>

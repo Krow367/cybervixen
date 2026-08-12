@@ -250,26 +250,34 @@ async function checkUserRole(handle) {
 
 // ─── User Presence & Roster ──────────────────────────────────────────────────
 
+let presenceHeartbeat = null;
+
 function setupPresence() {
     if (!db) return;
+    const connectedRef = ref(db, ".info/connected");
     const myPresenceRef = ref(db, `presence/${sessionKey}`);
-    const isOwner = currentUserRole === "owner" || isOwnerHandle(currentHandle);
-    const website = isOwner ? "https://cybervixen.dev" : currentWebsite;
 
-    const presenceData = {
-        name: currentHandle,
-        flair: currentFlair,
-        role: currentUserRole,
-        website: website,
-        isOwner: isOwner,
-        ipKey: visitorMeta.ipKey,
-        fpHash: visitorMeta.fpHash,
-        ip: visitorMeta.ip,
-        joinedAt: serverTimestamp()
-    };
+    // Auto-reconnect & presence re-establishment on network/socket restore
+    onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+            onDisconnect(myPresenceRef).remove();
+            updatePresenceData();
+        }
+    });
 
-    set(myPresenceRef, presenceData);
-    onDisconnect(myPresenceRef).remove();
+    // 15-second active heartbeat so idle/AFK users NEVER drop from the roster
+    if (presenceHeartbeat) clearInterval(presenceHeartbeat);
+    presenceHeartbeat = setInterval(() => {
+        updatePresenceData();
+    }, 15000);
+
+    // Clean up presence ONLY when page is closed or unloaded
+    window.addEventListener("beforeunload", () => {
+        if (db) remove(ref(db, `presence/${sessionKey}`));
+    });
+    window.addEventListener("pagehide", () => {
+        if (db) remove(ref(db, `presence/${sessionKey}`));
+    });
 
     const allPresenceRef = ref(db, "presence");
     onValue(allPresenceRef, (snapshot) => {
@@ -504,6 +512,25 @@ function updateMessageDOM(msgEl, msg) {
             `;
         }
 
+        let reactionsHTML = "";
+        if (msg.reactions) {
+            let pills = [];
+            Object.entries(msg.reactions).forEach(([emojiKey, usersObj]) => {
+                if (usersObj) {
+                    const emoji = decodeEmojiKey(emojiKey);
+                    const userKeys = Object.keys(usersObj);
+                    const count = userKeys.length;
+                    const hasReacted = userKeys.includes(currentHandle.toLowerCase());
+                    if (count > 0) {
+                        pills.push(`<span class="reaction-pill ${hasReacted ? 'user-reacted' : ''}" data-emoji-key="${emojiKey}" title="Reacted by: ${userKeys.map(u=>'@'+u).join(', ')}">${emoji} ${count}</span>`);
+                    }
+                }
+            });
+            if (pills.length > 0) {
+                reactionsHTML = `<div class="foxnet-msg-reactions">${pills.join('')}</div>`;
+            }
+        }
+
         msgEl.innerHTML = `
             <div class="foxnet-msg-header">
                 <span class="sender-name" style="color: ${senderColor}; text-shadow: 0 0 3px ${senderColor};">${escapeHTML(msg.sender)}</span>
@@ -512,16 +539,99 @@ function updateMessageDOM(msgEl, msg) {
             </div>
             ${quoteHTML}
             <div class="foxnet-msg-body">${formattedText}${imgHTML}</div>
+            ${reactionsHTML}
         `;
+
+        // Handle reaction pill click delegation
+        const reactionsContainer = msgEl.querySelector(".foxnet-msg-reactions");
+        if (reactionsContainer) {
+            reactionsContainer.addEventListener("click", (e) => {
+                const pill = e.target.closest(".reaction-pill");
+                if (pill) {
+                    const emojiKey = pill.getAttribute("data-emoji-key");
+                    const emoji = decodeEmojiKey(emojiKey);
+                    const msgKey = msgEl.getAttribute("data-msg-key");
+                    if (msgKey && emoji) {
+                        toggleReaction(msgKey, emoji);
+                    }
+                }
+            });
+        }
 
         // Play notification bleep for incoming messages from others
         if (msg.sender && msg.sender.toLowerCase() !== currentHandle.toLowerCase()) {
-            try {
-                const audio = new Audio("./media/beep.mp3");
-                audio.volume = 0.2;
-                audio.play().catch(() => {});
-            } catch (e) {}
+            if (audioEnabled) {
+                try {
+                    const audio = new Audio("./media/beep.mp3");
+                    audio.volume = 0.2;
+                    audio.play().catch(() => {});
+                } catch (e) {}
+            }
+            incrementUnreadBadge();
         }
+    }
+}
+
+function decodeEmojiKey(key) {
+    const map = {
+        "thumbsup": "👍",
+        "fire": "🔥",
+        "skull": "💀",
+        "heart": "❤️",
+        "robot": "🤖",
+        "fox": "🦊"
+    };
+    return map[key] || key;
+}
+
+function encodeEmojiKey(emoji) {
+    const map = {
+        "👍": "thumbsup",
+        "🔥": "fire",
+        "💀": "skull",
+        "❤️": "heart",
+        "🤖": "robot",
+        "🦊": "fox"
+    };
+    return map[emoji] || emoji;
+}
+
+let audioEnabled = localStorage.getItem("foxnet_audio_enabled") !== "false";
+let unreadCount = 0;
+
+function incrementUnreadBadge() {
+    const isDocHidden = document.hidden;
+    const chatWin = document.getElementById("chat");
+    const isWinMinimized = chatWin && chatWin.classList.contains("minimized");
+    if (isDocHidden || isWinMinimized) {
+        unreadCount++;
+        const titleEl = document.querySelector("#chat .window-title") || document.querySelector("#chat h1");
+        if (titleEl) {
+            titleEl.textContent = `SRC.EXE (${unreadCount}) - SERENITY RELAY CHAT`;
+        }
+        document.title = `(${unreadCount}) Cyber Vixen`;
+    }
+}
+
+function clearUnreadBadge() {
+    unreadCount = 0;
+    const titleEl = document.querySelector("#chat .window-title") || document.querySelector("#chat h1");
+    if (titleEl) {
+        titleEl.textContent = `SRC.EXE - SERENITY RELAY CHAT - YOU CHAT. WE READ.`;
+    }
+    document.title = "Cyber Vixen";
+}
+
+async function toggleReaction(msgKey, emoji) {
+    if (!msgKey || !emoji || !db) return;
+    const emojiKey = encodeEmojiKey(emoji);
+    const myHandleKey = currentHandle.toLowerCase();
+    const reactionRef = ref(db, `messages/${msgKey}/reactions/${emojiKey}/${myHandleKey}`);
+    const snap = await get(reactionRef);
+    if (snap.exists()) {
+        await remove(reactionRef);
+    } else {
+        await set(reactionRef, true);
     }
 }
 
@@ -696,17 +806,35 @@ function setupContextMenuEvents() {
         if (btnKick) btnKick.style.display = (isPrivileged && !isMyMsg) ? "block" : "none";
         if (btnBan) btnBan.style.display = (isPrivileged && !isMyMsg) ? "block" : "none";
 
-        // Position menu inside parent container
-        const parentRect = container.parentNode.getBoundingClientRect();
-        let left = clientX - parentRect.left;
-        let top = clientY - parentRect.top;
+        // Use fixed positioning so the menu can escape its parent container
+        menu.style.position = "fixed";
+        menu.style.left = "0px";
+        menu.style.top = "0px";
+        menu.style.display = "block";
+        menu.style.visibility = "hidden"; // measure without flash
 
-        if (left + 160 > parentRect.width) left = parentRect.width - 165;
-        if (top + 160 > parentRect.height) top = parentRect.height - 165;
+        // Measure true rendered size
+        const menuW = menu.offsetWidth;
+        const menuH = menu.offsetHeight;
+        const vpW = window.innerWidth;
+        const vpH = window.innerHeight;
+        const pad = 6; // px gap from edges
+
+        let left = clientX;
+        let top = clientY;
+
+        // Flip left if it would overflow right edge
+        if (left + menuW + pad > vpW) left = vpW - menuW - pad;
+        // Clamp to left edge
+        if (left < pad) left = pad;
+        // Flip up if it would overflow bottom edge
+        if (top + menuH + pad > vpH) top = vpH - menuH - pad;
+        // Clamp to top edge
+        if (top < pad) top = pad;
 
         menu.style.left = `${left}px`;
         menu.style.top = `${top}px`;
-        menu.style.display = "block";
+        menu.style.visibility = "visible";
         activeContextMenu = menu;
     };
 
@@ -759,6 +887,26 @@ function setupContextMenuEvents() {
             activeContextMenu = null;
         }
     });
+
+    // Emoji reaction row click
+    const reactionsRow = document.getElementById("ctx-reactions-row");
+    if (reactionsRow) {
+        reactionsRow.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const emojiSpan = e.target.closest(".ctx-emoji");
+            if (emojiSpan && targetMsgEl) {
+                const emoji = emojiSpan.getAttribute("data-emoji");
+                const msgKey = targetMsgEl.getAttribute("data-msg-key");
+                if (emoji && msgKey) {
+                    toggleReaction(msgKey, emoji);
+                    if (activeContextMenu) {
+                        activeContextMenu.style.display = "none";
+                        activeContextMenu = null;
+                    }
+                }
+            }
+        });
+    }
 
     if (btnQuote) {
         btnQuote.addEventListener("click", () => {
@@ -1018,6 +1166,26 @@ function setupUIEvents() {
             applyFontSizeLevel(e.target.value);
         });
     }
+
+    // Audio Toggle
+    const audioToggle = document.getElementById("setting-audio-toggle");
+    if (audioToggle) {
+        audioToggle.checked = audioEnabled;
+        audioToggle.addEventListener("change", () => {
+            audioEnabled = audioToggle.checked;
+            localStorage.setItem("foxnet_audio_enabled", audioEnabled ? "true" : "false");
+        });
+    }
+
+    // Clear unread badge when chat is focused or clicked
+    const chatMessages = document.getElementById("foxnet-messages");
+    if (chatMessages) {
+        chatMessages.addEventListener("click", clearUnreadBadge);
+        chatMessages.addEventListener("scroll", clearUnreadBadge);
+    }
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) clearUnreadBadge();
+    });
 
     // Commands Flyout Modal Dismiss Handlers
     const commandsModal = document.getElementById("foxnet-commands-modal");

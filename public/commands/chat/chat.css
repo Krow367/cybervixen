@@ -150,9 +150,47 @@ body::after {
   display: block;
 }
 
+.foxnet-msg-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.reaction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(var(--phosphor-rgb), 0.08);
+  border: 1px solid rgba(var(--phosphor-rgb), 0.35);
+  color: var(--phosphor);
+  font-size: 0.85rem;
+  padding: 1px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.reaction-pill:hover {
+  background: rgba(var(--phosphor-rgb), 0.22);
+  border-color: var(--phosphor);
+}
+
+.reaction-pill.user-reacted {
+  background: rgba(var(--phosphor-rgb), 0.28);
+  border-color: var(--phosphor);
+  box-shadow: 0 0 4px rgba(var(--phosphor-rgb), 0.4);
+}
+
 .ctx-item:hover {
   background: rgba(var(--phosphor-rgb), 0.2);
   text-shadow: 0 0 5px var(--phosphor);
+}
+
+.ctx-emoji:hover {
+  background: rgba(var(--phosphor-rgb), 0.25);
+  box-shadow: 0 0 5px var(--phosphor);
 }
 
 .allMessages {
