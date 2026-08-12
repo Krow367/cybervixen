@@ -1,0 +1,94 @@
+<div class="sidebar chat-sidebar" id="chat-sidebar" style="flex: 0 0 210px; min-width: 170px; height: 100%; border-right: 1px solid rgba(var(--phosphor-rgb), 0.4); display: flex; flex-direction: column; background: var(--window-tint); padding: 0; box-sizing: border-box; font-size: 1rem; position: relative;">
+    
+    <!-- User List View Header -->
+    <div class="chat-sidebar-header" id="sidebar-header-users" style="padding: 8px 12px; font-family: 'VT323', monospace; color: var(--phosphor); font-size: 1.1rem; border-bottom: 1px solid rgba(var(--phosphor-rgb), 0.3); text-shadow: 0 0 4px var(--phosphor); display: flex; justify-content: space-between; align-items: center; background: rgba(var(--phosphor-rgb), 0.05);">
+        <span>ONLINE USERS</span>
+        <span id="user-count-badge" style="font-size: 0.9rem; opacity: 0.85;">(0)</span>
+    </div>
+
+    <!-- Settings View Header (hidden by default) -->
+    <div class="chat-sidebar-header" id="sidebar-header-settings" style="padding: 8px 12px; font-family: 'VT323', monospace; color: var(--phosphor); font-size: 1.1rem; border-bottom: 1px solid rgba(var(--phosphor-rgb), 0.3); text-shadow: 0 0 4px var(--phosphor); display: none; justify-content: space-between; align-items: center; background: rgba(var(--phosphor-rgb), 0.05);">
+        <span>SETTINGS</span>
+    </div>
+
+    <!-- User List Body -->
+    <div class="chat-sidebar-users" id="chat-user-list" style="flex: 1; overflow-y: auto; padding: 8px 12px; font-family: 'VT323', monospace; color: var(--phosphor); font-size: 1.05rem; display: flex; flex-direction: column; gap: 4px;">
+        <div class="user-item-loading" style="opacity: 0.6; font-style: italic;">Scanning network...</div>
+    </div>
+
+    <!-- Settings Body (hidden by default) -->
+    <div class="chat-sidebar-settings" id="chat-settings-panel" style="flex: 1; overflow-y: auto; padding: 10px; font-family: 'VT323', monospace; color: var(--phosphor); font-size: 1rem; display: none; flex-direction: column; gap: 10px;">
+        
+        <!-- Handle Section -->
+        <div class="settings-group">
+            <label style="display: block; font-size: 0.9rem; opacity: 0.85; margin-bottom: 3px;">CHAT HANDLE</label>
+            <input type="text" id="setting-handle-input" placeholder="Enter handle..." style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(var(--phosphor-rgb), 0.5); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1rem; padding: 4px 6px; outline: none;">
+            <button type="button" id="btn-save-handle" style="margin-top: 4px; width: 100%; background: rgba(var(--phosphor-rgb), 0.1); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1rem; cursor: pointer; padding: 3px;">[ SAVE HANDLE ]</button>
+        </div>
+
+        <!-- Flair Section -->
+        <div class="settings-group">
+            <label style="display: block; font-size: 0.9rem; opacity: 0.85; margin-bottom: 3px;">USER FLAIR</label>
+            <input type="text" id="setting-flair-input" placeholder="Badge text..." style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(var(--phosphor-rgb), 0.5); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1rem; padding: 4px 6px; outline: none;">
+            <button type="button" id="btn-save-flair" style="margin-top: 4px; width: 100%; background: rgba(var(--phosphor-rgb), 0.1); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1rem; cursor: pointer; padding: 3px;">[ SET FLAIR ]</button>
+        </div>
+
+        <!-- Website Link Section -->
+        <div class="settings-group">
+            <label style="display: block; font-size: 0.9rem; opacity: 0.85; margin-bottom: 3px;">WEBSITE URL</label>
+            <input type="url" id="setting-website-input" placeholder="e.g. neocities.org/mysite" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(var(--phosphor-rgb), 0.5); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1rem; padding: 4px 6px; outline: none;">
+            <button type="button" id="btn-save-website" style="margin-top: 4px; width: 100%; background: rgba(var(--phosphor-rgb), 0.1); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1rem; cursor: pointer; padding: 3px;">[ SAVE WEBSITE ]</button>
+        </div>
+
+        <!-- Scanline Overlay Toggle Section -->
+        <div class="settings-group" style="border-top: 1px dashed rgba(var(--phosphor-rgb), 0.3); padding-top: 8px; margin-top: 4px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.95rem; cursor: pointer; user-select: none;">
+                <span>OVERLAY SCANLINES</span>
+                <input type="checkbox" id="setting-scanline-toggle" checked style="accent-color: var(--phosphor); width: 16px; height: 16px; cursor: pointer;">
+            </label>
+        </div>
+
+        <!-- Mod Auth Section (Form with autocomplete attributes for Firefox / browser password managers) -->
+        <form id="chat-mod-login-form" autocomplete="on" style="border-top: 1px dashed rgba(var(--phosphor-rgb), 0.3); padding-top: 8px;">
+            <label style="display: block; font-size: 0.9rem; opacity: 0.85; margin-bottom: 3px;">MOD AUTHENTICATION</label>
+            <input type="email" id="setting-mod-email" name="username" placeholder="Mod Email..." autocomplete="username" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(var(--phosphor-rgb), 0.5); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 0.95rem; padding: 4px 6px; outline: none; margin-bottom: 4px;">
+            <input type="password" id="setting-mod-pass" name="password" placeholder="Password..." autocomplete="current-password" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(var(--phosphor-rgb), 0.5); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 0.95rem; padding: 4px 6px; outline: none;">
+            <div style="display: flex; gap: 4px; margin-top: 4px;">
+                <button type="submit" id="btn-mod-login" style="flex: 1; background: rgba(var(--phosphor-rgb), 0.1); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 0.95rem; cursor: pointer; padding: 3px;">[ LOGIN ]</button>
+                <button type="button" id="btn-mod-logout" style="flex: 1; background: rgba(255, 50, 50, 0.1); border: 1px solid #FF3366; color: #FF3366; font-family: 'VT323', monospace; font-size: 0.95rem; cursor: pointer; padding: 3px;">[ LOGOUT ]</button>
+            </div>
+        </form>
+
+        <div id="settings-status-msg" style="font-size: 0.85rem; color: var(--phosphor); min-height: 1.2em; text-align: center;"></div>
+    </div>
+
+    <!-- Sidebar Footer Button -->
+    <div class="chat-sidebar-footer" style="padding: 8px; border-top: 1px solid rgba(var(--phosphor-rgb), 0.3); background: rgba(var(--phosphor-rgb), 0.03);">
+        <button type="button" id="btn-toggle-settings" style="width: 100%; background: transparent; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.05rem; cursor: pointer; padding: 4px; text-transform: uppercase; text-shadow: 0 0 3px var(--phosphor);">[ SETTINGS ]</button>
+    </div>
+</div>
+
+<div class="content chat-content-pane" style="flex: 1 1 auto; height: 100%; display: flex; flex-direction: column; overflow: hidden; padding: 0; background: rgba(0, 0, 0, 0.25); position: relative;">
+    
+    <!-- Welcome & Rules Splash Overlay -->
+    <div id="chat-splash-overlay" style="position: absolute; inset: 0; z-index: 999; background: rgba(4, 17, 6, 0.95); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; text-align: center; font-family: 'VT323', monospace; color: var(--phosphor);">
+        <div style="border: 1px solid var(--phosphor); background: rgba(0, 0, 0, 0.7); padding: 24px 28px; max-width: 480px; width: 90%; box-shadow: 0 0 15px rgba(var(--phosphor-rgb), 0.3); border-radius: 3px;">
+            <h2 style="margin: 0 0 6px; font-size: 1.6rem; letter-spacing: 2px; text-shadow: 0 0 6px var(--phosphor); color: var(--phosphor);">// SERENITY RELAY CHAT //</h2>
+            <div style="font-size: 0.95rem; color: var(--phosphor); opacity: 0.85; margin-bottom: 16px; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.4); padding-bottom: 8px;">
+                RELAY PROTOCOL v4.2.0 • NODE ACTIVE
+            </div>
+
+            <div style="text-align: left; font-size: 1.05rem; line-height: 1.45; margin-bottom: 20px; display: flex; flex-direction: column; gap: 8px; color: var(--phosphor);">
+                <div>> Be respectful to fellow network nodes.</div>
+                <div>> Share images using <code>!img &lt;url&gt;</code> in chat.</div>
+                <div>> Set your handle & site in <strong>[ SETTINGS ]</strong>.</div>
+            </div>
+
+            <button type="button" id="btn-enter-chat" style="width: 100%; padding: 8px; background: rgba(var(--phosphor-rgb), 0.15); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.2rem; letter-spacing: 1.5px; cursor: pointer; text-shadow: 0 0 4px var(--phosphor); transition: all 0.15s ease;">
+                [ ACKNOWLEDGE & CONNECT ]
+            </button>
+        </div>
+    </div>
+
+    <iframe id="chattable" src="https://iframe.chat/embed/?chat=39818112" allowtransparency="true" style="width: 100%; height: 100%; border: none; flex: 1; background: transparent;" title="Serenity Relay Chat"></iframe>
+</div>

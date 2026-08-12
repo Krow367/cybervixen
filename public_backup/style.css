@@ -1,0 +1,451 @@
+@font-face {
+    font-family: "Hack";
+    src: url("./fonts/hack-regular.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+
+@font-face {
+    font-family: "VT323";
+    src: url("./fonts/VT323.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    --phosphor: #5bf870;
+    --phosphor-rgb: 91, 248, 112;
+    --window-tint: rgba(0, 0, 0, 0.25);
+    --window-tint-strong: rgba(0, 0, 0, 0.16);
+    --phosphor-bg: rgb(5, 50, 30);
+    --boot: #020902;
+    --off: #050505;
+    --dark: #111;
+    --term: "> ";
+
+    --crt-phosphor:
+        radial-gradient(ellipse at center,
+            #052714 0%,
+            #052714 25%,
+            rgba(0, 0, 0, 0.3) 100%);
+}
+
+:root[data-theme="amber"] {
+    --phosphor: rgb(255, 229, 98);
+    --phosphor-rgb: 255, 229, 98;
+    --window-tint: rgba(0, 0, 0, 0.25);
+    --window-tint-strong: rgba(0, 0, 0, 0.16);
+    --phosphor-bg: #070301;
+    --boot: #020100;
+    --off: #050505;
+    --dark: #111;
+    --term: "> ";
+
+    --crt-phosphor:
+        radial-gradient(ellipse at center,
+            rgba(12, 10, 1, 0.3) 50%,
+            rgba(0, 0, 0, 0.3) 100%);
+}
+
+.ascii-art {
+    font-family: "Hack", monospace;
+    white-space: pre;
+    line-height: 1;
+    margin: 0;
+}
+
+#alert-frame {
+    color: var(--phosphor);
+    text-shadow: 0 0 5px #c8c8c8;
+    position: fixed;
+    left: 50%;
+    top: 40%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    font-size: 2rem;
+    word-break: break-word;
+}
+
+.alert-surface {
+    position: relative;
+    overflow: hidden;
+    border: 2px solid var(--phosphor);
+    padding: 10px 30px;
+    background: transparent;
+    isolation: isolate;
+}
+
+.alert-surface::before,
+.alert-surface::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.alert-surface::before {
+    background-image: var(--crt-phosphor), linear-gradient(#041106, #041106);
+    background-repeat: no-repeat, no-repeat;
+    background-size: 100vw 100vh, 100vw 100vh;
+    background-position:
+        var(--crt-offset-x, 0px) var(--crt-offset-y, 0px),
+        var(--crt-offset-x, 0px) var(--crt-offset-y, 0px);
+    z-index: -2;
+}
+
+.alert-surface::after {
+    background: rgba(0, 0, 0, 0.08);
+    z-index: -1;
+}
+
+.alert-surface > * {
+    position: relative;
+    z-index: 1;
+}
+
+
+body {
+    background: #111;
+    margin: 0;
+    font-family: sans-serif;
+    cursor: url("img/curosr.png"), auto;
+}
+
+html {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+a {
+    cursor: url("img/pointer.png"), auto;
+}
+
+html::-webkit-scrollbar {
+    display: none;
+}
+
+.terminal {
+    position: relative;
+    height: 100%;
+    padding: 2rem 2rem 2rem 4rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-break: break-word;
+    text-transform: uppercase;
+    animation: textShadow 3.2s infinite;
+}
+
+.terminal-underline {
+    text-decoration: underline;
+}
+
+.terminal,
+.fullscreen {
+    color: var(--phosphor);
+    text-shadow: 0 0 5px #c8c8c8;
+}
+
+.typer.active .typed-line:last-child {
+    display: inline;
+}
+
+.typer.active.typing::after {
+    animation: none;
+    opacity: 1;
+}
+
+#crt {
+    font-family: "VT323", monospace;
+    min-width: 80ch;
+    height: 100vh;
+    font-size: max(1rem, 2.2vmin);
+    position: relative;
+    transition: all 0.5s;
+    overflow: hidden;
+    z-index: 0;
+    isolation: isolate;
+    background:
+        var(--crt-phosphor),
+        var(--boot);
+}
+
+#crt-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: inherit;
+}
+
+#terminal {
+    position: relative;
+    z-index: 1;
+}
+
+.terminal {
+    position: relative;
+    z-index: 1;
+    height: 85%;
+    padding: 2rem 2rem 2rem 4rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-break: break-word;
+    text-transform: uppercase;
+    animation: textShadow 4s infinite;
+}
+
+.scanlines {
+    content: " ";
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+            rgba(18, 16, 16, 0) 50%,
+            rgba(0, 0, 0, 0.20) 50%);
+    background-size: 100% 4px;
+    z-index: 20000;
+    pointer-events: none;
+}
+
+#monitor.turn-off #crt:after {
+    animation: powerOn 0.4s ease-in-out;
+}
+
+#crt:after {
+    content: " ";
+    opacity: 0;
+    background: #fff;
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.scanline {
+    width: 100%;
+    height: 100px;
+    z-index: 19999;
+    background: linear-gradient(0deg,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(255, 255, 255, 0.2) 10%,
+            rgba(0, 0, 0, 0.1) 100%);
+    opacity: 0.1;
+    position: absolute;
+    bottom: 100%;
+    animation: scanline 10s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes scanline {
+    0% {
+        bottom: 100%;
+    }
+
+    80% {
+        bottom: 100%;
+    }
+
+    100% {
+        bottom: 0%;
+    }
+}
+
+#prompt {
+    display: none;
+}
+
+[contenteditable] {
+    caret-color: transparent;
+    outline: none;
+}
+
+#input {
+    position: relative;
+    display: block;
+    white-space: pre-wrap;
+}
+
+#input:before {
+    content: var(--term);
+}
+
+#input[contenteditable="true"]:after,
+.typer.active:after {
+    content: "";
+    display: inline-block;
+    width: 0.5em;
+    height: 0.5em;
+    background: currentColor;
+    margin-left: 1px;
+    animation: cursor 1s step-end infinite;
+}
+
+.typer.no-cursor::after,
+#input.no-cursor::after {
+    opacity: 0;
+    animation: none;
+}
+
+[contenteditable="true"] br:last-child {
+    display: none;
+}
+
+.typer {
+    word-break: break-all;
+}
+
+.turn-on {
+    animation: powerOn 900ms ease-out forwards;
+}
+
+.hack-font {
+    font-family: "Hack", monospace;
+    white-space: pre;
+}
+
+
+p code,
+li code,
+td code {
+    font-family: "Courier New", "Liberation Mono", monospace;
+    font-size: 0.6em;
+    border: transparent;
+    padding: 0.08em 0.3em;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--phosphor)
+}
+
+/* Block code */
+div.sourceCode {
+    font-family: "Courier New", "Liberation Mono", monospace;
+    font-size: 0.7em;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 1em 1.1em;
+    overflow-x: auto;
+    line-height: 1.5;
+
+}
+
+.scrollbox-content img {
+  width: 75%;
+  height: auto;
+  cursor: zoom-in;
+}
+
+.lightbox[hidden] {
+  display: none;
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+  padding: 2rem;
+}
+
+.lightbox img {
+  max-width: 92vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  cursor: zoom-out;
+}
+
+pre code,
+pre.sourceCode code {
+    font-size: inherit;
+    font-family: inherit;
+}
+
+/* Pandoc token colors */
+code span.kw {
+    color: #c678dd;
+    font-weight: bold;
+}
+
+/* keyword */
+code span.dt {
+    color: #e5c07b;
+}
+
+/* data type */
+code span.dv {
+    color: #d19a66;
+}
+
+/* decimal value */
+code span.bn {
+    color: #d19a66;
+}
+
+/* base-n number */
+code span.fl {
+    color: #d19a66;
+}
+
+/* float */
+code span.st {
+    color: #98c379;
+}
+
+/* string */
+code span.ch {
+    color: #98c379;
+}
+
+/* char */
+code span.co {
+    color: #7f848e;
+    font-style: italic;
+}
+
+/* comment */
+code span.ot {
+    color: #56b6c2;
+}
+
+/* other */
+code span.fu {
+    color: #61afef;
+}
+
+/* function */
+code span.va {
+    color: #e06c75;
+}
+
+/* variable */
+code span.cf {
+    color: #c678dd;
+    font-weight: bold;
+}
+
+/* control flow */
+code span.op {
+    color: #abb2bf;
+}
+
+/* operator */
+code span.im {
+    color: #c678dd;
+}
+
+/* import */
+code span.bu {
+    color: #56b6c2;
+}
+
+/* built-in */
+code span.er {
+    color: #e06c75;
+}
+
+/* error */

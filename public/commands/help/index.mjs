@@ -34,12 +34,12 @@ export default async function () {
     }
 
     if (credentialUnlocked) {
-        await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, balls");
-        await type("hard reset, theme [amber/green], follow, load [program], foxclaw");
+        await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, chat, balls");
+        await type("hard reset, theme [amber/green], follow, load [program]");
 
         await printAsciiArt("./commands/repair/repair.html");
     } else {
-        await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, balls");
+        await type("Available commands:\nhelp, clear, blog, recipes, about, atabook, links, chat, balls");
         await type("hard reset, theme [amber/green], follow, load [program]");
 
         await printAsciiArt("./commands/repair/repair.html");

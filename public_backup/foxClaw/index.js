@@ -1,0 +1,1 @@
+// Deprecated entry point. Replaced by index.mjs.

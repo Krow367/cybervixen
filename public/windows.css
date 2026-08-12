@@ -47,6 +47,38 @@
     inset 0 0 0 1px rgba(var(--phosphor-rgb), 0.12);
 }
 
+/* Per-window CRT scanline overlay */
+.window::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.20) 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* Per-window travelling scanline sweep beam */
+.window::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(255, 255, 255, 0.2) 10%, rgba(0, 0, 0, 0.1) 100%);
+  opacity: 0.1;
+  bottom: 100%;
+  animation: scanline 10s linear infinite;
+  pointer-events: none;
+  z-index: 998;
+}
+
+/* Disables scanlines on Chat (or any window) when requested by user */
+.window.no-scanline::after,
+.window.no-scanline::before {
+  display: none !important;
+}
+
 .hidden {
   display: none;
 }
@@ -332,6 +364,32 @@ a:visited {
   cursor: url("img/resize.png"), nwse-resize;
 }
 
+/* Amber theme cursor overrides */
+:root[data-theme="amber"] .window-header,
+:root[data-theme="amber"] .title-bar {
+  cursor: url("img/grab_amber.png"), move;
+}
+
+:root[data-theme="amber"] .buttons button {
+  cursor: url("img/curosr_amber.png"), auto;
+}
+
+:root[data-theme="amber"] .scrollbar-btn {
+  cursor: url("img/pointer_amber.png"), pointer;
+}
+
+:root[data-theme="amber"] .scrollbar-thumb {
+  cursor: url("img/grab_amber.png"), grab;
+}
+
+:root[data-theme="amber"] .scrollbar-thumb.dragging {
+  cursor: url("img/grab_amber.png"), grabbing;
+}
+
+:root[data-theme="amber"] .resize-handle {
+  cursor: url("img/resize_amber.png"), nwse-resize;
+}
+
 /* Existing links layout */
 #links {
   box-sizing: border-box;
@@ -511,10 +569,9 @@ a:visited {
 }
 
 /* Chat window overlay-scanline support */
-/* Default: window sits below scanlines (z-index 20000/19999)             */
-/* Toggling "OVERLAY SCANLINE EFFECT" lifts the window above them.       */
+/* Managed dynamically in windows.js via zCounter */
 .window.overlay-scanline {
-  z-index: 30000 !important;
+  /* Dynamic base Z applied by windows.js */
 }
 
 /* Chat layout overrides */

@@ -1,0 +1,9 @@
+# Editor temp files
+*.swp
+*.kate-swp
+*~
+.*.swp
+
+#other files
+gitcheet.txt
+story*notes.txt

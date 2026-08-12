@@ -28,6 +28,20 @@ export function ensureWindowCreated(id) {
     const lazyInfo = lazyWindows.get(id);
     if (!lazyInfo) return Promise.resolve(null);
 
+    // Check for inline template <template id="tpl-{id}"> first for synchronous zero-latency loading
+    const inlineTpl = document.getElementById(`tpl-${id}`);
+    if (inlineTpl) {
+        const win = createWindow(id, {
+            title: lazyInfo.title,
+            contentHTML: inlineTpl.innerHTML,
+            onOpen: lazyInfo.onOpen,
+            onClose: lazyInfo.onClose
+        });
+        win.querySelectorAll("[data-scrollbox]").forEach(setupFakeScrollbar);
+        win.dispatchEvent(new CustomEvent("template-loaded"));
+        return Promise.resolve(win);
+    }
+
     // Create the window shell synchronously so it is in DOM immediately
     const win = createWindow(id, {
         title: lazyInfo.title,

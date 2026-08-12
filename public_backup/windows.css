@@ -1,0 +1,665 @@
+/* Reset z-index layering for window internals */
+.window-surface,
+.window-surface::before,
+.window-surface::after,
+.titlebar,
+.body,
+.scrollbar,
+.scrollbar-thumb {
+  z-index: auto;
+}
+
+.window-loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  font-size: 1.5rem;
+  color: var(--phosphor);
+  text-shadow: 0 0 5px var(--phosphor);
+}
+
+
+.window {
+  container: window / inline-size;
+  position: fixed;
+  top: 12vh;
+  left: 12vw;
+  width: 76vw;
+  height: 72vh;
+  z-index: 5; /* Default: below scanlines (z-index 8888/9999) */
+  display: block;
+  overflow: hidden;
+  color: var(--phosphor);
+  font-family: "VT323", monospace;
+  border: 2px solid var(--phosphor);
+  box-shadow:
+    0 0 0 1px rgba(91, 248, 112, 0.25),
+    0 0 18px rgba(91, 248, 112, 0.22),
+    inset 0 0 0 1px rgba(91, 248, 112, 0.08);
+}
+
+.window.active-window {
+  box-shadow:
+    0 0 0 1px rgba(var(--phosphor-rgb), 0.35),
+    0 0 24px rgba(var(--phosphor-rgb), 0.34),
+    inset 0 0 0 1px rgba(var(--phosphor-rgb), 0.12);
+}
+
+.hidden {
+  display: none;
+}
+
+.window.minimized {
+  height: auto;
+  min-height: 0;
+}
+
+.window.minimized .titlebar {
+  display: flex;
+}
+
+.window.minimized .window-surface {
+  position: relative;
+  inset: auto;
+  display: block;
+  min-height: 0;
+}
+
+.window.minimized .body,
+.window.minimized .resize-handle {
+  display: none;
+}
+
+.window-surface {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.window-surface::before,
+.window-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.window-surface::before {
+  background-image: var(--crt-phosphor), linear-gradient(#041106, #041106);
+  background-repeat: no-repeat, no-repeat;
+  background-size: 100vw 100vh, 100vw 100vh;
+  background-position:
+    var(--crt-offset-x, 0px) var(--crt-offset-y, 0px),
+    var(--crt-offset-x, 0px) var(--crt-offset-y, 0px);
+}
+
+.window-surface::after {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.window-surface>* {
+  position: relative;
+  z-index: 1;
+}
+
+.titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  cursor: url("./img/grab.png"), move;
+  padding: 0.5rem 0.75rem;
+  background: var(--window-tint);
+  border-bottom: 1px solid rgba(var(--phosphor-rgb), 0.75);
+  text-transform: uppercase;
+  text-shadow: 0 0 5px #c8c8c8;
+  font-size: clamp(1rem, 2cqw, 2rem);
+}
+
+.buttons {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  z-index: 2;
+  padding-inline: 0.35rem;
+  margin-inline: -0.15rem;
+}
+
+.buttons button,
+.scrollbar-btn,
+.scrollbar-thumb {
+  box-sizing: border-box;
+}
+
+.buttons button {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+  z-index: 2;
+  width: 1.6em;
+  height: 1.6em;
+  margin: 0;
+  padding: 0;
+  line-height: 1.4em;
+  border: 1px solid var(--phosphor);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--phosphor);
+  font: inherit;
+  cursor: url("img/curosr.png"), auto;
+}
+
+.buttons button::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebar,
+.content,
+.scrollbox,
+.scrollbox-viewport,
+.scrollbox-content {
+  min-height: 0;
+}
+
+.sidebar {
+  flex: 0 0 10%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  font-size: 1.2rem;
+  background: var(--window-tint);
+  border-right: 1px solid rgba(var(--phosphor-rgb), 0.4);
+}
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 1rem;
+  font-size: clamp(1rem, 2cqw, 2rem);
+  background: rgba(0, 0, 0, 0.25)
+}
+
+a,
+a:visited {
+  color: var(--phosphor);
+}
+
+.scrollbox,
+.scrollbox-content {
+  background: transparent;
+}
+
+.scrollbox {
+  --sb-size: 18px;
+  --sb-step: 32;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--sb-size);
+  height: 100%;
+  overflow: hidden;
+  color: var(--phosphor);
+}
+
+.scrollbox-viewport {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 0.5rem;
+  background: transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbox-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbox-content {
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.scrollbar {
+  display: grid;
+  grid-template-rows: var(--sb-size) minmax(0, 1fr) var(--sb-size);
+  width: var(--sb-size);
+  min-height: 0;
+  user-select: none;
+  border-left: 1px solid var(--phosphor);
+}
+
+.scrollbar-btn {
+  position: relative;
+  z-index: 2;
+  background: rgba(0, 0, 0, 0.18);
+
+  width: 100%;
+  height: var(--sb-size);
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--phosphor);
+  border-left: 0;
+  color: var(--phosphor);
+  cursor: url("img/pointer.png"), pointer;
+}
+
+.scrollbar-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-inline: 5px solid transparent;
+}
+
+.scrollbar-btn.up::before {
+  border-bottom: 7px solid var(--phosphor);
+}
+
+.scrollbar-btn.down::before {
+  border-top: 7px solid var(--phosphor);
+}
+
+.scrollbar-track {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--phosphor);
+  border-right: 1px solid var(--phosphor);
+  border-bottom: 1px solid var(--phosphor);
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)) padding-box;
+}
+
+.scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: block;
+  width: 100%;
+  min-height: 24px;
+  border: 1px solid var(--phosphor);
+  border-right: 0;
+  background: rgba(var(--phosphor-rgb), 0.78);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  cursor: url("img/grab.png"), grab;
+}
+
+.scrollbar-thumb::before {
+  content: "";
+  position: absolute;
+  inset: 4px 3px;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.scrollbar-thumb.dragging {
+  cursor: url("img/grab.png"), grabbing;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+
+  width: 14px;
+  height: 14px;
+  cursor: url("img/resize.png"), nwse-resize;
+}
+
+/* Existing links layout */
+#links {
+  box-sizing: border-box;
+}
+
+#links .scrollbox-content {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-auto-rows: 100px;
+  gap: 10px;
+  align-items: start;
+  grid-template-areas:
+    "cy cy cy cy cy cy cy cy"
+    "cy cy cy cy cy cy cy cy"
+    "bl bl bl bl bl bl bl bl"
+    "a b c d e f g h"
+    "mu mu mu mu mu mu mu mu"
+    "q r s t u v w x"
+    "y z aa bb cc dd ee ff";
+}
+
+.cyberlink {
+  grid-area: cy;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  min-width: 0;
+  padding: 1rem;
+  text-align: center;
+}
+
+.cyberlink textarea {
+  width: 250px;
+  min-height: 75px;
+  max-height: 75px;
+  resize: none;
+}
+
+.mutuals {
+  grid-area: mu;
+  text-align: start;
+}
+
+.bl {
+  grid-area: bl;
+}
+
+.link1 {
+  grid-area: a;
+}
+
+.link2 {
+  grid-area: b;
+}
+
+.link3 {
+  grid-area: c;
+}
+
+.link4 {
+  grid-area: d;
+}
+
+.link5 {
+  grid-area: e;
+}
+
+.link6 {
+  grid-area: f;
+}
+
+.link7 {
+  grid-area: g;
+}
+
+.link8 {
+  grid-area: h;
+}
+
+.link9 {
+  grid-area: i;
+}
+
+.link10 {
+  grid-area: j;
+}
+
+.link11 {
+  grid-area: k;
+}
+
+.link12 {
+  grid-area: l;
+}
+
+.link13 {
+  grid-area: m;
+}
+
+.link14 {
+  grid-area: n;
+}
+
+.link15 {
+  grid-area: o;
+}
+
+.link16 {
+  grid-area: p;
+}
+
+.link17 {
+  grid-area: q;
+}
+
+.link18 {
+  grid-area: r;
+}
+
+.link19 {
+  grid-area: s;
+}
+
+.link20 {
+  grid-area: t;
+}
+
+.link21 {
+  grid-area: u;
+}
+
+.link22 {
+  grid-area: v;
+}
+
+.link23 {
+  grid-area: w;
+}
+
+.link24 {
+  grid-area: x;
+}
+
+.link25 {
+  grid-area: y;
+}
+
+.link26 {
+  grid-area: z;
+}
+
+.link27 {
+  grid-area: aa;
+}
+
+.link28 {
+  grid-area: bb;
+}
+
+.link29 {
+  grid-area: cc;
+}
+
+.link30 {
+  grid-area: dd;
+}
+
+.link31 {
+  grid-area: ee;
+}
+
+.link32 {
+  grid-area: ff;
+}
+
+/* Chat window overlay-scanline support */
+/* Default: window sits below scanlines (z-index 20000/19999)             */
+/* Toggling "OVERLAY SCANLINE EFFECT" lifts the window above them.       */
+.window.overlay-scanline {
+  z-index: 30000 !important;
+}
+
+/* Chat layout overrides */
+#chat .sidebar {
+  flex: 0 0 20% !important;
+}
+.chat-sidebar {
+  border-right: 1px solid var(--phosphor);
+}
+.sidebar-section-title {
+  padding: 8px;
+  font-weight: bold;
+  border-bottom: 1px solid var(--phosphor);
+  text-transform: uppercase;
+}
+.user-item {
+  font-size: 1.2rem !important;
+}
+.user-item:hover {
+  background: rgba(91, 248, 112, 0.1) !important;
+}
+
+.btn-settings {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--phosphor);
+  color: var(--phosphor);
+  font-family: inherit;
+  font-size: 16px;
+  padding: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.btn-settings:hover {
+  background: var(--phosphor);
+  color: #000;
+}
+
+.chat-content-pane {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: var(--window-tint) !important;
+  position: relative !important;  /* allows absolute positioning of corner btn */
+}
+
+#chat-room-view {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  position: relative !important; /* needed for overlay positioning */
+  overscroll-behavior: contain !important;
+}
+
+#chattable {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+/* Settings view fills the full content pane */
+#chat-settings-view {
+  flex: 1 1 auto !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Welcome Splash rules overlay overrides */
+#chat-splash {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--window-tint), var(--window-tint)),
+    var(--crt-phosphor),
+    linear-gradient(#041106, #041106);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: 100vw 100vh, 100vw 100vh, 100vw 100vh;
+  background-position:
+    0 0,
+    var(--crt-offset-x, 0px) var(--crt-offset-y, 0px),
+    var(--crt-offset-x, 0px) var(--crt-offset-y, 0px);
+  color: var(--phosphor);
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  text-align: center;
+  z-index: 20;
+  text-shadow: 0 0 4px var(--phosphor);
+}
+
+#chat-splash .splash-title {
+  font-weight: bold;
+  font-size: 1.6rem;
+  margin-bottom: 20px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+#chat-splash .rules-box {
+  max-width: 550px;
+  font-size: 1.2rem;
+  margin-bottom: 35px;
+  line-height: 1.5;
+  text-align: left;
+  border: 1px solid var(--phosphor);
+  padding: 25px;
+  background: rgba(0, 5, 0, 0.8);
+}
+
+#chat-splash .rules-title {
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 1px solid var(--phosphor);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  letter-spacing: 0.03em;
+  font-size: 1.3rem;
+}
+
+#chat-splash .agree-btn {
+  background: transparent;
+  border: 1px solid var(--phosphor);
+  color: var(--phosphor);
+  font-family: inherit;
+  font-size: 1.25rem;
+  padding: 14px 28px;
+  cursor: pointer;
+  text-shadow: inherit;
+  outline: none;
+  letter-spacing: 0.05em;
+  transition: background 0.2s;
+}
+
+#chat-splash .agree-btn:hover {
+  background: var(--phosphor);
+  color: #000;
+}

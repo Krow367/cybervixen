@@ -539,11 +539,11 @@ export function init(onDone = () => { }) {
 }
 
 function startLoop() {
-  if (frameId == null) {
-    lastTime = 0;
-    accumulator = 0;
-    frameId = requestAnimationFrame(loop);
-  }
+    if (frameId == null) {
+        lastTime = 0;
+        accumulator = 0;
+        frameId = requestAnimationFrame(loop);
+    }
 }
 
 
@@ -1330,10 +1330,11 @@ async function handleFinalContinue(onDone) {
         { kind: "type", text: "CyberVixen > Nice. You've done it. I don't know who you are. Don't want to know. foxOS landing in your hands is all I need.", wait: 20, },
         { kind: "type", text: "CyberVixen > foxHound has spoofed the credentials for foxClaw. You're ready to begin but before that, a couple things you should know.", wait: 20, },
         { kind: "type", text: "CyberVixen > Serenity is more than ready to kill to keep foxOS under wraps. If you're discovered, you'll only have a few minutes to get the hell out of wherever you are.\nWhen that happens, ditch the net, stay away from cities, and do not touch another Serenity Industries terminal again. They will find you.", wait: 20, },
-        { kind: "type", text: "CyberVixen > foxOS likely got scrambled during transfer. Sorry. Had to rush.", wait: 20, },
-        { kind: "type", text: "CyberVixen > foxHound can help fix corrupted data, but only after you've been able to steal enough data for it to work with", wait: 20, },
-        { kind: "type", text: `CyberVixen > Use the 'foxClaw' command for that part. Once in foxClaw mode, all other commands will cease to work except the suite commands and "exit"`, wait: 20, },
-        { kind: "type", text: "CyberVixen > Run 'foxclaw.scan(localhost)' to scan your own network node and find connected systems. From there, run 'foxclaw.help'", wait: 20, },
+        { kind: "type", text: "CyberVixen > foxOS likely got scrambled during transfer. Sorry. Had to rush. But I've embedded 'foxClaw' directly into your terminal suite to compensate.", wait: 20, },
+        { kind: "type", text: "CyberVixen > foxClaw is a rogue-kernel tactical probe. A turn-based breach protocol into Serenity's deeper sub-nets.", wait: 20 },
+        { kind: "type", text: "CyberVixen > Once launched, you'll control an isolated Kernel navigating grid- based network sectors.Every move and action costs system ticks.", wait: 20 },
+        { kind: "type", text: "CyberVixen > Scavenge subroutines, bypass Serenity security daemons, and descend deeper into the core.If your kernel gets dereferenced, the run is purged.", wait: 20 },
+        { kind: "type", text: "CyberVixen > Type 'foxclaw' to launch the probe. Use arrow keys or Numpad to navigate the grid.Once inside, run 'help' or check your equipment.", wait: 20 },
         { kind: "type", text: "CyberVixen > You'll figure it out.", wait: 20, },
         { kind: "type", text: "CyberVixen > Remember. Stay quiet, don't get caught, and don't bite off more than you and foxOS can chew at once. Start slow. You'll be running with the pack soon enough.", wait: 20, },
         { kind: "type", text: "CyberVixen > Good luck", wait: 20, },

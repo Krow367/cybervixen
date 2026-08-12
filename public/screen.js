@@ -192,14 +192,17 @@ async function init() {
             url: "./commands/chat/chat.html",
             width: "79vw",
             height: "75vh",
+            onOpen: () => {
+                import("./commands/chat/index.mjs").then(m => {
+                    m.blurTerminalInput?.();
+                    m.syncThemeToIframe?.();
+                });
+            }
         });
 
         // Start boot sequence immediately without blocking
         setupGlobalFocusBehavior();
         on();
-
-        // Prefetch window templates in the background concurrently
-        ["blog", "recipes", "about", "links", "chat"].forEach(id => ensureWindowCreated(id));
 
         // Fetch and append repair asset asynchronously
         fetch("./commands/repair/repair.html")
