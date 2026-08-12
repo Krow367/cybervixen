@@ -7,10 +7,10 @@ const onlineUsers = new Map();
 let rawChatCSS = null;
 let lastPushedCSS = "";
 
-async function getChatCSS() {
-    if (!rawChatCSS) {
+async function getChatCSS(force = false) {
+    if (!rawChatCSS || force) {
         try {
-            const res = await fetch("./commands/chat/chat.css");
+            const res = await fetch("./commands/chat/chat.css?t=" + Date.now());
             rawChatCSS = await res.text();
         } catch (e) {
             console.error("Failed to load chat.css:", e);
@@ -58,7 +58,7 @@ function applyCSS(force = false) {
     const iframe = document.getElementById("chattable");
     if (!iframe || !iframe.contentWindow) return;
 
-    getChatCSS().then(cssText => {
+    getChatCSS(force).then(cssText => {
         if (!cssText) return;
         if (!force && cssText === lastPushedCSS) return; // Prevent duplicate postMessage ping-pong loop!
         lastPushedCSS = cssText;
