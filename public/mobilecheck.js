@@ -123,12 +123,7 @@ function mobileDetected() {
     });
 
     document.getElementById("btn-chat").addEventListener("click", () => {
-        overlay.remove();
-        if (typeof window.openWindow === "function") {
-            window.openWindow("chat");
-        } else {
-            window.location.href = "/index.html?open=chat";
-        }
+        window.location.href = "/mobile-chat.html";
     });
 
     document.getElementById("btn-continue").addEventListener("click", () => {

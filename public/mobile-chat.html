@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>foxNet Chat — CyberVixen</title>
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+    <link rel="stylesheet" href="./commands/chat/chat.css">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --border: #2a2a2a;
+            --phosphor: #5bf870;
+            --phosphor-rgb: 91, 248, 112;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background: var(--bg);
+            color: var(--phosphor);
+            font-family: 'VT323', "Courier New", monospace;
+            overflow: hidden;
+        }
+
+        #mobile-chat-app {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+
+        header {
+            padding: 0.6rem 0.8rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #000;
+            flex-shrink: 0;
+        }
+
+        header a.back {
+            color: var(--phosphor);
+            text-decoration: none;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        header h1 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 4px var(--phosphor);
+        }
+
+        #mobile-btn-toggle-sidebar {
+            background: rgba(var(--phosphor-rgb), 0.1);
+            border: 1px solid var(--phosphor);
+            color: var(--phosphor);
+            font-family: 'VT323', monospace;
+            font-size: 0.85rem;
+            padding: 2px 6px;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+
+        #mobile-main-container {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Mobile Drawer Sidebar */
+        #mobile-sidebar {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 240px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.95);
+            border-left: 1px solid var(--phosphor);
+            display: none;
+            flex-direction: column;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.8);
+        }
+
+        #mobile-chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #mobile-input-bar {
+            padding: 8px;
+            border-top: 1px solid var(--border);
+            background: #050505;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #foxnet-message-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--phosphor);
+            color: var(--phosphor);
+            font-family: 'VT323', monospace;
+            font-size: 1.1rem;
+            padding: 6px 8px;
+            outline: none;
+            border-radius: 2px;
+        }
+
+        #foxnet-btn-send {
+            padding: 6px 12px;
+            background: rgba(var(--phosphor-rgb), 0.15);
+            border: 1px solid var(--phosphor);
+            color: var(--phosphor);
+            font-family: 'VT323', monospace;
+            font-size: 1.05rem;
+            cursor: pointer;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div id="mobile-chat-app">
+        <header>
+            <a href="index.html" class="back">← Exit</a>
+            <h1>// foxNet mobile //</h1>
+            <button type="button" id="mobile-btn-toggle-sidebar">[ USERS ]</button>
+        </header>
+
+        <div id="mobile-main-container">
+            <div class="content chat-content-pane" style="flex: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; position: relative;">
+                
+                <!-- Reply Bar -->
+                <div id="foxnet-reply-bar" style="display: none; align-items: center; justify-content: space-between; padding: 4px 8px; background: rgba(var(--phosphor-rgb), 0.15); border-bottom: 1px solid var(--phosphor); font-size: 0.95rem;">
+                    <span id="reply-bar-text" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Replying to...</span>
+                    <button type="button" id="btn-cancel-reply" style="background: transparent; border: none; color: var(--phosphor); cursor: pointer; padding: 0 4px;">[X]</button>
+                </div>
+
+                <!-- Messages Stream -->
+                <div id="foxnet-messages" style="flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box;">
+                    <div class="msg-system" style="opacity: 0.7; font-style: italic;">[foxNet Mobile initializing...]</div>
+                </div>
+
+                <!-- Input Bar -->
+                <div id="foxnet-input-bar" style="display: flex; gap: 6px; padding: 8px; background: #000; border-top: 1px solid rgba(var(--phosphor-rgb), 0.3); flex-shrink: 0;">
+                    <input type="text" id="foxnet-message-input" placeholder="Type message or /help..." autocomplete="off" spellcheck="false">
+                    <button type="button" id="foxnet-btn-send">[ SEND ]</button>
+                </div>
+            </div>
+
+            <!-- Drawer Sidebar (Roster & Settings) -->
+            <div id="mobile-sidebar" class="chat-sidebar">
+                <div class="chat-sidebar-header" id="sidebar-header-users" style="padding: 6px 8px; border-bottom: 1px solid rgba(var(--phosphor-rgb), 0.3); font-weight: bold; display: flex; justify-content: space-between;">
+                    <span>ONLINE USERS</span>
+                    <span id="user-count-badge">(0)</span>
+                </div>
+                <div class="chat-sidebar-header" id="sidebar-header-settings" style="padding: 6px 8px; border-bottom: 1px solid rgba(var(--phosphor-rgb), 0.3); font-weight: bold; display: none;">
+                    <span>CHAT SETTINGS</span>
+                </div>
+
+                <div class="chat-sidebar-userlist" id="chat-user-list" style="flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 6px;"></div>
+
+                <div class="chat-sidebar-settings" id="chat-settings-panel" style="flex: 1; overflow-y: auto; padding: 8px; display: none; flex-direction: column; gap: 8px;">
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; opacity: 0.85; margin-bottom: 2px;">HANDLE</label>
+                        <input type="text" id="setting-handle-input" style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; padding: 4px; font-size: 0.95rem; outline: none;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; opacity: 0.85; margin-bottom: 2px;">PIN (OPTIONAL)</label>
+                        <input type="text" id="setting-pin-input" style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; padding: 4px; font-size: 0.95rem; outline: none; -webkit-text-security: disc;">
+                        <button type="button" id="btn-save-handle" style="margin-top: 4px; width: 100%; background: rgba(var(--phosphor-rgb), 0.1); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; padding: 3px; cursor: pointer;">[ SAVE HANDLE ]</button>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; opacity: 0.85; margin-bottom: 2px;">FLAIR</label>
+                        <input type="text" id="setting-flair-input" style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; padding: 4px; font-size: 0.95rem; outline: none;">
+                        <button type="button" id="btn-save-flair" style="margin-top: 4px; width: 100%; background: rgba(var(--phosphor-rgb), 0.1); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; padding: 3px; cursor: pointer;">[ SET FLAIR ]</button>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; opacity: 0.85; margin-bottom: 2px;">WEBSITE</label>
+                        <input type="text" id="setting-website-input" style="width: 100%; background: #000; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; padding: 4px; font-size: 0.95rem; outline: none;">
+                        <button type="button" id="btn-save-website" style="margin-top: 4px; width: 100%; background: rgba(var(--phosphor-rgb), 0.1); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; padding: 3px; cursor: pointer;">[ SAVE WEBSITE ]</button>
+                    </div>
+                    <div style="border: 1px solid rgba(var(--phosphor-rgb), 0.3); padding: 6px; background: rgba(0, 0, 0, 0.2); border-radius: 3px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <label style="font-size: 0.8rem;">FONT SIZE</label>
+                            <span id="font-size-label" style="font-size: 0.8rem; font-weight: bold;">LARGE (3)</span>
+                        </div>
+                        <input type="range" id="setting-fontsize-slider" min="1" max="5" step="1" value="3" style="width: 100%; cursor: pointer; accent-color: var(--phosphor);">
+                    </div>
+                    <div id="settings-status-msg" style="font-size: 0.8rem; text-align: center; color: var(--phosphor);"></div>
+                </div>
+
+                <div style="padding: 6px; border-top: 1px solid rgba(var(--phosphor-rgb), 0.3);">
+                    <button type="button" id="btn-toggle-settings" style="width: 100%; background: transparent; border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; padding: 4px; cursor: pointer;">[ SETTINGS ]</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right-Click Context Menu -->
+    <div id="foxnet-context-menu" style="position: absolute; display: none; z-index: 10000; background: rgba(0, 0, 0, 0.95); border: 1px solid var(--phosphor); box-shadow: 0 0 12px rgba(var(--phosphor-rgb), 0.4); border-radius: 3px; padding: 4px; font-family: 'VT323', monospace; color: var(--phosphor); min-width: 140px;">
+        <div class="ctx-item" id="ctx-quote" style="padding: 4px 8px; cursor: pointer; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ QUOTE MESSAGE ]</div>
+        <div class="ctx-item" id="ctx-whisper" style="padding: 4px 8px; cursor: pointer; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ WHISPER USER ]</div>
+        <div class="ctx-item" id="ctx-edit" style="padding: 4px 8px; cursor: pointer; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3); display: none;">[ EDIT MESSAGE ]</div>
+        <div class="ctx-item" id="ctx-delete" style="padding: 4px 8px; cursor: pointer; color: #FF3366; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3); display: none;">[ DELETE MESSAGE ]</div>
+        <div class="ctx-item" id="ctx-kick" style="padding: 4px 8px; cursor: pointer; color: #FFA500; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3); display: none;">[ KICK USER ]</div>
+        <div class="ctx-item" id="ctx-ban" style="padding: 4px 8px; cursor: pointer; color: #FF0000; display: none;">[ BAN USER ]</div>
+    </div>
+
+    <!-- On-Theme Retro Dialog Modal -->
+    <div id="foxnet-dialog-modal" style="position: absolute; inset: 0; z-index: 10001; background: rgba(4, 17, 6, 0.92); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; font-family: 'VT323', monospace; color: var(--phosphor);">
+        <div style="border: 1px solid var(--phosphor); background: rgba(0, 0, 0, 0.92); padding: 16px; max-width: 420px; width: 94%; border-radius: 3px;">
+            <h3 id="dialog-modal-title" style="margin: 0 0 8px; font-size: 1.2rem;">// EDIT MESSAGE //</h3>
+            <p id="dialog-modal-desc" style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 10px;">Modify text below:</p>
+            <textarea id="dialog-modal-input" rows="3" style="width: 100%; box-sizing: border-box; background: rgba(0, 0, 0, 0.5); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.05rem; padding: 6px; outline: none; margin-bottom: 10px; resize: vertical; display: block;"></textarea>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" id="dialog-modal-submit" style="flex: 1; padding: 6px; background: rgba(var(--phosphor-rgb), 0.2); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; cursor: pointer;">[ CONFIRM ]</button>
+                <button type="button" id="dialog-modal-cancel" style="padding: 6px 12px; background: transparent; border: 1px solid rgba(var(--phosphor-rgb), 0.4); color: var(--phosphor); font-family: 'VT323', monospace; cursor: pointer;">[ CANCEL ]</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commands & Help Flyout Modal -->
+    <div id="foxnet-commands-modal" style="position: absolute; inset: 0; z-index: 10001; background: rgba(4, 17, 6, 0.92); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; font-family: 'VT323', monospace; color: var(--phosphor);">
+        <div style="border: 1px solid var(--phosphor); background: rgba(0, 0, 0, 0.92); padding: 16px; max-width: 440px; width: 94%; border-radius: 3px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(var(--phosphor-rgb), 0.4); padding-bottom: 6px; margin-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 1.2rem;">// FOXNET COMMAND MATRIX //</h3>
+                <button type="button" id="btn-close-commands" style="background: transparent; border: none; color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.1rem; cursor: pointer;">[ X ]</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px; font-size: 1rem; line-height: 1.35; max-height: 260px; overflow-y: auto;">
+                <div>> Be respectful to fellow network nodes.</div>
+                <div>> This is a mature, 18+ chat. Keep things mostly SFW, but swearing, etc are okay.</div>
+                <div>> Do not share pornography or illegal content. You will be banned without warning.</div>
+                <div>> Set your handle & site in <strong>[ SETTINGS ]</strong>.</div>
+            </div>
+            <button type="button" id="btn-dismiss-commands-modal" style="width: 100%; margin-top: 12px; padding: 6px; background: rgba(var(--phosphor-rgb), 0.15); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; cursor: pointer;">[ CLOSE HELP ]</button>
+        </div>
+    </div>
+
+    <!-- Load Firebase Chat Engine -->
+    <script type="module">
+        import chatInit from "./commands/chat/index.mjs";
+
+        // Initialize Firebase Chat directly for mobile standalone page
+        window.addEventListener("DOMContentLoaded", () => {
+            chatInit();
+
+            // Mobile Drawer Sidebar Toggle
+            const btnToggleSidebar = document.getElementById("mobile-btn-toggle-sidebar");
+            const sidebar = document.getElementById("mobile-sidebar");
+            if (btnToggleSidebar && sidebar) {
+                btnToggleSidebar.addEventListener("click", () => {
+                    const isOpen = sidebar.style.display === "flex";
+                    sidebar.style.display = isOpen ? "none" : "flex";
+                    btnToggleSidebar.textContent = isOpen ? "[ USERS ]" : "[ CLOSE ]";
+                });
+            }
+        });
+    </script>
+</body>
+</html>
