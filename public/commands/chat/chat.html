@@ -127,6 +127,17 @@
         <div class="ctx-item" id="ctx-ban" style="padding: 4px 8px; cursor: pointer; color: #FF0000; display: none;">[ BAN USER ]</div>
     </div>
 
+    <!-- User Roster Right-Click Context Menu (Owner Only Role Management) -->
+    <div id="foxnet-user-context-menu" style="position: fixed; display: none; z-index: 10000; background: rgba(0, 0, 0, 0.95); border: 1px solid var(--phosphor); box-shadow: 0 0 12px rgba(var(--phosphor-rgb), 0.4); border-radius: 3px; padding: 4px; font-family: 'VT323', monospace; color: var(--phosphor); min-width: 170px;">
+        <div id="user-ctx-header" style="padding: 4px 8px; font-weight: bold; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.4); text-align: center; color: var(--phosphor);">@USER</div>
+        <div class="ctx-item" id="user-ctx-whisper" style="padding: 4px 8px; cursor: pointer; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ WHISPER USER ]</div>
+        <div class="ctx-item" id="user-ctx-role-mod" style="padding: 4px 8px; cursor: pointer; color: #FFD700; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ SET ROLE: MOD ]</div>
+        <div class="ctx-item" id="user-ctx-role-vip" style="padding: 4px 8px; cursor: pointer; color: #00FFFF; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ SET ROLE: VIP ]</div>
+        <div class="ctx-item" id="user-ctx-role-user" style="padding: 4px 8px; cursor: pointer; color: var(--phosphor); border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ SET ROLE: USER ]</div>
+        <div class="ctx-item" id="user-ctx-kick" style="padding: 4px 8px; cursor: pointer; color: #FFA500; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ KICK USER ]</div>
+        <div class="ctx-item" id="user-ctx-ban" style="padding: 4px 8px; cursor: pointer; color: #FF0000;">[ BAN USER ]</div>
+    </div>
+
     <!-- On-Theme Retro Dialog Modal (Replaces browser prompt/confirm) -->
     <div id="foxnet-dialog-modal" style="position: absolute; inset: 0; z-index: 10001; background: rgba(4, 17, 6, 0.92); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; font-family: 'VT323', monospace; color: var(--phosphor);">
         <div style="border: 1px solid var(--phosphor); background: rgba(0, 0, 0, 0.88); padding: 20px; max-width: 420px; width: 92%; box-shadow: 0 0 15px rgba(var(--phosphor-rgb), 0.35); border-radius: 3px;">
@@ -152,6 +163,7 @@
             
             <div style="display: flex; flex-direction: column; gap: 8px; font-size: 1.05rem; line-height: 1.35; max-height: 280px; overflow-y: auto;">
                 <div><strong style="color: var(--phosphor); text-shadow: 0 0 3px var(--phosphor);">/w &lt;user&gt; &lt;msg&gt;</strong> — Send a private whisper</div>
+                <div><strong style="color: var(--phosphor); text-shadow: 0 0 3px var(--phosphor);">/r &lt;msg&gt;</strong> or <strong>/reply &lt;msg&gt;</strong> — Reply to last whisper</div>
                 <div><strong style="color: var(--phosphor); text-shadow: 0 0 3px var(--phosphor);">/img &lt;url&gt;</strong> — Share an inline image</div>
                 <div><strong style="color: var(--phosphor); text-shadow: 0 0 3px var(--phosphor);">/commands</strong> or <strong>/help</strong> — Open this command menu</div>
                 <div><strong style="color: var(--phosphor); text-shadow: 0 0 3px var(--phosphor);">Right-Click Message</strong> — Quote, Whisper, Edit, or Delete</div>

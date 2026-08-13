@@ -235,6 +235,17 @@
         <div class="ctx-item" id="ctx-ban" style="padding: 4px 8px; cursor: pointer; color: #FF0000; display: none;">[ BAN USER ]</div>
     </div>
 
+    <!-- User Roster Right-Click Context Menu (Owner Only Role Management) -->
+    <div id="foxnet-user-context-menu" style="position: fixed; display: none; z-index: 10000; background: rgba(0, 0, 0, 0.95); border: 1px solid var(--phosphor); box-shadow: 0 0 12px rgba(var(--phosphor-rgb), 0.4); border-radius: 3px; padding: 4px; font-family: 'VT323', monospace; color: var(--phosphor); min-width: 170px;">
+        <div id="user-ctx-header" style="padding: 4px 8px; font-weight: bold; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.4); text-align: center; color: var(--phosphor);">@USER</div>
+        <div class="ctx-item" id="user-ctx-whisper" style="padding: 4px 8px; cursor: pointer; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ WHISPER USER ]</div>
+        <div class="ctx-item" id="user-ctx-role-mod" style="padding: 4px 8px; cursor: pointer; color: #FFD700; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ SET ROLE: MOD ]</div>
+        <div class="ctx-item" id="user-ctx-role-vip" style="padding: 4px 8px; cursor: pointer; color: #00FFFF; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ SET ROLE: VIP ]</div>
+        <div class="ctx-item" id="user-ctx-role-user" style="padding: 4px 8px; cursor: pointer; color: var(--phosphor); border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ SET ROLE: USER ]</div>
+        <div class="ctx-item" id="user-ctx-kick" style="padding: 4px 8px; cursor: pointer; color: #FFA500; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3);">[ KICK USER ]</div>
+        <div class="ctx-item" id="user-ctx-ban" style="padding: 4px 8px; cursor: pointer; color: #FF0000;">[ BAN USER ]</div>
+    </div>
+
     <!-- On-Theme Retro Dialog Modal -->
     <div id="foxnet-dialog-modal" style="position: absolute; inset: 0; z-index: 10001; background: rgba(4, 17, 6, 0.92); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; font-family: 'VT323', monospace; color: var(--phosphor);">
         <div style="border: 1px solid var(--phosphor); background: rgba(0, 0, 0, 0.92); padding: 16px; max-width: 420px; width: 94%; border-radius: 3px;">
@@ -256,10 +267,12 @@
                 <button type="button" id="btn-close-commands" style="background: transparent; border: none; color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.1rem; cursor: pointer;">[ X ]</button>
             </div>
             <div style="display: flex; flex-direction: column; gap: 6px; font-size: 1rem; line-height: 1.35; max-height: 260px; overflow-y: auto;">
+                <div><strong style="color: var(--phosphor);">/w &lt;user&gt; &lt;msg&gt;</strong> — Send a private whisper</div>
+                <div><strong style="color: var(--phosphor);">/r &lt;msg&gt;</strong> or <strong>/reply &lt;msg&gt;</strong> — Reply to last whisper</div>
+                <div><strong style="color: var(--phosphor);">/img &lt;url&gt;</strong> — Share an inline image</div>
+                <div><strong style="color: var(--phosphor);">/help</strong> — Show this command menu</div>
+                <div>> Long-press messages for reactions, quote, whisper, or mod options.</div>
                 <div>> Be respectful to fellow network nodes.</div>
-                <div>> This is a mature, 18+ chat. Keep things mostly SFW, but swearing, etc are okay.</div>
-                <div>> Do not share pornography or illegal content. You will be banned without warning.</div>
-                <div>> Set your handle & site in <strong>[ SETTINGS ]</strong>.</div>
             </div>
             <button type="button" id="btn-dismiss-commands-modal" style="width: 100%; margin-top: 12px; padding: 6px; background: rgba(var(--phosphor-rgb), 0.15); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; cursor: pointer;">[ CLOSE HELP ]</button>
         </div>

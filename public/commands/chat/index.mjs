@@ -147,6 +147,7 @@ async function initFirebaseEngine() {
         listenToMessages();
         setupUIEvents();
         setupContextMenuEvents();
+        setupUserRosterContextMenu();
         renderLocalWelcomeMessage();
     } catch (e) {
         console.error("Firebase init error:", e);
@@ -164,6 +165,20 @@ function renderLocalWelcomeMessage() {
     msgEl.style.color = "var(--phosphor)";
     msgEl.innerHTML = `<span>[ Welcome to foxNet! Type <strong style="text-shadow: 0 0 4px var(--phosphor);">/help</strong> for a list of available commands. ]</span>`;
     container.appendChild(msgEl);
+}
+
+function renderLocalNotice(text) {
+    const container = document.getElementById("foxnet-messages");
+    if (!container) return;
+    const msgEl = document.createElement("div");
+    msgEl.className = "foxnet-msg-item msg-system";
+    msgEl.style.fontStyle = "italic";
+    msgEl.style.opacity = "0.9";
+    msgEl.style.padding = "4px 12px";
+    msgEl.style.color = "var(--phosphor)";
+    msgEl.innerHTML = `<span>[ ${escapeHTML(text)} ]</span>`;
+    container.appendChild(msgEl);
+    container.scrollTop = container.scrollHeight + 1000;
 }
 
 async function checkBannedStatus() {
@@ -236,6 +251,12 @@ async function checkUserRole(handle) {
     if (!db) return "user";
 
     try {
+        const roleSnap = await get(child(ref(db), `user_roles/${handle.toLowerCase()}`));
+        if (roleSnap.exists() && roleSnap.val()) {
+            currentUserRole = roleSnap.val();
+            return roleSnap.val();
+        }
+
         const handleSnap = await get(child(ref(db), `reserved_handles/${handle.toLowerCase()}`));
         const data = handleSnap.val();
         if (data && data.role) {
@@ -390,16 +411,24 @@ function renderUserList() {
 
 // ─── Real-Time Messaging & Whisper Engine ─────────────────────────────────────
 
+let isInitialLoad = true;
+
 function listenToMessages() {
     if (!db) return;
     const messagesQuery = query(ref(db, "messages"), limitToLast(100));
     const container = document.getElementById("foxnet-messages");
     if (!container) return;
 
-    onChildAdded(messagesQuery, (snapshot) => {
+    onValue(messagesQuery, () => {
+        setTimeout(() => {
+            isInitialLoad = false;
+        }, 400);
+    }, { onlyOnce: true });
+
+    onChildAdded(messagesQuery, (snapshot, previousChildName) => {
         const msg = snapshot.val();
         if (!msg) return;
-        renderMessageItem(msg, container, snapshot.key);
+        renderMessageItem(msg, container, snapshot.key, previousChildName);
     });
 
     onChildChanged(messagesQuery, (snapshot) => {
@@ -417,7 +446,37 @@ function listenToMessages() {
     });
 }
 
-function renderMessageItem(msg, container, msgKey) {
+function insertMessageInOrder(container, msgEl, msgKey, previousChildName) {
+    if (!container) return;
+
+    // Replace if element with this key already exists
+    const existing = container.querySelector(`[data-msg-key="${msgKey}"]`);
+    if (existing) {
+        existing.replaceWith(msgEl);
+        return;
+    }
+
+    if (!previousChildName) {
+        // If no previousChildName, this is the oldest message in the query window -> insert at top!
+        const firstMsg = container.querySelector(".foxnet-msg-item");
+        if (firstMsg) {
+            container.insertBefore(msgEl, firstMsg);
+        } else {
+            container.appendChild(msgEl);
+        }
+        return;
+    }
+
+    // Find previous child element
+    const prevEl = container.querySelector(`[data-msg-key="${previousChildName}"]`);
+    if (prevEl) {
+        container.insertBefore(msgEl, prevEl.nextSibling);
+    } else {
+        container.appendChild(msgEl);
+    }
+}
+
+function renderMessageItem(msg, container, msgKey, previousChildName = null) {
     if (container.querySelector(`.user-item-loading, .msg-system`)) {
         const initMsg = container.querySelector(`.msg-system`);
         if (initMsg) initMsg.remove();
@@ -440,12 +499,16 @@ function renderMessageItem(msg, container, msgKey) {
     msgEl._msgData = msg;
 
     updateMessageDOM(msgEl, msg);
-    container.appendChild(msgEl);
+    insertMessageInOrder(container, msgEl, msgKey, previousChildName);
 
-    // Smooth auto-scroll
-    const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-    if (distanceToBottom < 300 || msg.sender?.toLowerCase() === currentHandle.toLowerCase()) {
-        container.scrollTop = container.scrollHeight + 1000;
+    // Smooth auto-scroll only if added at bottom or sent by self
+    const isSelf = msg.sender?.toLowerCase() === currentHandle.toLowerCase();
+    const isAtBottom = !previousChildName || container.lastElementChild === msgEl;
+    if (isSelf || isAtBottom) {
+        const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+        if (distanceToBottom < 300 || isSelf) {
+            container.scrollTop = container.scrollHeight + 1000;
+        }
     }
 }
 
@@ -558,14 +621,17 @@ function updateMessageDOM(msgEl, msg) {
             });
         }
 
-        // Play notification bleep for incoming messages from others
-        if (msg.sender && msg.sender.toLowerCase() !== currentHandle.toLowerCase()) {
-            if (audioEnabled) {
-                try {
-                    const audio = new Audio("./media/beep.mp3");
-                    audio.volume = 0.2;
-                    audio.play().catch(() => {});
-                } catch (e) {}
+        // Track last whisper sender for /r or /reply command
+        if (msg.whisperTo && msg.whisperTo.toLowerCase() === currentHandle.toLowerCase() && msg.sender && msg.sender.toLowerCase() !== currentHandle.toLowerCase()) {
+            lastWhisperSender = msg.sender;
+        }
+
+        // Play notification sound & track unread for incoming messages from others
+        if (!isInitialLoad && msg.sender && msg.sender.toLowerCase() !== currentHandle.toLowerCase() && !msg.isSystem) {
+            if (msg.whisperTo) {
+                playWhisperSound();
+            } else {
+                playReceiveSound();
             }
             incrementUnreadBadge();
         }
@@ -598,12 +664,89 @@ function encodeEmojiKey(emoji) {
 
 let audioEnabled = localStorage.getItem("foxnet_audio_enabled") !== "false";
 let unreadCount = 0;
+let lastWhisperSender = null;
+
+// ─── Web Audio API Sound Synthesizer ──────────────────────────────────────────
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+        }
+    }
+    if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+}
+
+function unlockAudio() {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === "suspended") {
+        ctx.resume();
+    }
+}
+
+function playSynthTone(freq1, freq2, duration, type = "sine", gainVal = 0.25) {
+    if (!audioEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        const play = () => {
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq1, now);
+            if (freq2 && freq2 !== freq1) {
+                osc.frequency.exponentialRampToValueAtTime(freq2, now + duration * 0.85);
+            }
+
+            gain.gain.setValueAtTime(gainVal, now);
+            gain.gain.linearRampToValueAtTime(0.0001, now + duration);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(now);
+            osc.stop(now + duration);
+        };
+
+        if (ctx.state === "suspended") {
+            ctx.resume().then(play).catch(() => {});
+        } else {
+            play();
+        }
+    } catch (e) {}
+}
+
+function playReceiveSound() {
+    playSynthTone(520, 880, 0.09, "sine", 0.25);
+}
+
+function playSendSound() {
+    playSynthTone(750, 1050, 0.08, "sine", 0.25);
+}
+
+function playWhisperSound() {
+    playSynthTone(880, 880, 0.08, "sine", 0.25);
+    setTimeout(() => {
+        playSynthTone(1320, 1320, 0.12, "sine", 0.28);
+    }, 90);
+}
 
 function incrementUnreadBadge() {
     const isDocHidden = document.hidden;
+    const isDocFocused = document.hasFocus && document.hasFocus();
     const chatWin = document.getElementById("chat");
     const isWinMinimized = chatWin && chatWin.classList.contains("minimized");
-    if (isDocHidden || isWinMinimized) {
+    const isWinActive = chatWin && chatWin.classList.contains("active-window");
+
+    if (isDocHidden || !isDocFocused || isWinMinimized || !isWinActive) {
         unreadCount++;
         const titleEl = document.querySelector("#chat .window-title") || document.querySelector("#chat h1");
         if (titleEl) {
@@ -614,6 +757,7 @@ function incrementUnreadBadge() {
 }
 
 function clearUnreadBadge() {
+    if (unreadCount === 0) return;
     unreadCount = 0;
     const titleEl = document.querySelector("#chat .window-title") || document.querySelector("#chat h1");
     if (titleEl) {
@@ -644,6 +788,9 @@ function sendChatMessage(rawText, isSystem = false) {
     if (!rawText || !rawText.trim() || !db) return;
     const trimmed = rawText.trim();
 
+    // Unlock Web Audio Context if needed
+    unlockAudio();
+
     // Check for /commands or /help
     if (/^\/(?:commands|help)$/i.test(trimmed)) {
         openCommandsFlyout();
@@ -664,8 +811,37 @@ function sendChatMessage(rawText, isSystem = false) {
                 text: whisperMsg,
                 timestamp: serverTimestamp()
             });
+            playSendSound();
             return;
         }
+    }
+
+    // Check for reply command syntax: /r message OR /reply message OR just /r /reply
+    const replyMatch = trimmed.match(/^\/(?:r|reply)(?:\s+(.+))?$/i);
+    if (replyMatch) {
+        if (!lastWhisperSender) {
+            renderLocalNotice("NO RECENT WHISPERS TO REPLY TO");
+            return;
+        }
+        const replyMsg = replyMatch[1] ? replyMatch[1].trim() : "";
+        if (!replyMsg) {
+            const input = document.getElementById("foxnet-message-input");
+            if (input) {
+                input.value = `/w ${lastWhisperSender} `;
+                input.focus();
+            }
+            return;
+        }
+        push(ref(db, "messages"), {
+            sender: currentHandle,
+            whisperTo: lastWhisperSender.toLowerCase(),
+            flair: currentFlair,
+            role: currentUserRole,
+            text: replyMsg,
+            timestamp: serverTimestamp()
+        });
+        playSendSound();
+        return;
     }
 
     const isOwner = currentUserRole === "owner" || isOwnerHandle(currentHandle);
@@ -687,6 +863,9 @@ function sendChatMessage(rawText, isSystem = false) {
     }
 
     push(ref(db, "messages"), msgData);
+    if (!isSystem) {
+        playSendSound();
+    }
 }
 
 // ─── Handle Reservation & Inline Auth ────────────────────────────────────────
@@ -1031,6 +1210,160 @@ async function banUser(targetHandle) {
     }
 }
 
+// ─── Owner-Only User Roster Role Management Context Menu ─────────────────────
+
+async function setUserRole(targetUser, newRole) {
+    if (!db || !targetUser || (currentUserRole !== "owner" && !isOwnerHandle(currentHandle))) {
+        renderLocalNotice("ONLY THE OWNER CAN ASSIGN ROLES");
+        return;
+    }
+    const handleKey = targetUser.toLowerCase();
+
+    if (isOwnerHandle(handleKey)) {
+        renderLocalNotice("CANNOT MODIFY OWNER ROLE");
+        return;
+    }
+
+    const confirmed = await showRetroConfirm(
+        "// ASSIGN ROLE //",
+        `Set role of @${targetUser.toUpperCase()} to ${newRole.toUpperCase()}?`
+    );
+    if (!confirmed) return;
+
+    try {
+        // 1. Persist role in /user_roles/handleKey
+        await set(ref(db, `user_roles/${handleKey}`), newRole);
+
+        // 2. Persist in /reserved_handles/handleKey/role if handle is reserved
+        const reservedRef = ref(db, `reserved_handles/${handleKey}`);
+        const snap = await get(reservedRef);
+        if (snap.exists()) {
+            await update(reservedRef, { role: newRole });
+        }
+
+        // 3. Update active presence entry for real-time live tag/color update
+        const presenceSnap = await get(ref(db, "presence"));
+        if (presenceSnap.exists()) {
+            const data = presenceSnap.val();
+            Object.entries(data).forEach(([pKey, pVal]) => {
+                if (pVal && pVal.name && pVal.name.toLowerCase() === handleKey) {
+                    update(ref(db, `presence/${pKey}`), { role: newRole });
+                }
+            });
+        }
+
+        renderLocalNotice(`ROLE FOR @${targetUser.toUpperCase()} SET TO [${newRole.toUpperCase()}]`);
+    } catch (e) {
+        console.error("Failed to set role:", e);
+        renderLocalNotice(`ERROR UPDATING ROLE FOR @${targetUser.toUpperCase()}`);
+    }
+}
+
+function setupUserRosterContextMenu() {
+    const userListEl = document.getElementById("chat-user-list");
+    const userMenu = document.getElementById("foxnet-user-context-menu");
+    if (!userListEl || !userMenu) return;
+
+    let targetUserName = "";
+
+    const openUserMenuAt = (userItem, clientX, clientY) => {
+        targetUserName = userItem.getAttribute("data-username") || "";
+        if (!targetUserName) return;
+
+        const headerEl = document.getElementById("user-ctx-header");
+        if (headerEl) {
+            headerEl.textContent = `@${targetUserName.toUpperCase()}`;
+        }
+
+        userMenu.style.position = "fixed";
+        userMenu.style.left = "0px";
+        userMenu.style.top = "0px";
+        userMenu.style.display = "block";
+        userMenu.style.visibility = "hidden";
+
+        const menuW = userMenu.offsetWidth;
+        const menuH = userMenu.offsetHeight;
+        const vpW = window.innerWidth;
+        const vpH = window.innerHeight;
+        const pad = 6;
+
+        let left = clientX;
+        let top = clientY;
+
+        if (left + menuW + pad > vpW) left = vpW - menuW - pad;
+        if (left < pad) left = pad;
+        if (top + menuH + pad > vpH) top = vpH - menuH - pad;
+        if (top < pad) top = pad;
+
+        userMenu.style.left = `${left}px`;
+        userMenu.style.top = `${top}px`;
+        userMenu.style.visibility = "visible";
+        activeContextMenu = userMenu;
+    };
+
+    userListEl.addEventListener("contextmenu", (e) => {
+        // ONLY Owner can open the User Roster Context Menu
+        const isOwner = currentUserRole === "owner" || isOwnerHandle(currentHandle);
+        if (!isOwner) return;
+
+        const userItem = e.target.closest(".sidebar-user-item");
+        if (!userItem) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        openUserMenuAt(userItem, e.clientX, e.clientY);
+    });
+
+    const btnUserWhisper = document.getElementById("user-ctx-whisper");
+    const btnUserRoleMod = document.getElementById("user-ctx-role-mod");
+    const btnUserRoleVip = document.getElementById("user-ctx-role-vip");
+    const btnUserRoleUser = document.getElementById("user-ctx-role-user");
+    const btnUserKick = document.getElementById("user-ctx-kick");
+    const btnUserBan = document.getElementById("user-ctx-ban");
+
+    if (btnUserWhisper) {
+        btnUserWhisper.addEventListener("click", () => {
+            if (!targetUserName) return;
+            const input = document.getElementById("foxnet-message-input");
+            if (input) {
+                input.value = `/w ${targetUserName} `;
+                input.focus();
+            }
+        });
+    }
+
+    if (btnUserRoleMod) {
+        btnUserRoleMod.addEventListener("click", () => {
+            if (targetUserName) setUserRole(targetUserName, "mod");
+        });
+    }
+
+    if (btnUserRoleVip) {
+        btnUserRoleVip.addEventListener("click", () => {
+            if (targetUserName) setUserRole(targetUserName, "vip");
+        });
+    }
+
+    if (btnUserRoleUser) {
+        btnUserRoleUser.addEventListener("click", () => {
+            if (targetUserName) setUserRole(targetUserName, "user");
+        });
+    }
+
+    if (btnUserKick) {
+        btnUserKick.addEventListener("click", () => {
+            if (targetUserName) performKickUser(targetUserName);
+        });
+    }
+
+    if (btnUserBan) {
+        btnUserBan.addEventListener("click", () => {
+            if (targetUserName) performBanUser(targetUserName);
+        });
+    }
+}
+
 function showRetroPrompt(titleText, descText, defaultInputText) {
     return new Promise((resolve) => {
         const modal = document.getElementById("foxnet-dialog-modal");
@@ -1177,14 +1510,21 @@ function setupUIEvents() {
         });
     }
 
-    // Clear unread badge when chat is focused or clicked
-    const chatMessages = document.getElementById("foxnet-messages");
-    if (chatMessages) {
-        chatMessages.addEventListener("click", clearUnreadBadge);
-        chatMessages.addEventListener("scroll", clearUnreadBadge);
+    // Clear unread badge ONLY when user explicitly clicks/focuses in chat window or input
+    const chatWin = document.getElementById("chat");
+    if (chatWin) {
+        chatWin.addEventListener("click", clearUnreadBadge);
     }
-    document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) clearUnreadBadge();
+    const messageInput = document.getElementById("foxnet-message-input");
+    if (messageInput) {
+        messageInput.addEventListener("focus", clearUnreadBadge);
+        messageInput.addEventListener("click", clearUnreadBadge);
+    }
+    document.addEventListener("click", () => {
+        unlockAudio();
+        if (document.hasFocus && document.hasFocus() && document.activeElement && (document.activeElement === messageInput || chatWin?.contains(document.activeElement))) {
+            clearUnreadBadge();
+        }
     });
 
     // Commands Flyout Modal Dismiss Handlers
@@ -1348,8 +1688,11 @@ function setupUIEvents() {
     const userListEl = document.getElementById("chat-user-list");
     if (userListEl) {
         userListEl.addEventListener("click", (e) => {
+            // Ignore clicks directly on or inside website links!
+            if (e.target.closest("a")) return;
+
             const userItem = e.target.closest(".sidebar-user-item");
-            if (userItem && !e.target.closest(".easter-egg-site-link")) {
+            if (userItem) {
                 const targetUser = userItem.getAttribute("data-username");
                 if (targetUser && targetUser.toLowerCase() !== currentHandle.toLowerCase()) {
                     const input = document.getElementById("foxnet-message-input");
