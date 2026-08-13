@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concept 2: Cyber Stream Terminal Preview</title>
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030603;
+            --phosphor: #5bf870;
+            --phosphor-dim: #268032;
+            --phosphor-glow: rgba(91, 248, 112, 0.45);
+            --magenta: #e024c3;
+            --magenta-glow: rgba(224, 36, 195, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            color: var(--phosphor);
+            font-family: "Share Tech Mono", monospace;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* ── Canvas Matrix Rain ── */
+        #matrix-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.85;
+        }
+
+        /* ── CRT Scanlines & Vignette ── */
+        .crt-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            pointer-events: none;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.45) 50%),
+                        radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+            background-size: 100% 4px, 100% 100%;
+        }
+
+        /* ── Concept Switcher Toolbar ── */
+        .switcher-bar {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 200;
+            display: flex;
+            gap: 8px;
+            font-size: 11px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid #333;
+            padding: 4px 8px;
+            border-radius: 2px;
+        }
+
+        .switcher-bar span {
+            color: #888;
+            line-height: 22px;
+        }
+
+        .switcher-bar a {
+            color: var(--phosphor);
+            text-decoration: none;
+            padding: 2px 6px;
+            border: 1px solid var(--phosphor-dim);
+            transition: all 0.15s;
+        }
+
+        .switcher-bar a.active {
+            background: var(--phosphor);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .switcher-bar a:hover:not(.active) {
+            background: rgba(91, 248, 112, 0.2);
+        }
+
+        /* ── HUD Telemetry ── */
+        .hud-corner {
+            position: fixed;
+            z-index: 60;
+            font-size: 0.7rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.15em;
+            padding: 1rem;
+            line-height: 1.5;
+            text-shadow: 0 0 4px var(--phosphor-glow);
+        }
+
+        .top-left { top: 0; left: 0; }
+        .bottom-left { bottom: 0; left: 0; }
+        .bottom-right { bottom: 0; right: 0; text-align: right; }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--phosphor);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--phosphor);
+            margin-right: 6px;
+            animation: pulseDot 1.5s infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* ── Main Stage ── */
+        .stage {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .brand-container {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .brand-sub {
+            font-size: 0.85rem;
+            letter-spacing: 0.4em;
+            color: var(--phosphor-dim);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .brand-title {
+            font-family: "VT323", monospace;
+            font-size: clamp(3.5rem, 10vw, 7.5rem);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--phosphor);
+            text-shadow: 0 0 10px var(--phosphor-glow), 0 0 30px var(--phosphor-glow);
+            line-height: 0.9;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .brand-title:hover {
+            transform: scale(1.02);
+        }
+
+        .brand-vixen {
+            color: var(--magenta);
+            text-shadow: 0 0 10px var(--magenta-glow), 0 0 35px var(--magenta-glow);
+        }
+
+        .brand-tagline {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            letter-spacing: 0.25em;
+            color: #b5ffbe;
+            opacity: 0.85;
+        }
+
+        /* ── Enter Button ── */
+        .enter-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--phosphor);
+            color: var(--phosphor);
+            font-family: "Share Tech Mono", monospace;
+            font-size: 1.15rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            padding: 0.9rem 2.2rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 0 15px rgba(91, 248, 112, 0.2), inset 0 0 10px rgba(91, 248, 112, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .enter-btn:hover {
+            background: var(--phosphor);
+            color: #000;
+            box-shadow: 0 0 30px rgba(91, 248, 112, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .enter-btn:active {
+            transform: translateY(0);
+        }
+
+        .enter-hint {
+            margin-top: 1rem;
+            font-size: 0.75rem;
+            color: var(--phosphor-dim);
+            letter-spacing: 0.15em;
+        }
+
+        /* ── Transition Out ── */
+        .fade-out {
+            opacity: 0;
+            transform: scale(1.08);
+            filter: blur(8px);
+            transition: all 0.35s ease-in;
+        }
+
+        @media (max-width: 600px) {
+            .hud-corner { display: none; }
+            .brand-sub { font-size: 0.7rem; }
+            .brand-tagline { font-size: 0.75rem; }
+            .enter-btn { font-size: 0.95rem; padding: 0.75rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    <div class="crt-overlay"></div>
+
+    <nav class="switcher-bar">
+        <span>PREVIEW:</span>
+        <a href="preview-bios.html">1. BIOS POST</a>
+        <a href="preview-matrix.html" class="active">2. Cyber Stream</a>
+        <a href="index.html">Current</a>
+    </nav>
+
+    <div class="hud-corner top-left">
+        <div><span class="status-dot"></span>SYS_STAT: ONLINE</div>
+        <div>NET_LINK: FOXNET-98</div>
+    </div>
+
+    <div class="hud-corner bottom-left">
+        <div id="uptime">UPTIME: 00:00:00</div>
+        <div>SEC_LEVEL: 0x7F</div>
+    </div>
+
+    <div class="hud-corner bottom-right">
+        <div>PROTO: HTTPS/2.0</div>
+        <div>RENDER: NEURAL_CANVAS</div>
+    </div>
+
+    <main class="stage" id="main-stage">
+        <div class="brand-container">
+            <div class="brand-sub">// NEOCITIES NETWORK NODE //</div>
+            <h1 class="brand-title">CYBER<span class="brand-vixen">VIXEN</span></h1>
+            <div class="brand-tagline">"Harmony Engineered."</div>
+        </div>
+
+        <button class="enter-btn" id="btn-enter" type="button">
+            <span>[ INITIALIZE SYSTEM ]</span>
+            <span>→</span>
+        </button>
+        <div class="enter-hint">PRESS [ENTER] OR [SPACE]</div>
+    </main>
+
+    <script>
+        // ─── Interactive Matrix Rain ──────────────────────────────────────────
+        const canvas = document.getElementById("matrix-canvas");
+        const ctx = canvas.getContext("2d");
+
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
+
+        window.addEventListener("resize", () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initColumns();
+        });
+
+        // Glyph character set (Katakana + Hex + Latin + Cyber Symbols)
+        const chars = "ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789ABCDEF<>/*+=~$_#";
+        const fontSize = 16;
+        let columns = [];
+
+        function initColumns() {
+            const count = Math.floor(width / fontSize);
+            columns = [];
+            for (let i = 0; i < count; i++) {
+                columns.push({
+                    y: Math.random() * -100,
+                    speed: 1.2 + Math.random() * 2.2,
+                    chars: Array.from({ length: 25 }, () => chars[Math.floor(Math.random() * chars.length)]),
+                    isMagenta: Math.random() > 0.85
+                });
+            }
+        }
+        initColumns();
+
+        let mouseX = -1000;
+        let mouseY = -1000;
+        window.addEventListener("mousemove", (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function renderMatrix() {
+            ctx.fillStyle = "rgba(3, 6, 3, 0.12)";
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.font = `${fontSize}px "Share Tech Mono", monospace`;
+
+            for (let i = 0; i < columns.length; i++) {
+                const col = columns[i];
+                const x = i * fontSize;
+
+                for (let j = 0; j < col.chars.length; j++) {
+                    const charY = (col.y - j) * fontSize;
+                    if (charY < 0 || charY > height) continue;
+
+                    // Lead character is white/bright
+                    if (j === 0) {
+                        ctx.fillStyle = "#ffffff";
+                        ctx.shadowColor = col.isMagenta ? "#e024c3" : "#5bf870";
+                        ctx.shadowBlur = 10;
+                    } else {
+                        const dist = Math.hypot(x - mouseX, charY - mouseY);
+                        if (dist < 120) {
+                            ctx.fillStyle = col.isMagenta ? "#ff78ea" : "#a8ffb5";
+                            ctx.shadowColor = ctx.fillStyle;
+                            ctx.shadowBlur = 8;
+                        } else {
+                            ctx.fillStyle = col.isMagenta 
+                                ? `rgba(224, 36, 195, ${1 - j / col.chars.length})`
+                                : `rgba(91, 248, 112, ${1 - j / col.chars.length})`;
+                            ctx.shadowBlur = 0;
+                        }
+                    }
+
+                    // Random character mutation
+                    if (Math.random() < 0.03) {
+                        col.chars[j] = chars[Math.floor(Math.random() * chars.length)];
+                    }
+
+                    ctx.fillText(col.chars[j], x, charY);
+                }
+
+                col.y += col.speed * 0.25;
+
+                if (col.y * fontSize > height + (col.chars.length * fontSize)) {
+                    col.y = 0;
+                    col.speed = 1.2 + Math.random() * 2.2;
+                }
+            }
+
+            requestAnimationFrame(renderMatrix);
+        }
+        renderMatrix();
+
+        // ─── Uptime Counter ───────────────────────────────────────────────────
+        const start = Date.now();
+        const uptimeEl = document.getElementById("uptime");
+        setInterval(() => {
+            const elapsed = Math.floor((Date.now() - start) / 1000);
+            const hrs = String(Math.floor(elapsed / 3600)).padStart(2, "0");
+            const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
+            const secs = String(elapsed % 60).padStart(2, "0");
+            if (uptimeEl) uptimeEl.textContent = `UPTIME: ${hrs}:${mins}:${secs}`;
+        }, 1000);
+
+        // ─── Entry Trigger ────────────────────────────────────────────────────
+        let transitioning = false;
+        function enterOS() {
+            if (transitioning) return;
+            transitioning = true;
+            document.getElementById("main-stage").classList.add("fade-out");
+            setTimeout(() => {
+                window.location.href = "./home.html";
+            }, 350);
+        }
+
+        document.getElementById("btn-enter").addEventListener("click", enterOS);
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                enterOS();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -106,6 +106,7 @@ function mobileDetected() {
             <h2>// WARNING //</h2>
             <p>Mobile device detected. This site is designed for desktop.<br>
             Where would you like to go?</p>
+            <button class="mobile-btn" id="btn-blog">Blog</button>
             <button class="mobile-btn" id="btn-recipes">Recipes</button>
             <button class="mobile-btn" id="btn-links">Links</button>
             <button class="mobile-btn" id="btn-chat">foxNet Chat</button>
@@ -113,6 +114,10 @@ function mobileDetected() {
         </div>
     `;
     document.body.appendChild(overlay);
+
+    document.getElementById("btn-blog").addEventListener("click", () => {
+        window.location.href = "/mobile-blog.html";
+    });
 
     document.getElementById("btn-recipes").addEventListener("click", () => {
         window.location.href = "/mobile-recipes.html";
