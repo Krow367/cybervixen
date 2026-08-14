@@ -317,7 +317,7 @@ export async function input(pw) {
                 const result = cleanInput(inputEl.textContent);
                 addToHistory(result);
                 resolve(result);
-            } else if (event.key === "ArrowUp") {
+            } else if (event.key === "ArrowUp" && !event.shiftKey && !event.ctrlKey && !event.altKey) {
                 event.preventDefault();
                 if (historyIndex === -1) tmp = inputEl.textContent;
                 historyIndex = Math.min(prev.length - 1, historyIndex + 1);
@@ -325,7 +325,7 @@ export async function input(pw) {
                     inputEl.textContent = prev[historyIndex];
                     moveCaretToEnd(inputEl);
                 }
-            } else if (event.key === "ArrowDown") {
+            } else if (event.key === "ArrowDown" && !event.shiftKey && !event.ctrlKey && !event.altKey) {
                 event.preventDefault();
                 historyIndex = Math.max(-1, historyIndex - 1);
                 inputEl.textContent = historyIndex === -1 ? tmp : prev[historyIndex];

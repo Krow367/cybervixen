@@ -59,6 +59,113 @@ export function getTypingHost() {
     return activeTypingHost || getTerminal();
 }
 
+// ─── Vintage Keyboard & CRT Terminal Scrolling ───────────────────────────────
+let crtAudioCtx = null;
+function playCRTPageClick() {
+    if (localStorage.getItem("system_sound_muted") === "true") return;
+    try {
+        if (!crtAudioCtx) crtAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (crtAudioCtx.state === "suspended") crtAudioCtx.resume();
+        const now = crtAudioCtx.currentTime;
+        const osc = crtAudioCtx.createOscillator();
+        const gain = crtAudioCtx.createGain();
+
+        // 1981 hardware terminal relay click
+        osc.type = "square";
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.022);
+
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.022);
+
+        osc.connect(gain);
+        gain.connect(crtAudioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.022);
+    } catch (e) {}
+}
+
+function triggerCRTRetrace() {
+    const crt = document.getElementById("crt");
+    if (crt) {
+        crt.classList.remove("crt-retrace");
+        void crt.offsetWidth; // Force CSS reflow to re-trigger animation
+        crt.classList.add("crt-retrace");
+    }
+    playCRTPageClick();
+}
+
+// Snappy, instant 100% viewport paging matching authentic CRT hardware
+window.addEventListener("keydown", (e) => {
+    // If a popup window (like blog or recipes) is focused, let window handle its own scrolling
+    if (activeTypingHost && activeTypingHost !== getTerminal()) return;
+
+    const term = getTerminal();
+    if (!term) return;
+
+    // Full 100% viewport height jump (snappy instant hardware redraw)
+    const fullViewportHeight = term.clientHeight;
+    const lineAmount = 40; // Line-by-line step
+
+    // Snappy 100% Viewport Page Up
+    if (e.key === "PageUp") {
+        e.preventDefault();
+        term.scrollBy({ top: -fullViewportHeight, behavior: "auto" });
+        triggerCRTRetrace();
+    } 
+    // Snappy 100% Viewport Page Down
+    else if (e.key === "PageDown") {
+        e.preventDefault();
+        term.scrollBy({ top: fullViewportHeight, behavior: "auto" });
+        triggerCRTRetrace();
+    } 
+    // Half-screen jump: Ctrl+Up or Alt+Up
+    else if ((e.ctrlKey || e.altKey) && e.key === "ArrowUp") {
+        e.preventDefault();
+        term.scrollBy({ top: -Math.round(fullViewportHeight * 0.5), behavior: "auto" });
+        triggerCRTRetrace();
+    }
+    // Half-screen jump: Ctrl+Down or Alt+Down
+    else if ((e.ctrlKey || e.altKey) && e.key === "ArrowDown") {
+        e.preventDefault();
+        term.scrollBy({ top: Math.round(fullViewportHeight * 0.5), behavior: "auto" });
+        triggerCRTRetrace();
+    }
+    // Line-by-line precision: Shift+Up
+    else if (e.shiftKey && e.key === "ArrowUp") {
+        e.preventDefault();
+        term.scrollBy({ top: -lineAmount, behavior: "auto" });
+        triggerCRTRetrace();
+    } 
+    // Line-by-line precision: Shift+Down
+    else if (e.shiftKey && e.key === "ArrowDown") {
+        e.preventDefault();
+        term.scrollBy({ top: lineAmount, behavior: "auto" });
+        triggerCRTRetrace();
+    } 
+    // Top of terminal
+    else if (e.key === "Home" && (e.ctrlKey || e.shiftKey)) {
+        e.preventDefault();
+        term.scrollTo({ top: 0, behavior: "auto" });
+        triggerCRTRetrace();
+    } 
+    // Bottom of terminal (active prompt)
+    else if (e.key === "End" && (e.ctrlKey || e.shiftKey)) {
+        e.preventDefault();
+        term.scrollTo({ top: term.scrollHeight, behavior: "auto" });
+        triggerCRTRetrace();
+    }
+});
+
+// Capture mouse wheel anywhere on CRT to scroll the terminal smoothly
+window.addEventListener("wheel", (e) => {
+    if (activeTypingHost && activeTypingHost !== getTerminal()) return;
+    const term = getTerminal();
+    if (term) {
+        term.scrollTop += e.deltaY;
+    }
+}, { passive: true });
+
 export async function typeInActiveHost(text, options = {}) {
     return type(text, options, getTypingHost());
 }
@@ -71,8 +178,12 @@ async function on() {
 }
 
 async function power() {
-    await pause(0.5);
-    document.getElementById("monitor")?.classList.toggle("turn-on");
+    await pause(0.25);
+    const monitor = document.getElementById("monitor");
+    if (monitor) {
+        monitor.classList.remove("off");
+        monitor.classList.add("turn-on");
+    }
 }
 
 export async function boot() {

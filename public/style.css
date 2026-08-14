@@ -17,6 +17,8 @@
 :root {
     --phosphor: #5bf870;
     --phosphor-rgb: 91, 248, 112;
+    --phosphor-glow: 0 0 4px rgba(91, 248, 112, 0.85), 0 0 12px rgba(91, 248, 112, 0.35);
+    --cursor-glow: 0 0 6px rgba(91, 248, 112, 0.9), 0 0 14px rgba(91, 248, 112, 0.45);
     --window-tint: rgba(0, 0, 0, 0.25);
     --window-tint-strong: rgba(0, 0, 0, 0.16);
     --phosphor-bg: rgb(5, 50, 30);
@@ -35,6 +37,8 @@
 :root[data-theme="amber"] {
     --phosphor: rgb(255, 229, 98);
     --phosphor-rgb: 255, 229, 98;
+    --phosphor-glow: 0 0 4px rgba(255, 229, 98, 0.9), 0 0 12px rgba(255, 180, 40, 0.4);
+    --cursor-glow: 0 0 6px rgba(255, 229, 98, 0.95), 0 0 14px rgba(255, 180, 40, 0.5);
     --window-tint: rgba(0, 0, 0, 0.25);
     --window-tint-strong: rgba(0, 0, 0, 0.16);
     --phosphor-bg: #070301;
@@ -136,17 +140,6 @@ html::-webkit-scrollbar {
     display: none;
 }
 
-.terminal {
-    position: relative;
-    height: 100%;
-    padding: 2rem 2rem 2rem 4rem;
-    overflow-y: auto;
-    overflow-x: hidden;
-    word-break: break-word;
-    text-transform: uppercase;
-    animation: textShadow 3.2s infinite;
-}
-
 .terminal-underline {
     text-decoration: underline;
 }
@@ -154,7 +147,7 @@ html::-webkit-scrollbar {
 .terminal,
 .fullscreen {
     color: var(--phosphor);
-    text-shadow: 0 0 5px #c8c8c8;
+    text-shadow: var(--phosphor-glow);
 }
 
 .typer.active .typed-line:last-child {
@@ -196,8 +189,9 @@ html::-webkit-scrollbar {
 .terminal {
     position: relative;
     z-index: 1;
-    height: 85%;
-    padding: 2rem 2rem 2rem 4rem;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 2rem 2rem 3rem 4rem;
     overflow-y: auto;
     overflow-x: hidden;
     word-break: break-word;
@@ -287,10 +281,12 @@ html::-webkit-scrollbar {
 .typer.active:after {
     content: "";
     display: inline-block;
-    width: 0.5em;
-    height: 0.5em;
-    background: currentColor;
+    width: 0.42em;
+    height: 0.68em;
+    background: var(--phosphor);
+    box-shadow: var(--cursor-glow);
     margin-left: 1px;
+    vertical-align: -0.02em;
     animation: cursor 1s step-end infinite;
 }
 
@@ -304,8 +300,10 @@ html::-webkit-scrollbar {
     display: none;
 }
 
-.typer {
-    word-break: break-all;
+#monitor.off {
+    opacity: 0;
+    transform: scale(0, 0.0001);
+    pointer-events: none;
 }
 
 .turn-on {

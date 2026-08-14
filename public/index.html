@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="ciphers.css">
     <script src="mobilecheck.js"></script>
     <script>
         const savedTheme = localStorage.getItem("theme");
@@ -388,11 +389,15 @@
         <button type="button" id="btn-toggle-sound" title="Toggle System Sounds">
             SOUND: <span id="sound-label">ON</span>
         </button>
+        <span class="divider">|</span>
+        <button type="button" id="btn-open-ciphers" title="View Network Cipher Vault">
+            CIPHERS
+        </button>
     </nav>
 
     <div class="hud-corner top-left">
         <div><span class="status-dot"></span>SYS_STAT: ONLINE</div>
-        <div>NET_LINK: FOXNET-98</div>
+        <div>NET_LINK: FOXNET-42</div>
     </div>
 
     <div class="hud-corner bottom-left">
@@ -401,13 +406,13 @@
     </div>
 
     <div class="hud-corner bottom-right">
-        <div>PROTO: HTTPS/2.0</div>
-        <div>ENGINE: HARMONY v1.33.7</div>
+        <div>PROTOCOL: HTTPS/SERENITY ENCRYPTION</div>
+        <div>ENGINE: foxOS v1.33.7</div>
     </div>
 
     <main class="stage" id="main-stage">
         <div class="brand-container">
-            <div class="brand-sub">// NEOCITIES NETWORK NODE //</div>
+            <div class="brand-sub">// A NEOCITIES NETWORK NODE //</div>
             <h1 class="brand-title">
                 <span class="brand-cyber">CYBER</span><span class="brand-vixen">VIXEN</span>
             </h1>
@@ -421,33 +426,124 @@
         <div class="enter-hint">PRESS [ENTER] OR [SPACE]</div>
     </main>
 
-    <script>
+    <script type="module">
+        import { openCipherVaultModal, updateCipherCounterUI, unlockCipher } from "./ciphers.js";
+
+        // Initialize Cipher UI Counter
+        updateCipherCounterUI();
+
         // ─── Sound Synthesizer (Web Audio API) ───────────────────────────────
         let audioCtx = null;
         let systemAudioMuted = localStorage.getItem("system_sound_muted") === "true";
 
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === "suspended") {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Pre-warm AudioContext on very first user touch/click/key so initial sound plays with 100% full attack
+        const warmUpAudio = () => {
+            getAudioContext();
+            window.removeEventListener("pointerdown", warmUpAudio);
+            window.removeEventListener("keydown", warmUpAudio);
+        };
+        window.addEventListener("pointerdown", warmUpAudio, { passive: true });
+        window.addEventListener("keydown", warmUpAudio, { passive: true });
+
         function playRetroChime(freq = 520, type = "triangle", duration = 0.08) {
             if (systemAudioMuted) return;
             try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === "suspended") {
-                    audioCtx.resume();
-                }
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
                 osc.type = type;
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(freq * 1.5, audioCtx.currentTime + duration);
+                osc.frequency.setValueAtTime(freq, now);
+                osc.frequency.exponentialRampToValueAtTime(freq * 1.5, now + duration);
 
-                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
                 osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + duration);
+            } catch (e) {}
+        }
+
+        // Windows 98 "Chord / Error" strike with crunchy corrupted digital glitch
+        function playFoxBoop() {
+            if (systemAudioMuted) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+
+                // Win98 Chord Harmonics (Eb3, Bb3, Eb4, G4, Eb5 brassy digital chime)
+                const freqs = [155.56, 233.08, 311.13, 392.00, 622.25];
+
+                // Filter with classic 90s Sound Blaster / FM resonant warmth
+                const filter = ctx.createBiquadFilter();
+                filter.type = "lowpass";
+                filter.frequency.setValueAtTime(4500, now);
+                filter.frequency.exponentialRampToValueAtTime(750, now + 0.38);
+                filter.Q.setValueAtTime(3.5, now);
+
+                // Corrupted Distortion / Bitcrush Waveshaper curve
+                const waveShaper = ctx.createWaveShaper();
+                const samples = 1024;
+                const curve = new Float32Array(samples);
+                for (let i = 0; i < samples; i++) {
+                    const x = (i * 2) / samples - 1;
+                    const steps = 16;
+                    const crushed = Math.round(x * steps) / steps;
+                    curve[i] = Math.tanh(crushed * 1.8);
+                }
+                waveShaper.curve = curve;
+
+                // Boosted Master Volume with Dynamics Compressor (Loud, crunchy & impactful)
+                const masterGain = ctx.createGain();
+                masterGain.gain.setValueAtTime(1.4, now);
+                masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.46);
+
+                // Glitchy digital transient burst
+                const noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.04), ctx.sampleRate);
+                const noiseData = noiseBuf.getChannelData(0);
+                for (let i = 0; i < noiseData.length; i++) {
+                    noiseData[i] = (Math.random() * 2 - 1) * (1 - i / noiseData.length);
+                }
+                const noiseSrc = ctx.createBufferSource();
+                noiseSrc.buffer = noiseBuf;
+                const noiseGain = ctx.createGain();
+                noiseGain.gain.setValueAtTime(0.7, now);
+                noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                noiseSrc.connect(noiseGain);
+                noiseGain.connect(filter);
+                noiseSrc.start(now);
+
+                // Spawn the layered Win98 chord oscillators with boosted amplitudes
+                freqs.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    osc.type = idx % 2 === 0 ? "sawtooth" : "triangle";
+                    osc.frequency.setValueAtTime(freq * 1.08, now);
+                    osc.frequency.exponentialRampToValueAtTime(freq, now + 0.035);
+
+                    const oscGain = ctx.createGain();
+                    oscGain.gain.setValueAtTime(0.95 / freqs.length, now);
+
+                    osc.connect(oscGain);
+                    oscGain.connect(filter);
+                    osc.start(now);
+                    osc.stop(now + 0.46);
+                });
+
+                filter.connect(waveShaper);
+                waveShaper.connect(masterGain);
+                masterGain.connect(ctx.destination);
             } catch (e) {}
         }
 
@@ -457,6 +553,7 @@
         const themeLabel = document.getElementById("theme-label");
         const btnSound = document.getElementById("btn-toggle-sound");
         const soundLabel = document.getElementById("sound-label");
+        const btnCiphers = document.getElementById("btn-open-ciphers");
 
         function updateThemeUI() {
             const isAmber = root.getAttribute("data-theme") === "amber";
@@ -499,8 +596,12 @@
 
         btnTheme.addEventListener("click", toggleTheme);
         btnSound.addEventListener("click", toggleSound);
+        btnCiphers?.addEventListener("click", () => {
+            playRetroChime(580, "sine", 0.05);
+            openCipherVaultModal();
+        });
 
-        // ─── Smooth Matrix Rain with Fluid Avoidance & Character Flicker ─────
+        // ─── Canvas & Viewport Setup ─────────────────────────────────────────
         const canvas = document.getElementById("matrix-canvas");
         const ctx = canvas.getContext("2d");
 
@@ -511,6 +612,188 @@
             width = canvas.width = window.innerWidth;
             height = canvas.height = window.innerHeight;
             initColumns();
+            createWorldCodeCanvas();
+        });
+
+        // ─── SPEED & IDLE CONFIGURATION SETTINGS ─────────────────────────────
+        const FOX_SPEED = 6.8; // Speed of the phantom fox (pixels per frame)
+        const IDLE_TRIGGER_DELAY_MS = 10000; // in milliseconds. 2000 = 2 seconds
+
+        // ─── Full-Screen World-Space Code Revealer Setup ─────────────────────
+        let loadedCodeLines = [];
+
+        const worldCodeCanvas = document.createElement("canvas");
+        const worldCodeCtx = worldCodeCanvas.getContext("2d");
+
+        function createWorldCodeCanvas() {
+            worldCodeCanvas.width = width;
+            worldCodeCanvas.height = height;
+            const isAmber = root.getAttribute("data-theme") === "amber";
+
+            worldCodeCtx.fillStyle = isAmber ? "#0c0401" : "#010803";
+            worldCodeCtx.fillRect(0, 0, width, height);
+
+            const rowHeight = 21;
+            const fontSize = 12;
+            worldCodeCtx.font = `bold ${fontSize}px "Share Tech Mono", monospace`;
+
+            const topMargin = 20;
+            const bottomMargin = 20;
+            const availableHeight = height - topMargin - bottomMargin;
+            const rowsPerColumn = Math.max(5, Math.floor(availableHeight / rowHeight));
+
+            const columnWidth = 490;
+            const numColumns = Math.ceil(width / columnWidth) + 1;
+
+            let lineIndex = 0;
+
+            for (let c = 0; c < numColumns; c++) {
+                const colX = 18 + c * columnWidth;
+
+                worldCodeCtx.save();
+                worldCodeCtx.beginPath();
+                worldCodeCtx.rect(colX, 0, columnWidth - 25, height);
+                worldCodeCtx.clip();
+
+                for (let r = 0; r < rowsPerColumn; r++) {
+                    const rowY = topMargin + r * rowHeight;
+                    const line = (loadedCodeLines.length > 0) ? loadedCodeLines[lineIndex % loadedCodeLines.length] : "// FOXNET ONLINE";
+                    lineIndex++;
+
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith("//") || trimmed.startsWith("/*") || trimmed.startsWith("<!") || trimmed.startsWith("*")) {
+                        worldCodeCtx.fillStyle = isAmber ? "rgba(255, 196, 56, 0.6)" : "rgba(91, 248, 112, 0.6)";
+                    } else if (line.includes("function") || line.includes("import") || line.includes("export") || line.includes("const") || line.includes("return")) {
+                        worldCodeCtx.fillStyle = isAmber ? "#ff3366" : "#ff40d0";
+                    } else if (line.includes("0x") || line.includes("crypto") || line.includes("unlockCipher") || line.includes("AudioContext")) {
+                        worldCodeCtx.fillStyle = isAmber ? "#ffffff" : "#ffffff";
+                    } else if (r % 2 === 0) {
+                        worldCodeCtx.fillStyle = isAmber ? "#fff0a8" : "#85ffa0";
+                    } else {
+                        worldCodeCtx.fillStyle = isAmber ? "#ffb338" : "#48e86c";
+                    }
+
+                    worldCodeCtx.fillText(line, colX, rowY);
+                }
+
+                worldCodeCtx.restore();
+            }
+        }
+
+        async function loadSourceCodeFile() {
+            try {
+                const res = await fetch("data/revealed_code.txt?v=" + Date.now());
+                if (res.ok) {
+                    const text = await res.text();
+                    const parsed = text.split("\n").map(l => l.trimEnd()).filter(l => l.length > 0);
+                    if (parsed.length > 0) {
+                        loadedCodeLines = parsed;
+                    }
+                }
+            } catch (err) {}
+            createWorldCodeCanvas();
+        }
+        loadSourceCodeFile();
+
+        // ─── Load Silhouette & Feathered Glow Sheets ─────────────────────────
+        const blackSheet = new Image();
+        let blackLoaded = false;
+        blackSheet.onload = () => { blackLoaded = true; };
+        blackSheet.src = "img/fox_solid_black_sheet.png";
+
+        const glowGreenSheet = new Image();
+        let glowGreenLoaded = false;
+        glowGreenSheet.onload = () => { glowGreenLoaded = true; };
+        glowGreenSheet.src = "img/fox_glow_green_sheet.png";
+
+        const glowAmberSheet = new Image();
+        let glowAmberLoaded = false;
+        glowAmberSheet.onload = () => { glowAmberLoaded = true; };
+        glowAmberSheet.src = "img/fox_glow_amber_sheet.png";
+
+        const TOTAL_CYCLE_FRAMES = 20;
+        const FRAME_SRC_W = 340;
+        const FRAME_SRC_H = 200;
+        const FOX_SCALE = 1.35;
+        const RENDER_W = Math.round(FRAME_SRC_W * FOX_SCALE);
+        const RENDER_H = Math.round(FRAME_SRC_H * FOX_SCALE);
+
+        const foxBufferCanvas = document.createElement("canvas");
+        const foxBufferCtx = foxBufferCanvas.getContext("2d");
+        foxBufferCanvas.width = RENDER_W;
+        foxBufferCanvas.height = RENDER_H;
+
+        // ─── 7-Lane Non-Repeating Shuffle Bag ────────────────────────────────
+        const HEIGHT_LANES = [0.18, 0.28, 0.38, 0.48, 0.58, 0.68, 0.78];
+        let laneShuffleBag = [];
+
+        function getNextShuffledLane() {
+            if (laneShuffleBag.length === 0) {
+                laneShuffleBag = [...HEIGHT_LANES];
+                for (let i = laneShuffleBag.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [laneShuffleBag[i], laneShuffleBag[j]] = [laneShuffleBag[j], laneShuffleBag[i]];
+                }
+            }
+            return laneShuffleBag.pop();
+        }
+
+        // ─── Phantom Fox State ───────────────────────────────────────────────
+        let ghostFox = {
+            active: false,
+            x: -RENDER_W - 50,
+            y: height * 0.5,
+            speed: FOX_SPEED,
+            frame: 0,
+            frameTimer: 0
+        };
+
+        function triggerPhantomFoxRun() {
+            ghostFox.active = true;
+            ghostFox.x = -RENDER_W - 30;
+            ghostFox.y = height * getNextShuffledLane();
+            ghostFox.speed = FOX_SPEED;
+            ghostFox.frame = 0;
+            ghostFox.frameTimer = 0;
+        }
+
+        // ─── 20-Second Ambient Easter Egg Interval ──────────────────────────
+        // Mouse movement does NOT reset the timer, so users enjoying the fluid
+        // matrix rain deflection still get treated to the phantom fox sprint!
+        let idleTimer = null;
+
+        function startFoxTimer() {
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                triggerPhantomFoxRun();
+            }, IDLE_TRIGGER_DELAY_MS);
+        }
+
+        // Arm the 20-second timer on page load
+        startFoxTimer();
+
+        // ─── Click Hitbox on Phantom Fox (Cipher Unlock Ready) ───────────────
+        window.addEventListener("click", (e) => {
+            // Ignore clicks on UI buttons, nav controls, or modals
+            if (e.target.closest("#btn-enter, .header-controls, .cipher-modal-overlay")) return;
+            if (!ghostFox.active) return;
+
+            const clickX = e.clientX;
+            const clickY = e.clientY;
+            const drawX = Math.round(ghostFox.x);
+            const drawY = Math.round(ghostFox.y - RENDER_H * 0.5);
+
+            // Check if click occurred within the fox's bounding area
+            if (
+                clickX >= drawX && clickX <= drawX + RENDER_W &&
+                clickY >= drawY && clickY <= drawY + RENDER_H
+            ) {
+                // ─── CIPHER UNLOCK HOOK ───
+                // When you are ready with a cipher name, uncomment and fill in:
+                // unlockCipher("CIPHER_NAME_HERE");
+                console.log("[CIPHER_EVENT] Phantom Fox caught!");
+                playFoxBoop();
+            }
         });
 
         // Glyph character set (Katakana + Hex + Latin + Cyber Symbols)
@@ -525,7 +808,7 @@
                 columns.push({
                     x: i * fontSize,
                     y: Math.random() * -100,
-                    speed: 1.1 + Math.random() * 1.8,
+                    speed: 1.1 + Math.random() * 0.3,
                     chars: Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]),
                     isAccent: Math.random() > 0.85
                 });
@@ -547,6 +830,60 @@
             ctx.fillStyle = isAmber ? "rgba(6, 3, 1, 0.13)" : "rgba(2, 5, 2, 0.13)";
             ctx.fillRect(0, 0, width, height);
 
+            // ─── LAYER 1: Draw Phantom Fox Stencil (Behind Matrix Rain) ──────
+            const isReady = blackLoaded || (blackSheet.complete && blackSheet.naturalWidth > 0);
+            if (ghostFox.active && isReady) {
+                ghostFox.x += ghostFox.speed;
+
+                ghostFox.frameTimer++;
+                if (ghostFox.frameTimer >= 2) {
+                    ghostFox.frameTimer = 0;
+                    ghostFox.frame = (ghostFox.frame + 1) % TOTAL_CYCLE_FRAMES;
+                }
+
+                const drawX = Math.round(ghostFox.x);
+                const drawY = Math.round(ghostFox.y - RENDER_H * 0.5);
+
+                const activeGlowSheet = isAmber ? glowAmberSheet : glowGreenSheet;
+                const glowReady = isAmber ? (glowAmberLoaded || glowAmberSheet.complete) : (glowGreenLoaded || glowGreenSheet.complete);
+
+                ctx.save();
+
+                // A. Draw Phosphor Glow Aura (0.08 Feathered Aura)
+                if (glowReady && activeGlowSheet.naturalWidth > 0) {
+                    ctx.globalAlpha = 0.08;
+                    ctx.drawImage(
+                        activeGlowSheet,
+                        ghostFox.frame * FRAME_SRC_W, 0, FRAME_SRC_W, FRAME_SRC_H,
+                        drawX, drawY, RENDER_W, RENDER_H
+                    );
+                }
+
+                // B. World-Space Code Stencil
+                foxBufferCtx.clearRect(0, 0, RENDER_W, RENDER_H);
+                foxBufferCtx.globalCompositeOperation = "source-over";
+                foxBufferCtx.drawImage(
+                    blackSheet,
+                    ghostFox.frame * FRAME_SRC_W, 0, FRAME_SRC_W, FRAME_SRC_H,
+                    0, 0, RENDER_W, RENDER_H
+                );
+
+                foxBufferCtx.globalCompositeOperation = "source-in";
+                foxBufferCtx.drawImage(worldCodeCanvas, -drawX, -drawY);
+
+                // C. Blit Stenciled Fox to Main Canvas
+                ctx.globalAlpha = 1.0;
+                ctx.drawImage(foxBufferCanvas, drawX, drawY);
+                ctx.restore();
+
+                // Loop / Schedule next sprint
+                if (ghostFox.x > width + RENDER_W + 50) {
+                    ghostFox.active = false;
+                    startFoxTimer();
+                }
+            }
+
+            // ─── LAYER 2: Draw Falling Matrix Rain (On Top of Fox) ───────────
             ctx.font = `${fontSize}px "Share Tech Mono", monospace`;
 
             const repelRadius = 110;
@@ -640,7 +977,6 @@
         function enterOS() {
             if (transitioning) return;
             transitioning = true;
-            playRetroChime(880, "triangle", 0.12);
             document.getElementById("main-stage").classList.add("fade-out");
             setTimeout(() => {
                 window.location.href = "./home.html";

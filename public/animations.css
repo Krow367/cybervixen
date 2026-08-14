@@ -1,19 +1,37 @@
+/* Authentic 1981 555-Timer Hardware Square-Wave Cursor Blink (Exact 1.0 Hz) */
 @keyframes cursor {
-	0% {
+	0%, 49.99% {
 		opacity: 1;
+		visibility: visible;
 	}
-
-	25% {
+	50%, 100% {
 		opacity: 0;
+		visibility: hidden;
 	}
+}
 
-	75% {
-		opacity: 1;
+/* CRT Electron Gun Re-trace Jitter (micro-instant analog page shift) */
+@keyframes crtRetrace {
+	0% {
+		transform: translate3d(0, 0, 0);
+		filter: brightness(1);
 	}
-
+	35% {
+		transform: translate3d(-1.5px, 0.5px, 0);
+		filter: brightness(1.22) contrast(1.08);
+	}
+	70% {
+		transform: translate3d(1px, -0.5px, 0);
+		filter: brightness(1.1);
+	}
 	100% {
-		opacity: 1;
+		transform: translate3d(0, 0, 0);
+		filter: brightness(1);
 	}
+}
+
+.crt-retrace {
+	animation: crtRetrace 45ms ease-out !important;
 }
 
 @keyframes flicker {
@@ -253,7 +271,7 @@
 		filter: brightness(1);
 		opacity: 1;
 		/* Match #crt's actual resting background exactly so there is no snap at the end */
-		background: var(--crt-phosphor), var(--phosphor-bg);
+		background: var(--crt-phosphor), var(--boot);
 	}
 }
 
