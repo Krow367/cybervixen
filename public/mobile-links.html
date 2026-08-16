@@ -134,51 +134,46 @@
     </main>
 
     <script type="module">
+        import { MY_LINK_BADGE, NEIGHBOR_NODES } from "./programs/links/links_data.js";
+
         try {
-            const res = await fetch("/commands/links/links.html");
-            const html = await res.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
-
             // 1. My button + copybox section
-            const cyberlink = doc.querySelector(".cyberlink, #cyberbutton");
             const myBtnContainer = document.getElementById("my-button-container");
-            if (cyberlink && myBtnContainer) {
-                myBtnContainer.innerHTML = cyberlink.innerHTML;
+            if (myBtnContainer) {
+                myBtnContainer.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <a href="${MY_LINK_BADGE.href}" target="_blank" rel="noopener">
+                            <img src="${MY_LINK_BADGE.imgSrc}" alt="${MY_LINK_BADGE.alt}" width="${MY_LINK_BADGE.width}" height="${MY_LINK_BADGE.height}" style="image-rendering: pixelated; border: 1px solid var(--phosphor);">
+                        </a>
+                        <textarea readonly style="width: 100%; max-width: 320px; font-family: monospace; font-size: 0.75rem; background: #000; color: var(--phosphor); border: 1px solid var(--phosphor); padding: 4px; resize: none;" rows="2">${MY_LINK_BADGE.htmlCode}</textarea>
+                    </div>
+                `;
             }
 
-            // 2. Button grids (Friends vs Neighboring Network Nodes)
-            const content = doc.querySelector(".scrollbox-content") || doc.body;
-            const children = Array.from(content.children);
-
-            const friendsGrid = document.getElementById("friends-grid");
+            // 2. Neighboring Network Nodes Grid
             const mutualsGrid = document.getElementById("mutuals-grid");
-            let targetGrid = friendsGrid;
+            const friendsGrid = document.getElementById("friends-grid");
 
-            for (const el of children) {
-                if (el.matches(".cyberlink, #cyberbutton, .bl, .scrollbar")) continue;
+            NEIGHBOR_NODES.forEach(node => {
+                const a = document.createElement("a");
+                a.href = node.url;
+                a.target = "_blank";
+                a.rel = "noopener";
+                a.title = `${node.title}: ${node.desc}`;
+                a.innerHTML = `<img src="${node.badge}" alt="${node.title}" style="image-rendering: pixelated; border: 1px solid var(--phosphor); width: 88px; height: 31px; object-fit: contain; background: #000;">`;
 
-                if (el.classList.contains("mutuals")) {
-                    targetGrid = mutualsGrid;
-                    continue;
+                if (node.mutual && mutualsGrid) {
+                    mutualsGrid.appendChild(a);
+                } else if (friendsGrid) {
+                    friendsGrid.appendChild(a);
                 }
+            });
 
-                // Extract all active anchor tags inside each item container
-                const anchors = el.querySelectorAll("a");
-                anchors.forEach(a => {
-                    targetGrid.appendChild(a.cloneNode(true));
-                });
-            }
-
-            // Hide sections if no links exist in them
-            if (friendsGrid.children.length === 0) {
+            if (friendsGrid && friendsGrid.children.length === 0) {
                 document.getElementById("friends-section")?.remove();
             }
-            if (mutualsGrid.children.length === 0) {
-                document.getElementById("mutuals-section")?.remove();
-            }
         } catch (err) {
-            console.error("Failed to load links from /commands/links/links.html:", err);
+            console.error("Failed to render mobile links:", err);
         }
     </script>
 </body>

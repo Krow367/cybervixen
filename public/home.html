@@ -33,14 +33,14 @@
     </div>
 
     <script type="module">
-        import { applyTheme, getSavedTheme } from "./themes.js";
-        import { getPromptPath, resetCurrentPathToUser } from "./vfs.js";
-        import { executeCommand, navigateHistory } from "./kernel.js";
-        import { type as typewriter } from "./typer.js";
-        import { runBootSequence } from "./boot.js";
-        import { initSettingsUI } from "./settings.js";
-        import { getActiveUser } from "./session.js";
-        import { playKeyClick, playRelayThump, playBell, playErrorBuzz, playDiskSeek, playBootChime } from "./audio.js";
+        import { applyTheme, getSavedTheme } from "./core/themes.js";
+        import { getPromptPath, resetCurrentPathToUser } from "./core/vfs.js";
+        import { executeCommand, navigateHistory } from "./core/kernel.js";
+        import { type as typewriter } from "./core/typer.js";
+        import { runBootSequence } from "./core/boot.js";
+        import { initSettingsUI } from "./core/settings.js";
+        import { getActiveUser } from "./core/session.js";
+        import { playKeyClick, playRelayThump, playBell, playErrorBuzz, playDiskSeek, playBootChime } from "./core/audio.js";
 
         // Initialize System Settings and Controls
         initSettingsUI();

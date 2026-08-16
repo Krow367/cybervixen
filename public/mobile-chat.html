@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>foxNet Chat — CyberVixen</title>
     <link rel="icon" type="image/x-icon" href="img/icon.png">
-    <link rel="stylesheet" href="./commands/chat/chat.css">
+    <link rel="stylesheet" href="./programs/chat/chat.css">
     <style>
         :root {
             --bg: #0a0a0a;
@@ -280,11 +280,11 @@
 
     <!-- Load Firebase Chat Engine -->
     <script type="module">
-        import chatInit from "./commands/chat/index.mjs";
+        import { initFirebaseEngine } from "./programs/chat/chat.js";
 
         // Initialize Firebase Chat directly for mobile standalone page
         window.addEventListener("DOMContentLoaded", () => {
-            chatInit();
+            initFirebaseEngine();
 
             // Mobile Drawer Sidebar Toggle
             const btnToggleSidebar = document.getElementById("mobile-btn-toggle-sidebar");
