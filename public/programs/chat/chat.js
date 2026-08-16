@@ -1871,5 +1871,5 @@ export async function launchChat(ctx) {
     return win;
 }
 
-export { launchChat, initFirebaseEngine };
+export { initFirebaseEngine };
 export default launchChat;
