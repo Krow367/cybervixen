@@ -10,6 +10,7 @@
  */
 
 import { openWindow } from "../../core/windows.js";
+import { setupScrollbar } from "../../core/scrollbar.js";
 
 export const CIPHER_DEFINITIONS = [
     {
@@ -483,9 +484,14 @@ export function launchCipherVault(ctx) {
         content: renderVault()
     });
 
+    if (!win) return;
+
     const bindVaultEvents = () => {
-        const body = win.element.querySelector(".window-body");
+        const body = win.querySelector(".window-body");
         if (!body) return;
+
+        // Initialize hardware CRT scrollbar
+        win.querySelectorAll("[data-scrollbox]").forEach(setupScrollbar);
 
         // Export save token
         body.querySelector("#btn-export-cipher-token")?.addEventListener("click", () => {
@@ -508,7 +514,7 @@ export function launchCipherVault(ctx) {
             const res = importCipherSaveString(code);
             if (res.success) {
                 alert(`[ RESTORE COMPLETE ]\n\nRestored ${res.count} new cipher(s)!\nTotal unlocked: ${res.total}/${CIPHER_DEFINITIONS.length}`);
-                const bodyEl = win.element.querySelector(".window-body");
+                const bodyEl = win.querySelector(".window-body");
                 if (bodyEl) {
                     bodyEl.innerHTML = renderVault();
                     bindVaultEvents();
@@ -523,11 +529,11 @@ export function launchCipherVault(ctx) {
 
     // Auto-refresh if a cipher is decrypted while the window is open
     const onUnlock = () => {
-        if (!document.body.contains(win.element)) {
+        if (!document.body.contains(win)) {
             window.removeEventListener("foxos_cipher_unlocked", onUnlock);
             return;
         }
-        const bodyEl = win.element.querySelector(".window-body");
+        const bodyEl = win.querySelector(".window-body");
         if (bodyEl) {
             bodyEl.innerHTML = renderVault();
             bindVaultEvents();
