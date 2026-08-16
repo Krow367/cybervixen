@@ -1,0 +1,289 @@
+/**
+ * links.css — Hardware Micro-Animations & 3D CSS Physics for Links Cartridge
+ */
+
+/* ─── 1. Rolodex 3D Card Stack Animations ─────────────────────────────────── */
+
+.rolodex-perspective-stage {
+    perspective: 1000px;
+    perspective-origin: 50% 30%;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 10px 16px 28px 16px;
+    box-sizing: border-box;
+}
+
+.rolodex-card-deck {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+}
+
+/* Background Deck Ghost Cards with clear visible margins and offset tops */
+.rolodex-card-ghost {
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    border: 1px solid rgba(var(--phosphor-rgb), 0.4);
+    background: rgba(0, 0, 0, 0.65);
+    pointer-events: none;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.rolodex-ghost-1 {
+    transform: translate3d(0, -12px, -30px) scale(0.96);
+    opacity: 0.65;
+}
+
+.rolodex-ghost-2 {
+    transform: translate3d(0, -24px, -60px) scale(0.92);
+    opacity: 0.35;
+}
+
+/* Active 3D Flipping Card */
+.rolodex-card-active {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    border: 2px solid var(--phosphor);
+    background: rgba(var(--phosphor-rgb), 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9), 0 0 16px rgba(var(--phosphor-rgb), 0.3), inset 0 0 12px rgba(var(--phosphor-rgb), 0.08);
+    border-radius: 4px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transform-style: preserve-3d;
+    animation: roloCardFlipIn 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes roloCardFlipIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-28px) rotateX(-20deg) scale(0.94);
+    }
+    60% {
+        transform: translateY(4px) rotateX(3deg) scale(1.01);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) rotateX(0deg) scale(1);
+    }
+}
+
+/* ─── 2. Microfiche Optical Rapid-Slide Filmstrip Animations ───────────────── */
+
+.microfiche-lens-housing {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border: 2px solid var(--phosphor);
+    background: radial-gradient(circle at center, rgba(var(--phosphor-rgb), 0.16) 0%, rgba(0,0,0,0.96) 88%);
+    box-shadow: inset 0 0 50px rgba(var(--phosphor-rgb), 0.45), 0 0 20px rgba(var(--phosphor-rgb), 0.25);
+    border-radius: 6px;
+    padding: 10px 14px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+}
+
+/* Optical Graticule Scanline & Light Flicker */
+.microfiche-lens-housing::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        rgba(var(--phosphor-rgb), 0.05) 50%,
+        rgba(0, 0, 0, 0.4) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* Animated Microfiche Optical Reticle Crosshairs */
+.microfiche-crosshair-v {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(var(--phosphor-rgb), 0.22);
+    pointer-events: none;
+    z-index: 4;
+}
+.microfiche-crosshair-h {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(var(--phosphor-rgb), 0.22);
+    pointer-events: none;
+    z-index: 4;
+}
+
+/* Continuous High-Speed Filmstrip Track */
+#microfiche-film-track {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    position: absolute;
+    left: 0;
+    top: 0;
+    will-change: transform, opacity;
+    transition: transform 0.52s cubic-bezier(0.08, 0.82, 0.18, 1.05);
+}
+
+/* Subtle Optical Motion Shutter during Seek (Crisp, Eye-Friendly) */
+#microfiche-film-track.seeking-slide {
+    opacity: 0.85;
+    filter: contrast(1.15) brightness(1.25);
+}
+
+/* Full Window Slide Frame Document */
+.microfiche-frame-cell {
+    height: 100%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 24px;
+    box-sizing: border-box;
+    position: relative;
+    user-select: none;
+}
+
+/* High-Contrast Newspaper Document Layout (Authentic Full Sheet) */
+.microfiche-document-sheet {
+    width: 100%;
+    max-width: 540px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 2px solid var(--phosphor);
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(var(--phosphor-rgb), 0.35), inset 0 0 14px rgba(var(--phosphor-rgb), 0.12);
+    padding: 14px 18px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Heavy Black Inter-Frame Dividing Bar (True Film Negative Margin on Reel) */
+.microfiche-film-divider {
+    width: 70px;
+    height: 100%;
+    background: #000;
+    border-left: 3px solid rgba(var(--phosphor-rgb), 0.5);
+    border-right: 3px solid rgba(var(--phosphor-rgb), 0.5);
+    box-shadow: inset 0 0 25px #000, 0 0 12px #000;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    box-sizing: border-box;
+}
+
+.microfiche-film-divider::before {
+    content: "▲▲▲\A▲▲▲\A▲▲▲";
+    white-space: pre-wrap;
+    font-size: 0.65em;
+    opacity: 0.45;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+.microfiche-film-divider::after {
+    content: "▼▼▼\A▼▼▼\A▼▼▼";
+    white-space: pre-wrap;
+    font-size: 0.65em;
+    opacity: 0.45;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+/* Newspaper Masthead Banner */
+.microfiche-masthead {
+    border-bottom: 2px solid var(--phosphor);
+    padding-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.microfiche-masthead-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 8px var(--phosphor);
+}
+
+/* Newspaper Multi-Column Article Layout */
+.microfiche-columns {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Heavy Black Inter-Frame Dividing Bar (True Film Negative Margin) */
+.microfiche-film-divider {
+    width: 70px;
+    height: 100%;
+    background: #000;
+    border-left: 3px solid rgba(var(--phosphor-rgb), 0.6);
+    border-right: 3px solid rgba(var(--phosphor-rgb), 0.6);
+    box-shadow: inset 0 0 25px #000, 0 0 12px #000;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    box-sizing: border-box;
+}
+
+.microfiche-film-divider::before {
+    content: "▲▲▲\A▲▲▲\A▲▲▲";
+    white-space: pre-wrap;
+    font-size: 0.65em;
+    opacity: 0.45;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+.microfiche-film-divider::after {
+    content: "▼▼▼\A▼▼▼\A▼▼▼";
+    white-space: pre-wrap;
+    font-size: 0.65em;
+    opacity: 0.45;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+/* Optical Badge Projection Holo Glow */
+.microfiche-badge-frame {
+    border: 2px solid var(--phosphor);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 10px 18px;
+    border-radius: 4px;
+    box-shadow: 0 0 20px var(--phosphor), inset 0 0 10px rgba(var(--phosphor-rgb), 0.5);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.microfiche-badge-frame:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 28px var(--phosphor), inset 0 0 14px var(--phosphor);
+}

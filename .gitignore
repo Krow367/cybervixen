@@ -1,0 +1,6 @@
+# Editor temp files
+*.swp
+*.kate-swp
+*~
+.*.swp
+*.mp4

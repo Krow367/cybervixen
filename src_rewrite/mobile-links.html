@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Links — CyberVixen</title>
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --border: #2a2a2a;
+            --phosphor: #5bf870;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--phosphor);
+            font-family: "Courier New", Courier, monospace;
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        header a.back {
+            color: var(--phosphor);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        header a.back:hover { color: var(--phosphor); }
+
+        header h1 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        main {
+            padding: 1.5rem;
+            max-width: 600px;
+        }
+
+        /* ── My button + copybox ── */
+        .my-button {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .my-button p {
+            font-size: 0.75rem !important;
+            color: var(--phosphor);
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        .my-button img {
+            display: block;
+            margin-bottom: 0.5rem;
+            max-width: 100%;
+        }
+
+        .my-button textarea {
+            width: 100%;
+            background: #111;
+            border: 1px solid var(--border);
+            color: var(--phosphor);
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.7rem;
+            padding: 0.4rem;
+            resize: none;
+            margin-bottom: 0.5rem;
+        }
+
+        /* ── Button grid ── */
+        .section-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--phosphor);
+            margin-bottom: 0.75rem;
+        }
+
+        .button-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .button-grid a {
+            display: inline-block;
+            line-height: 0;
+        }
+
+        .button-grid img {
+            width: 88px;
+            height: 31px;
+            display: block;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a class="back" href="mobile-menu.html">← Menu</a>
+        <a class="back" href="mobile-chat.html">Chat</a>
+        <h1>web.exe</h1>
+    </header>
+
+    <main>
+        <div class="my-button" id="my-button-container"></div>
+
+        <div id="friends-section">
+            <p class="section-label">Friends &amp; Neighbors</p>
+            <div class="button-grid" id="friends-grid"></div>
+        </div>
+
+        <div id="mutuals-section">
+            <p class="section-label">Neighboring Network Nodes</p>
+            <div class="button-grid" id="mutuals-grid"></div>
+        </div>
+    </main>
+
+    <script type="module">
+        try {
+            const res = await fetch("/commands/links/links.html");
+            const html = await res.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+
+            // 1. My button + copybox section
+            const cyberlink = doc.querySelector(".cyberlink, #cyberbutton");
+            const myBtnContainer = document.getElementById("my-button-container");
+            if (cyberlink && myBtnContainer) {
+                myBtnContainer.innerHTML = cyberlink.innerHTML;
+            }
+
+            // 2. Button grids (Friends vs Neighboring Network Nodes)
+            const content = doc.querySelector(".scrollbox-content") || doc.body;
+            const children = Array.from(content.children);
+
+            const friendsGrid = document.getElementById("friends-grid");
+            const mutualsGrid = document.getElementById("mutuals-grid");
+            let targetGrid = friendsGrid;
+
+            for (const el of children) {
+                if (el.matches(".cyberlink, #cyberbutton, .bl, .scrollbar")) continue;
+
+                if (el.classList.contains("mutuals")) {
+                    targetGrid = mutualsGrid;
+                    continue;
+                }
+
+                // Extract all active anchor tags inside each item container
+                const anchors = el.querySelectorAll("a");
+                anchors.forEach(a => {
+                    targetGrid.appendChild(a.cloneNode(true));
+                });
+            }
+
+            // Hide sections if no links exist in them
+            if (friendsGrid.children.length === 0) {
+                document.getElementById("friends-section")?.remove();
+            }
+            if (mutualsGrid.children.length === 0) {
+                document.getElementById("mutuals-section")?.remove();
+            }
+        } catch (err) {
+            console.error("Failed to load links from /commands/links/links.html:", err);
+        }
+    </script>
+</body>
+</html>

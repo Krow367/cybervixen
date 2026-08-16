@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Vixen // foxOS Terminal</title>
+    <link rel="icon" type="image/x-icon" href="img/icon.png">
+    <!-- Google Fonts for Retro CRT Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@400;600&family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./crt.css">
+    <link rel="stylesheet" href="./windows.css">
+    <link rel="stylesheet" href="./splash.css">
+    <link rel="stylesheet" href="./programs/blog/blog.css">
+    <link rel="stylesheet" href="./programs/recipes/recipes.css">
+    <link rel="stylesheet" href="./programs/nano/nano.css">
+    <script>
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme) {
+            document.documentElement.setAttribute("data-theme", savedTheme);
+        }
+        // Check for URL query (?debug=1 or ?skip=1) or localStorage toggle
+        const urlParams = new URLSearchParams(window.location.search);
+        globalThis.DEBUG = urlParams.get("debug") === "1" || urlParams.get("skip") === "1" || localStorage.getItem("foxOS_debug") === "true";
+        if (globalThis.DEBUG || localStorage.getItem("foxos_skip_splash") === "true") {
+            document.documentElement.classList.add("skip-splash-mode");
+        }
+    </script>
+</head>
+<body>
+    <!-- ─── Vintage CRT Power-On Audio Activation Interstitial ─── -->
+    <div id="power-prompt">
+        <div class="power-prompt-box">
+            <div class="power-prompt-header">SERENITY INDUSTRIES // MODEL 1981-CRT</div>
+            <div class="power-prompt-text">[ CLICK ANYWHERE OR PRESS ANY KEY TO POWER ON ]</div>
+            <div class="power-prompt-sub">// CARRIER: 555-CLOCK SYNC ■ AUDIO SYNTHESIZER READY //</div>
+        </div>
+    </div>
+
+    <!-- ─── Matrix & Neon Splash Gateway Overlay ─── -->
+    <div id="splash-overlay">
+        <canvas id="matrix-canvas"></canvas>
+        <div class="crt-overlay"></div>
+
+        <div class="hud-corner top-left">
+            <div><span class="status-dot"></span>SYS_STAT: ONLINE</div>
+            <div>NET_LINK: FOXNET-42</div>
+        </div>
+
+        <div class="hud-corner top-right">
+            <div>PHOSPHOR: P39 DUAL-BAND</div>
+            <div>CARRIER: 555-CLOCK SYNC</div>
+        </div>
+
+        <div class="hud-corner bottom-left">
+            <div id="uptime">UPTIME: 00:00:00</div>
+            <div>SEC_LEVEL: 0x7F</div>
+        </div>
+
+        <div class="hud-corner bottom-right">
+            <div>PROTOCOL: HTTPS/SERENITY ENCRYPTION</div>
+            <div>ENGINE: foxOS v1.33.7</div>
+        </div>
+
+        <main class="stage" id="main-stage">
+            <div class="brand-container">
+                <div class="brand-sub">// A NEOCITIES NETWORK NODE //</div>
+                <h1 class="brand-title">
+                    <span class="brand-cyber">CYBER</span><span class="brand-vixen">VIXEN</span>
+                </h1>
+                <div class="brand-tagline">"Harmony Engineered."</div>
+            </div>
+
+            <!-- Login Gateway Card -->
+            <div class="gateway-card">
+                <div class="gateway-header">
+                    <span>foxNET OPERATOR ACCESS</span>
+                    <button type="button" class="gateway-help-btn" id="open-help-btn">[ ? ] PRIVACY &amp; STORAGE</button>
+                </div>
+
+                <form class="gateway-form" id="gateway-login-form">
+                    <div class="gateway-row">
+                        <label for="handle-input">OPERATOR HANDLE:</label>
+                        <input type="text" id="handle-input" class="gateway-input" autocomplete="off" maxlength="16">
+                    </div>
+                    <div class="gateway-row">
+                        <label for="pin-input">4-DIGIT ACCESS PIN:</label>
+                        <input type="password" id="pin-input" class="gateway-input" maxlength="8">
+                    </div>
+
+                    <!-- Option 1: Remember Operator Handle & Token -->
+                    <div class="gateway-remember-row" style="display: flex; align-items: center; gap: 8px; margin: 4px 0 10px 0; font-size: 0.85em; opacity: 0.85; color: var(--phosphor, #39ff14);">
+                        <input type="checkbox" id="remember-me-checkbox" style="cursor: pointer; accent-color: var(--phosphor, #39ff14);">
+                        <label for="remember-me-checkbox" style="cursor: pointer; user-select: none;">REMEMBER OPERATOR &amp; AUTO-LOGIN</label>
+                    </div>
+
+                    <button type="submit" class="gateway-btn" id="connect-btn">INITIALIZE WITH HANDLE →</button>
+                </form>
+
+                <div style="margin: 14px 0; border-top: 1px dashed rgba(var(--phosphor-rgb, 57, 255, 20), 0.3);"></div>
+
+                <!-- Option 2: Skip Splash Gateway Directly to Terminal -->
+                <div class="gateway-skip-toggle" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 10px; font-size: 0.85em; opacity: 0.85; color: var(--phosphor, #39ff14);">
+                    <input type="checkbox" id="skip-splash-checkbox" style="cursor: pointer; accent-color: var(--phosphor, #39ff14);">
+                    <label for="skip-splash-checkbox" style="cursor: pointer; user-select: none;">ALWAYS SKIP SPLASH &amp; BOOT TO TERMINAL</label>
+                </div>
+
+                <button type="button" class="guest-btn" id="guest-btn">CONTINUE AS GUEST (OFFLINE NVRAM)</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ─── Help & Architecture Info Modal ─── -->
+    <div id="help-modal">
+        <div class="help-card">
+            <h3>foxOS STORAGE &amp; IDENTITY POLICY</h3>
+            <p><strong>1. Guest / Offline Terminal Mode (Zero-Server):</strong></p>
+            <ul>
+                <li>Operates strictly within your browser's private local memory (NVRAM / localStorage).</li>
+                <li>All notes and achievements are preserved locally without sending data to any remote server.</li>
+                <li><strong>Cross-Device Migration:</strong> Guests can type <code>backup</code> anytime inside the terminal to get a private transfer token, and <code>restore &lt;token&gt;</code> on any phone or laptop. <em>The backup token is generated entirely within your local browser JavaScript with zero network requests or data transfer to any remote server.</em></li>
+            </ul>
+
+            <p><strong>2. foxNet Operator Handle:</strong></p>
+            <ul>
+                <li>Claiming a handle links your terminal identity to the foxNet network.</li>
+                <li>Syncs unlocked ciphers and achievements to Firebase.</li>
+                <li>Creates your own personal workspace at <code>/USERS/&lt;HANDLE&gt;/</code>.</li>
+                <li>Entering a new handle and PIN automatically registers it for you on first use.</li>
+            </ul>
+
+            <p><strong>3. Zero Spam / Zero Email:</strong></p>
+            <ul>
+                <li>No email addresses, no tracking cookies, and no password reset spam.</li>
+            </ul>
+
+            <button type="button" class="help-close-btn" id="close-help-btn">ACKNOWLEDGE</button>
+        </div>
+    </div>
+
+    <!-- ─── CRT Monitor & Terminal Buffer ─── -->
+    <div id="monitor">
+        <div id="crt">
+            <!-- Terminal Buffer -->
+            <div class="terminal" id="terminal-buffer">
+                <div id="output-lines"></div>
+                <div id="active-prompt-line" style="display: none; align-items: baseline;">
+                    <span id="prompt-label">foxOS:/USERS/GUEST&gt;&nbsp;</span>
+                    <span id="input" contenteditable="true" spellcheck="false"></span>
+                </div>
+            </div>
+
+            <!-- Floating CRT Windows Layer -->
+            <div id="windows-container"></div>
+
+            <!-- CRT Scanline Overlays -->
+            <div class="scanlines"></div>
+            <div class="scanline-beam"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { applyTheme, getSavedTheme } from "./core/themes.js";
+        import { getPromptPath, resetCurrentPathToUser } from "./core/vfs.js";
+        import { executeCommand, navigateHistory } from "./core/kernel.js";
+        import { type as typewriter } from "./core/typer.js";
+        import { runBootSequence } from "./core/boot.js";
+        import { initSettingsUI } from "./core/settings.js";
+        import { checkMobileModal } from "./core/mobilecheck.js";
+        import { getActiveUser, setActiveUser, authenticateHandleAndPin } from "./core/session.js";
+        import { getAudioContext, playKeyClick, playRelayThump, playBell, playErrorBuzz, playDiskSeek, playDiskActivity, playBootChime } from "./core/audio.js";
+
+        import {
+            initVRAMEngine,
+            printToVRAM,
+            printReplaceToVRAM,
+            clearVRAM,
+            snapToRow1,
+            getLastVRAMIndex,
+            handlePageNav,
+            renderScreen
+        } from "./core/vram.js";
+
+        // Initialize System Settings and Mobile Check
+        initSettingsUI();
+        checkMobileModal();
+
+        const splashOverlay = document.getElementById("splash-overlay");
+        const helpModal = document.getElementById("help-modal");
+        const openHelpBtn = document.getElementById("open-help-btn");
+        const closeHelpBtn = document.getElementById("close-help-btn");
+        const loginForm = document.getElementById("gateway-login-form");
+        const handleInput = document.getElementById("handle-input");
+        const guestBtn = document.getElementById("guest-btn");
+
+        const inputEl = document.getElementById("input");
+        const inputLine = document.getElementById("active-prompt-line");
+        const outputLines = document.getElementById("output-lines");
+        const promptLabel = document.getElementById("prompt-label");
+        const terminal = document.getElementById("terminal-buffer");
+
+        // Initialize Virtual Video RAM (VRAM) Framebuffer
+        initVRAMEngine(terminal, outputLines, inputLine, inputEl);
+
+        function updatePrompt() {
+            promptLabel.textContent = getPromptPath();
+        }
+
+        // Helper to place cursor at the very end of contenteditable text
+        function setCaretToEnd(el) {
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+
+        // Active Interactive Input Prompt Holder (for login, masked passwords, etc.)
+        let activeInputPrompt = null;
+
+        // Execution Context Sandbox passed to commands and binary executions
+        const ctx = {
+            print: printToVRAM,
+            printReplace: printReplaceToVRAM,
+            type: (content, opts) => typewriter(outputLines, content, opts),
+            clear: clearVRAM,
+            error: (msg) => {
+                const lines = String(msg).split("\n");
+                lines.forEach(line => {
+                    printToVRAM(`<span style="color: #ff3366; text-shadow: 0 0 8px #ff3366;">${line}</span>`);
+                });
+            },
+            errorBuzz: playErrorBuzz,
+            keyClick: playKeyClick,
+            relayThump: playRelayThump,
+            diskSeek: playDiskSeek,
+            diskActivity: playDiskActivity,
+            bootChime: playBootChime,
+            getPrompt: getPromptPath,
+            snapToTop: snapToRow1,
+            setInputEnabled: (enabled) => {
+                inputLine.style.display = enabled ? "flex" : "none";
+                if (enabled) {
+                    inputEl.focus();
+                } else {
+                    inputEl.blur();
+                }
+            },
+            readInput: (promptText = "", options = {}) => {
+                return new Promise((resolve) => {
+                    promptLabel.textContent = promptText;
+                    inputEl.textContent = "";
+                    inputLine.style.display = "flex";
+                    inputEl.focus();
+
+                    activeInputPrompt = {
+                        promptText,
+                        mask: options.mask === true,
+                        buffer: "",
+                        resolve: (val) => {
+                            const pText = activeInputPrompt?.promptText || promptText;
+                            const isMasked = activeInputPrompt?.mask;
+                            activeInputPrompt = null;
+                            printToVRAM(`${pText}${isMasked ? "*".repeat(val.length) : val}`);
+                            const echoIndex = getLastVRAMIndex();
+                            snapToRow1(echoIndex);
+                            updatePrompt();
+                            resolve(val);
+                        }
+                    };
+                });
+            }
+        };
+
+        // ─── Fast Instant Debug Mode / Skip Splash Gateway Handler ───────────
+        const powerPrompt = document.getElementById("power-prompt");
+        const skipSplashPref = localStorage.getItem("foxos_skip_splash") === "true";
+
+        if (globalThis.DEBUG) {
+            splashOverlay.classList.add("hidden");
+            splashOverlay.style.display = "none";
+
+            const activeUser = getActiveUser();
+            resetCurrentPathToUser(activeUser);
+            updatePrompt();
+
+            runBootSequence(ctx, false);
+            inputEl.focus();
+        } else if (skipSplashPref) {
+            splashOverlay.classList.add("hidden");
+            splashOverlay.style.display = "none";
+
+            let hasPoweredOn = false;
+            const activateCRT = (e) => {
+                if (hasPoweredOn) return;
+                hasPoweredOn = true;
+
+                window.removeEventListener("keydown", activateCRT, { capture: true });
+                window.removeEventListener("pointerdown", activateCRT, { capture: true });
+
+                const audio = getAudioContext();
+                if (audio && audio.state === "suspended") {
+                    audio.resume();
+                }
+                playRelayThump();
+                if (powerPrompt) powerPrompt.classList.add("dismissed");
+
+                const activeUser = getActiveUser();
+                resetCurrentPathToUser(activeUser);
+                updatePrompt();
+
+                runBootSequence(ctx, false);
+                inputEl.focus();
+            };
+
+            window.addEventListener("keydown", activateCRT, { capture: true });
+            window.addEventListener("pointerdown", activateCRT, { capture: true });
+        }
+
+        // ─── Canvas Matrix Rain & Phantom Fox ────────────────────────────────
+        const canvas = document.getElementById("matrix-canvas");
+        const ctxCanvas = canvas.getContext("2d");
+
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
+
+        const FOX_SPEED = 6.8;
+        const IDLE_TRIGGER_DELAY_MS = 10000;
+
+        let loadedCodeLines = [];
+        const worldCodeCanvas = document.createElement("canvas");
+        const worldCodeCtx = worldCodeCanvas.getContext("2d");
+
+        function createWorldCodeCanvas() {
+            worldCodeCanvas.width = width;
+            worldCodeCanvas.height = height;
+
+            worldCodeCtx.fillStyle = "#010803";
+            worldCodeCtx.fillRect(0, 0, width, height);
+
+            const rowHeight = 21;
+            const fontSize = 12;
+            worldCodeCtx.font = `bold ${fontSize}px "Share Tech Mono", monospace`;
+
+            const topMargin = 20;
+            const bottomMargin = 20;
+            const availableHeight = height - topMargin - bottomMargin;
+            const rowsPerColumn = Math.max(5, Math.floor(availableHeight / rowHeight));
+
+            const columnWidth = 490;
+            const numColumns = Math.ceil(width / columnWidth) + 1;
+
+            let lineIndex = 0;
+            for (let c = 0; c < numColumns; c++) {
+                const colX = 18 + c * columnWidth;
+                worldCodeCtx.save();
+                worldCodeCtx.beginPath();
+                worldCodeCtx.rect(colX, 0, columnWidth - 25, height);
+                worldCodeCtx.clip();
+
+                for (let r = 0; r < rowsPerColumn; r++) {
+                    const rowY = topMargin + r * rowHeight;
+                    const line = (loadedCodeLines.length > 0) ? loadedCodeLines[lineIndex % loadedCodeLines.length] : "// FOXNET ONLINE";
+                    lineIndex++;
+
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith("//") || trimmed.startsWith("/*") || trimmed.startsWith("<!") || trimmed.startsWith("*")) {
+                        worldCodeCtx.fillStyle = "rgba(91, 248, 112, 0.6)";
+                    } else if (line.includes("function") || line.includes("import") || line.includes("export") || line.includes("const") || line.includes("return")) {
+                        worldCodeCtx.fillStyle = "#ff40d0";
+                    } else if (line.includes("0x") || line.includes("crypto") || line.includes("AudioContext")) {
+                        worldCodeCtx.fillStyle = "#ffffff";
+                    } else if (r % 2 === 0) {
+                        worldCodeCtx.fillStyle = "#85ffa0";
+                    } else {
+                        worldCodeCtx.fillStyle = "#48e86c";
+                    }
+
+                    worldCodeCtx.fillText(line, colX, rowY);
+                }
+                worldCodeCtx.restore();
+            }
+        }
+
+        async function loadSourceCodeFile() {
+            try {
+                const res = await fetch("data/revealed_code.txt?v=" + Date.now());
+                if (res.ok) {
+                    const text = await res.text();
+                    const parsed = text.split("\n").map(l => l.trimEnd()).filter(l => l.length > 0);
+                    if (parsed.length > 0) {
+                        loadedCodeLines = parsed;
+                    }
+                }
+            } catch (err) {}
+            createWorldCodeCanvas();
+        }
+        loadSourceCodeFile();
+
+        // Load Silhouette & Glow Sheets
+        const blackSheet = new Image();
+        let blackLoaded = false;
+        blackSheet.onload = () => { blackLoaded = true; };
+        blackSheet.src = "img/fox_solid_black_sheet.png";
+
+        const glowGreenSheet = new Image();
+        let glowGreenLoaded = false;
+        glowGreenSheet.onload = () => { glowGreenLoaded = true; };
+        glowGreenSheet.src = "img/fox_glow_green_sheet.png";
+
+        const glowAmberSheet = new Image();
+        let glowAmberLoaded = false;
+        glowAmberSheet.onload = () => { glowAmberLoaded = true; };
+        glowAmberSheet.src = "img/fox_glow_amber_sheet.png";
+
+        const TOTAL_CYCLE_FRAMES = 20;
+        const FRAME_SRC_W = 340;
+        const FRAME_SRC_H = 200;
+        const FOX_SCALE = 1.35;
+        const RENDER_W = Math.round(FRAME_SRC_W * FOX_SCALE);
+        const RENDER_H = Math.round(FRAME_SRC_H * FOX_SCALE);
+
+        const foxBufferCanvas = document.createElement("canvas");
+        const foxBufferCtx = foxBufferCanvas.getContext("2d");
+        foxBufferCanvas.width = RENDER_W;
+        foxBufferCanvas.height = RENDER_H;
+
+        const HEIGHT_LANES = [0.18, 0.28, 0.38, 0.48, 0.58, 0.68, 0.78];
+        let laneShuffleBag = [];
+
+        function getNextShuffledLane() {
+            if (laneShuffleBag.length === 0) {
+                laneShuffleBag = [...HEIGHT_LANES];
+                for (let i = laneShuffleBag.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [laneShuffleBag[i], laneShuffleBag[j]] = [laneShuffleBag[j], laneShuffleBag[i]];
+                }
+            }
+            return laneShuffleBag.pop();
+        }
+
+        let ghostFox = {
+            active: false,
+            x: -RENDER_W - 50,
+            y: (height || window.innerHeight) * 0.5,
+            speed: FOX_SPEED,
+            frame: 0,
+            frameTimer: 0
+        };
+
+        function triggerPhantomFoxRun() {
+            ghostFox.active = true;
+            ghostFox.x = -RENDER_W - 30;
+            ghostFox.y = (height || window.innerHeight) * getNextShuffledLane();
+            ghostFox.speed = FOX_SPEED;
+            ghostFox.frame = 0;
+            ghostFox.frameTimer = 0;
+        }
+
+        let idleTimer = null;
+        function startFoxTimer(delay = IDLE_TRIGGER_DELAY_MS) {
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = setTimeout(() => {
+                triggerPhantomFoxRun();
+            }, delay);
+        }
+        startFoxTimer(6750);
+
+        // Matrix Rain Columns
+        const chars = "ｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ0123456789ABCDEF<>/*+=~$_#";
+        const fontSize = 16;
+        let columns = [];
+
+        function initColumns() {
+            const count = Math.floor(width / fontSize);
+            columns = [];
+            for (let i = 0; i < count; i++) {
+                columns.push({
+                    x: i * fontSize,
+                    y: Math.random() * -100,
+                    speed: 1.1 + Math.random() * 0.3,
+                    chars: Array.from({ length: 24 }, () => chars[Math.floor(Math.random() * chars.length)]),
+                    isAccent: Math.random() > 0.85
+                });
+            }
+        }
+        initColumns();
+
+        let mouseX = -1000;
+        let mouseY = -1000;
+        window.addEventListener("mousemove", (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        window.addEventListener("resize", () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            initColumns();
+            createWorldCodeCanvas();
+        });
+
+        let matrixRunning = true;
+        function renderMatrix() {
+            if (!matrixRunning) return;
+
+            ctxCanvas.fillStyle = "rgba(2, 5, 2, 0.13)";
+            ctxCanvas.fillRect(0, 0, width, height);
+
+            // Layer 1: Phantom Fox Stencil
+            const isReady = blackLoaded || (blackSheet.complete && blackSheet.naturalWidth > 0);
+            if (ghostFox.active && isReady) {
+                ghostFox.x += ghostFox.speed;
+                ghostFox.frameTimer++;
+                if (ghostFox.frameTimer >= 2) {
+                    ghostFox.frameTimer = 0;
+                    ghostFox.frame = (ghostFox.frame + 1) % TOTAL_CYCLE_FRAMES;
+                }
+
+                const drawX = Math.round(ghostFox.x);
+                const drawY = Math.round(ghostFox.y - RENDER_H * 0.5);
+
+                const activeGlowSheet = glowGreenSheet;
+                const glowReady = glowGreenLoaded || glowGreenSheet.complete;
+
+                ctxCanvas.save();
+                if (glowReady && activeGlowSheet.naturalWidth > 0) {
+                    ctxCanvas.globalAlpha = 0.08;
+                    ctxCanvas.drawImage(
+                        activeGlowSheet,
+                        ghostFox.frame * FRAME_SRC_W, 0, FRAME_SRC_W, FRAME_SRC_H,
+                        drawX, drawY, RENDER_W, RENDER_H
+                    );
+                }
+
+                foxBufferCtx.clearRect(0, 0, RENDER_W, RENDER_H);
+                foxBufferCtx.globalCompositeOperation = "source-over";
+                foxBufferCtx.drawImage(
+                    blackSheet,
+                    ghostFox.frame * FRAME_SRC_W, 0, FRAME_SRC_W, FRAME_SRC_H,
+                    0, 0, RENDER_W, RENDER_H
+                );
+
+                foxBufferCtx.globalCompositeOperation = "source-in";
+                foxBufferCtx.drawImage(worldCodeCanvas, -drawX, -drawY);
+
+                ctxCanvas.globalAlpha = 1.0;
+                ctxCanvas.drawImage(foxBufferCanvas, drawX, drawY);
+                ctxCanvas.restore();
+
+                if (ghostFox.x > width + RENDER_W + 50) {
+                    ghostFox.active = false;
+                    startFoxTimer();
+                }
+            }
+
+            // Layer 2: Matrix Rain
+            ctxCanvas.font = `${fontSize}px "Share Tech Mono", monospace`;
+            const repelRadius = 110;
+
+            for (let i = 0; i < columns.length; i++) {
+                const col = columns[i];
+                const baseX = col.x;
+
+                for (let j = 0; j < col.chars.length; j++) {
+                    const charY = (col.y - j) * fontSize;
+                    if (charY < -fontSize || charY > height + fontSize) continue;
+
+                    const dx = baseX - mouseX;
+                    const dy = charY - mouseY;
+                    const dist = Math.hypot(dx, dy);
+
+                    let drawX = baseX;
+                    let drawY = charY;
+
+                    if (dist < repelRadius && dist > 0) {
+                        const force = Math.pow((1 - dist / repelRadius), 1.6);
+                        const angle = Math.atan2(dy, dx);
+                        drawX += Math.cos(angle) * force * 45;
+                        drawY += Math.sin(angle) * force * 20;
+                    }
+
+                    if (Math.random() < 0.075) {
+                        col.chars[j] = chars[Math.floor(Math.random() * chars.length)];
+                    }
+
+                    if (j === 0) {
+                        ctxCanvas.fillStyle = col.isAccent ? "#ffa3f0" : "#d6ffde";
+                    } else {
+                        let flickerMod = 1.0;
+                        const rand = Math.random();
+                        if (rand > 0.94) flickerMod = 1.35;
+                        else if (rand < 0.06) flickerMod = 0.5;
+
+                        const baseAlpha = Math.max(0.08, 0.85 * (1 - j / col.chars.length));
+                        const alpha = Math.min(1.0, Math.max(0.05, baseAlpha * flickerMod));
+
+                        ctxCanvas.fillStyle = col.isAccent
+                            ? `rgba(224, 36, 195, ${alpha})`
+                            : `rgba(91, 248, 112, ${alpha})`;
+                    }
+
+                    ctxCanvas.fillText(col.chars[j], drawX, drawY);
+                }
+
+                col.y += col.speed * 0.25;
+                if (col.y * fontSize > height + (col.chars.length * fontSize)) {
+                    col.y = 0;
+                    col.speed = 1.1 + Math.random() * 1.8;
+                }
+            }
+
+            requestAnimationFrame(renderMatrix);
+        }
+        if (!globalThis.DEBUG) renderMatrix();
+
+        // Uptime Counter
+        const start = Date.now();
+        const uptimeEl = document.getElementById("uptime");
+        setInterval(() => {
+            const elapsed = Math.floor((Date.now() - start) / 1000);
+            const hrs = String(Math.floor(elapsed / 3600)).padStart(2, "0");
+            const mins = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
+            const secs = String(elapsed % 60).padStart(2, "0");
+            if (uptimeEl) uptimeEl.textContent = `UPTIME: ${hrs}:${mins}:${secs}`;
+        }, 1000);
+
+        // Help Modal Handlers
+        openHelpBtn.addEventListener("click", () => {
+            playBell(600, 0.05);
+            helpModal.classList.add("open");
+        });
+        closeHelpBtn.addEventListener("click", () => {
+            playBell(500, 0.05);
+            helpModal.classList.remove("open");
+        });
+
+        // ─── Single-Page Gateway Launch Orchestration ─────────────────────────
+        let transitioning = false;
+        function launchTerminal(handle) {
+            if (transitioning) return;
+            transitioning = true;
+
+            // Direct user activation event wakes and unlocks WebAudio permanently
+            const audio = getAudioContext();
+            if (audio && audio.state === "suspended") {
+                audio.resume();
+            }
+            playBootChime();
+
+            const cleanHandle = handle ? setActiveUser(handle) : "GUEST";
+            if (!handle) setActiveUser("GUEST");
+
+            resetCurrentPathToUser(cleanHandle);
+            updatePrompt();
+
+            // Fade out splash overlay smoothly
+            document.getElementById("main-stage").classList.add("fade-out");
+            setTimeout(() => {
+                matrixRunning = false;
+                splashOverlay.classList.add("hidden");
+
+                // Execute CRT power bloom & POST boot sequence with 100% live hardware audio
+                runBootSequence(ctx, false);
+                inputEl.focus();
+            }, 380);
+        }
+
+        const pinInput = document.getElementById("pin-input");
+        const loginErrorMsg = document.getElementById("gateway-error-msg") || (() => {
+            const el = document.createElement("div");
+            el.id = "gateway-error-msg";
+            el.style.cssText = "color: #ff3366; font-size: 0.9em; margin-top: 8px; text-shadow: 0 0 4px #ff3366; min-height: 1.2em;";
+            loginForm.appendChild(el);
+            return el;
+        })();
+
+        const rememberMeCheckbox = document.getElementById("remember-me-checkbox");
+        const skipSplashCheckbox = document.getElementById("skip-splash-checkbox");
+
+        // Preload saved preferences
+        if (rememberMeCheckbox) {
+            rememberMeCheckbox.checked = localStorage.getItem("foxos_remember_me") === "true";
+        }
+        if (skipSplashCheckbox) {
+            skipSplashCheckbox.checked = localStorage.getItem("foxos_skip_splash") === "true";
+            skipSplashCheckbox.addEventListener("change", (e) => {
+                localStorage.setItem("foxos_skip_splash", e.target.checked ? "true" : "false");
+            });
+        }
+        const savedHandle = localStorage.getItem("foxnet_handle");
+        if (savedHandle && savedHandle !== "GUEST" && handleInput) {
+            handleInput.value = savedHandle;
+        }
+
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const handle = handleInput.value.trim();
+            const pin = pinInput ? pinInput.value.trim() : "";
+
+            if (!handle) {
+                handleInput.focus();
+                return;
+            }
+
+            loginErrorMsg.textContent = "[ AUTHENTICATING... ]";
+            const res = await authenticateHandleAndPin(handle, pin);
+
+            if (!res.success) {
+                playErrorBuzz();
+                loginErrorMsg.textContent = res.error || "[ AUTH ERROR: ACCESS DENIED ]";
+                if (pinInput) pinInput.focus();
+                return;
+            }
+
+            const shouldRemember = rememberMeCheckbox ? rememberMeCheckbox.checked : false;
+            setActiveUser(res.cleanHandle, shouldRemember);
+
+            if (skipSplashCheckbox && skipSplashCheckbox.checked) {
+                localStorage.setItem("foxos_skip_splash", "true");
+            }
+
+            loginErrorMsg.textContent = "";
+            launchTerminal(res.cleanHandle);
+        });
+
+        guestBtn.addEventListener("click", () => {
+            setActiveUser("GUEST", false);
+            if (skipSplashCheckbox && skipSplashCheckbox.checked) {
+                localStorage.setItem("foxos_skip_splash", "true");
+            }
+            launchTerminal(null);
+        });
+
+        // ─── Terminal Keyboard & Event Handlers ──────────────────────────────
+        const MAX_INPUT_COLS = 72;
+
+        inputEl.addEventListener("keydown", async (e) => {
+            // ── Interactive readInput mode (e.g. login handle & masked PIN) ──
+            if (activeInputPrompt) {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    playKeyClick("enter");
+                    playRelayThump();
+                    const val = activeInputPrompt.mask ? activeInputPrompt.buffer : inputEl.textContent;
+                    inputEl.textContent = "";
+                    activeInputPrompt.resolve(val);
+                    return;
+                }
+
+                if (e.key === "Escape") {
+                    e.preventDefault();
+                    inputEl.textContent = "";
+                    activeInputPrompt.resolve("");
+                    return;
+                }
+
+                if (activeInputPrompt.mask) {
+                    if (e.key === "Backspace") {
+                        e.preventDefault();
+                        activeInputPrompt.buffer = activeInputPrompt.buffer.slice(0, -1);
+                        inputEl.textContent = "*".repeat(activeInputPrompt.buffer.length);
+                        setCaretToEnd(inputEl);
+                        playKeyClick("key");
+                        return;
+                    }
+
+                    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+                        e.preventDefault();
+                        if (activeInputPrompt.buffer.length < MAX_INPUT_COLS) {
+                            activeInputPrompt.buffer += e.key;
+                            inputEl.textContent = "*".repeat(activeInputPrompt.buffer.length);
+                            setCaretToEnd(inputEl);
+                            playKeyClick("key");
+                        } else {
+                            playErrorBuzz();
+                        }
+                        return;
+                    }
+
+                    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Tab"].includes(e.key)) {
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+
+            if (e.key === "Backspace" && inputEl.textContent.length === 0) {
+                e.preventDefault();
+                return;
+            }
+
+            // Enforce authentic 72-column hardware input line buffer limit
+            if (
+                !e.ctrlKey &&
+                !e.metaKey &&
+                !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter", "Tab", "Escape"].includes(e.key) &&
+                inputEl.textContent.length >= MAX_INPUT_COLS
+            ) {
+                e.preventDefault();
+                playErrorBuzz();
+                return;
+            }
+
+            if (e.key === "ArrowUp" && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+                e.preventDefault();
+                playKeyClick();
+                inputEl.textContent = navigateHistory("up", inputEl.textContent);
+                setCaretToEnd(inputEl);
+                return;
+            }
+
+            if (e.key === "ArrowDown" && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+                e.preventDefault();
+                playKeyClick();
+                inputEl.textContent = navigateHistory("down", inputEl.textContent);
+                setCaretToEnd(inputEl);
+                return;
+            }
+
+            if (e.key === "Enter") {
+                e.preventDefault();
+                playKeyClick("enter");
+                playRelayThump();
+                const raw = inputEl.textContent;
+                inputEl.textContent = "";
+
+                if (!raw.trim()) return;
+
+                // Hide the prompt line while command is executing
+                inputLine.style.display = "none";
+
+                // Print the prompt echo to VRAM
+                printToVRAM(`${getPromptPath()}${raw}`);
+
+                // Instant hardware snap: Align the newly entered prompt echo at Row 1 (top of CRT)
+                const echoIndex = getLastVRAMIndex();
+                snapToRow1(echoIndex);
+
+                try {
+                    await executeCommand(raw, ctx);
+                } finally {
+                    // Unhide prompt and refocus when the entire command lifecycle finishes
+                    inputLine.style.display = "flex";
+                    inputEl.focus();
+                }
+                updatePrompt();
+                return;
+            }
+
+            // Hardware PageUp / PageDown Discrete Page-Stepping with Relay Audio
+            if (e.key === "PageUp" || e.key === "PageDown") {
+                e.preventDefault();
+                handlePageNav(e.key);
+                return;
+            }
+
+            if (!e.repeat && !e.ctrlKey && !e.metaKey && !["Shift", "Control", "Alt", "Meta", "CapsLock", "Tab"].includes(e.key)) {
+                if (e.key === " ") {
+                    playKeyClick("space");
+                } else {
+                    playKeyClick("key");
+                }
+            }
+        });
+
+        // Clamp pasted text to MAX_INPUT_COLS
+        inputEl.addEventListener("paste", (e) => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData("text");
+            const clean = text.replace(/[\r\n]+/g, " ").slice(0, MAX_INPUT_COLS);
+            document.execCommand("insertText", false, clean);
+        });
+
+        document.getElementById("crt").addEventListener("click", (e) => {
+            if (!e.target.closest("#dev-bar, select, button, a, .window")) {
+                inputEl.focus();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>foxOS Drive Soundboard & Acoustic Diagnostics</title>
+    <style>
+        body {
+            background: #020902;
+            color: #33ff33;
+            font-family: monospace;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+        h1, h2 {
+            border-bottom: 1px solid #33ff33;
+            padding-bottom: 0.5rem;
+            text-shadow: 0 0 10px #33ff33;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .card {
+            border: 1px solid #33ff33;
+            padding: 1rem;
+            background: rgba(51, 255, 51, 0.05);
+            box-shadow: 0 0 8px rgba(51, 255, 51, 0.2);
+            border-radius: 4px;
+        }
+        button {
+            background: #33ff33;
+            color: #020902;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            font-family: monospace;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            margin-top: 0.8rem;
+        }
+        button:hover {
+            background: #ffffff;
+            box-shadow: 0 0 12px #ffffff;
+        }
+        .meta {
+            font-size: 0.85em;
+            color: #88ff88;
+            margin-top: 0.4rem;
+        }
+        .loop-box {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border: 2px solid #33ff33;
+            background: rgba(51, 255, 51, 0.08);
+        }
+    </style>
+</head>
+<body>
+    <h1>🎛️ foxOS Drive Acoustic Suite Diagnostics</h1>
+    <p>Lossless 16-bit Master extracted from Amiga 2000 & Seagate MFM physical recordings.</p>
+
+    <h2>1. Stepper Motor Clicks & Quick Track Seeks</h2>
+    <div class="grid">
+        <div class="card">
+            <strong>seek_single_01.ogg</strong>
+            <div class="meta">Single step click (0.35s) — Ideal for single keystroke step or directory ping</div>
+            <button onclick="play('./audio/drive/seek_single_01.ogg')">▶ Play Step 1</button>
+        </div>
+        <div class="card">
+            <strong>seek_single_02.ogg</strong>
+            <div class="meta">Single step clack (0.40s) — Higher frequency step pulse</div>
+            <button onclick="play('./audio/drive/seek_single_02.ogg')">▶ Play Step 2</button>
+        </div>
+        <div class="card">
+            <strong>seek_single_03.ogg</strong>
+            <div class="meta">Single step thump (0.38s) — Deep track alignment click</div>
+            <button onclick="play('./audio/drive/seek_single_03.ogg')">▶ Play Step 3</button>
+        </div>
+    </div>
+
+    <h2>2. Medium Read Bursts (Directory & File Reads)</h2>
+    <div class="grid">
+        <div class="card">
+            <strong>seek_burst_01.ogg</strong>
+            <div class="meta">1.10s Burst — Multi-track seek (ideal for 'cd A:' / 'dir')</div>
+            <button onclick="play('./audio/drive/seek_burst_01.ogg')">▶ Play Burst 1</button>
+        </div>
+        <div class="card">
+            <strong>seek_burst_02.ogg</strong>
+            <div class="meta">1.25s Burst — Rapid head stepper jitter & seek</div>
+            <button onclick="play('./audio/drive/seek_burst_02.ogg')">▶ Play Burst 2</button>
+        </div>
+    </div>
+
+    <h2>3. Heavy Read Bursts (Decryption & Cartridge Execution)</h2>
+    <div class="grid">
+        <div class="card">
+            <strong>seek_heavy_01.ogg</strong>
+            <div class="meta">2.40s Heavy Load — Continuous multi-sector reading</div>
+            <button onclick="play('./audio/drive/seek_heavy_01.ogg')">▶ Play Heavy 1</button>
+        </div>
+        <div class="card">
+            <strong>seek_heavy_02.ogg</strong>
+            <div class="meta">3.10s Extended Load — Full cartridge load burst</div>
+            <button onclick="play('./audio/drive/seek_heavy_02.ogg')">▶ Play Heavy 2</button>
+        </div>
+    </div>
+
+    <div class="loop-box">
+        <h2>4. Seamless Motor Whirr Looping Track</h2>
+        <p>Extracted continuous magnetic spindle drone crossfaded into a seamless 4.5s buffer loop.</p>
+        <button id="loop-btn" onclick="toggleLoop('./audio/drive/motor_loop.ogg')">▶ START SEAMLESS MOTOR LOOP</button>
+    </div>
+
+    <script>
+        let ctx = null;
+        let loopSource = null;
+        let loopGain = null;
+
+        function getAudioContext() {
+            if (!ctx) {
+                ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (ctx.state === "suspended") {
+                ctx.resume();
+            }
+            return ctx;
+        }
+
+        async function play(url) {
+            const audioCtx = getAudioContext();
+            try {
+                const res = await fetch(url);
+                const arrayBuf = await res.arrayBuffer();
+                const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
+                const src = audioCtx.createBufferSource();
+                src.buffer = audioBuf;
+                src.connect(audioCtx.destination);
+                src.start();
+            } catch (err) {
+                console.error("Playback error:", err);
+            }
+        }
+
+        async function toggleLoop(url) {
+            const audioCtx = getAudioContext();
+            const btn = document.getElementById("loop-btn");
+
+            if (loopSource) {
+                loopSource.stop();
+                loopSource = null;
+                btn.textContent = "▶ START SEAMLESS MOTOR LOOP";
+                btn.style.background = "#33ff33";
+                return;
+            }
+
+            try {
+                const res = await fetch(url);
+                const arrayBuf = await res.arrayBuffer();
+                const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
+                
+                loopSource = audioCtx.createBufferSource();
+                loopSource.buffer = audioBuf;
+                loopSource.loop = true;
+
+                loopGain = audioCtx.createGain();
+                loopGain.gain.value = 0.5;
+
+                loopSource.connect(loopGain);
+                loopGain.connect(audioCtx.destination);
+                loopSource.start();
+
+                btn.textContent = "⏹ STOP SEAMLESS MOTOR LOOP";
+                btn.style.background = "#ff3366";
+            } catch (err) {
+                console.error("Loop error:", err);
+            }
+        }
+    </script>
+</body>
+</html>
