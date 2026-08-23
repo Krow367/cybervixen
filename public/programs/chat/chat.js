@@ -1746,7 +1746,7 @@ function setupUIEvents() {
 
 export function playModemAudio() {
     try {
-        const audio = new Audio("./media/modem.mp3");
+        const audio = new Audio("/media/modem.mp3");
         audio.volume = 0.45;
         audio.play().catch(() => {});
         return audio;
