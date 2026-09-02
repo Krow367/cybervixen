@@ -106,10 +106,12 @@ body::after {
   border-left: 2px solid rgba(var(--phosphor-rgb), 0.2) !important;
 }
 
-.foxnet-msg-item.foxnet-msg-mention {
-  background: rgba(var(--phosphor-rgb), 0.12) !important;
-  border-left: 3px solid var(--phosphor) !important;
-  box-shadow: inset 0 0 12px rgba(var(--phosphor-rgb), 0.16), 0 0 6px rgba(var(--phosphor-rgb), 0.1) !important;
+.foxnet-msg-item.foxnet-msg-mention,
+.foxnet-msg-item.foxnet-msg-mention:nth-child(odd),
+.foxnet-msg-item.foxnet-msg-mention:nth-child(even) {
+  background: rgba(var(--phosphor-rgb), 0.22) !important;
+  border-left: 4px solid var(--phosphor) !important;
+  box-shadow: inset 0 0 16px rgba(var(--phosphor-rgb), 0.25), 0 0 8px rgba(var(--phosphor-rgb), 0.18) !important;
 }
 
 .foxnet-msg-item:hover {
@@ -119,9 +121,9 @@ body::after {
 }
 
 .foxnet-msg-item.foxnet-msg-mention:hover {
-  background: rgba(var(--phosphor-rgb), 0.2) !important;
+  background: rgba(var(--phosphor-rgb), 0.3) !important;
   border-left-color: var(--phosphor) !important;
-  box-shadow: inset 0 0 16px rgba(var(--phosphor-rgb), 0.25), 0 0 10px rgba(var(--phosphor-rgb), 0.18) !important;
+  box-shadow: inset 0 0 20px rgba(var(--phosphor-rgb), 0.35), 0 0 12px rgba(var(--phosphor-rgb), 0.25) !important;
 }
 
 .foxnet-msg-header {
@@ -158,8 +160,19 @@ body::after {
 }
 
 .foxnet-quote-block {
+  border-left: 2px solid rgba(var(--phosphor-rgb), 0.4) !important;
+  padding: 3px 8px !important;
+  margin: 4px 0 6px 0 !important;
+  background: rgba(var(--phosphor-rgb), 0.08) !important;
+  border-radius: 2px !important;
   user-select: text !important;
   -webkit-user-select: text !important;
+}
+
+.foxnet-quote-block.foxnet-quote-self {
+  border-left: 2px solid var(--phosphor) !important;
+  background: rgba(var(--phosphor-rgb), 0.18) !important;
+  box-shadow: inset 0 0 8px rgba(var(--phosphor-rgb), 0.15) !important;
 }
 
 .foxnet-link,
@@ -196,6 +209,20 @@ body::after {
   border: 1px solid var(--phosphor) !important;
   text-shadow: 0 0 4px var(--phosphor) !important;
   box-shadow: 0 0 6px rgba(var(--phosphor-rgb), 0.3) !important;
+}
+
+#foxnet-messages ::selection,
+.chat-window-wrapper ::selection {
+  background: var(--phosphor, #5bf870) !important;
+  color: #000000 !important;
+  text-shadow: none !important;
+}
+
+#foxnet-messages ::-moz-selection,
+.chat-window-wrapper ::-moz-selection {
+  background: var(--phosphor, #5bf870) !important;
+  color: #000000 !important;
+  text-shadow: none !important;
 }
 
 .foxnet-msg-img {

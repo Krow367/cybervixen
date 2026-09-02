@@ -656,6 +656,12 @@ function updateMessageDOM(msgEl, msg) {
         }
 
         const editedLabel = msg.isEdited ? ' <small style="opacity:0.5; font-style:italic;">(edited)</small>' : '';
+        let mentionBadge = '';
+        if (isTargeted) {
+            mentionBadge = isQuotingMe
+                ? ' <small class="foxnet-mention-badge" style="color: var(--phosphor); background: rgba(var(--phosphor-rgb), 0.25); border: 1px solid var(--phosphor); padding: 0 5px; border-radius: 2px; font-size: 0.78rem; letter-spacing: 0.5px; text-shadow: 0 0 4px var(--phosphor);">[REPLY TO YOU]</small>'
+                : ' <small class="foxnet-mention-badge" style="color: var(--phosphor); background: rgba(var(--phosphor-rgb), 0.25); border: 1px solid var(--phosphor); padding: 0 5px; border-radius: 2px; font-size: 0.78rem; letter-spacing: 0.5px; text-shadow: 0 0 4px var(--phosphor);">[MENTION]</small>';
+        }
 
         // Check for /img or /image command
         let textContent = msg.text || "";
@@ -672,10 +678,14 @@ function updateMessageDOM(msgEl, msg) {
 
         let quoteHTML = "";
         if (msg.replyTo) {
+            const isQuotedSelf = myHandleLower && msg.replyTo.sender && msg.replyTo.sender.toLowerCase() === myHandleLower;
+            const replySenderBadge = isQuotedSelf
+                ? `<span class="foxnet-mention-tag foxnet-mention-self">@${escapeHTML(msg.replyTo.sender)}</span>`
+                : `<span class="foxnet-mention-tag">@${escapeHTML(msg.replyTo.sender)}</span>`;
             quoteHTML = `
-                <div class="foxnet-quote-block">
-                    <small style="opacity: 0.75;">┌─ Replying to <strong>@${escapeHTML(msg.replyTo.sender)}</strong>:</small>
-                    <div style="opacity: 0.9;">"${linkifyText(msg.replyTo.text)}"</div>
+                <div class="foxnet-quote-block ${isQuotedSelf ? 'foxnet-quote-self' : ''}">
+                    <small style="opacity: 0.85;">┌─ Replying to ${replySenderBadge}:</small>
+                    <div style="opacity: 0.95;">"${linkifyText(msg.replyTo.text)}"</div>
                 </div>
             `;
         }
@@ -702,7 +712,7 @@ function updateMessageDOM(msgEl, msg) {
         msgEl.innerHTML = `
             <div class="foxnet-msg-header">
                 <span class="sender-name" style="color: ${senderColor}; text-shadow: 0 0 3px ${senderColor};">${escapeHTML(msg.sender)}</span>
-                ${roleBadge}
+                ${roleBadge}${mentionBadge}
                 <span class="foxnet-msg-time">${timeStr}${editedLabel}</span>
             </div>
             ${quoteHTML}
