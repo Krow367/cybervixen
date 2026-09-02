@@ -109,9 +109,9 @@ body::after {
 .foxnet-msg-item.foxnet-msg-mention,
 .foxnet-msg-item.foxnet-msg-mention:nth-child(odd),
 .foxnet-msg-item.foxnet-msg-mention:nth-child(even) {
-  background: rgba(var(--phosphor-rgb), 0.22) !important;
+  background: linear-gradient(90deg, rgba(var(--phosphor-rgb), 0.32) 0%, rgba(var(--phosphor-rgb), 0.12) 65%, rgba(var(--phosphor-rgb), 0.04) 100%) !important;
   border-left: 4px solid var(--phosphor) !important;
-  box-shadow: inset 0 0 16px rgba(var(--phosphor-rgb), 0.25), 0 0 8px rgba(var(--phosphor-rgb), 0.18) !important;
+  box-shadow: inset 0 0 16px rgba(var(--phosphor-rgb), 0.24), 0 0 10px rgba(var(--phosphor-rgb), 0.3) !important;
 }
 
 .foxnet-msg-item:hover {
@@ -121,9 +121,9 @@ body::after {
 }
 
 .foxnet-msg-item.foxnet-msg-mention:hover {
-  background: rgba(var(--phosphor-rgb), 0.3) !important;
-  border-left-color: var(--phosphor) !important;
-  box-shadow: inset 0 0 20px rgba(var(--phosphor-rgb), 0.35), 0 0 12px rgba(var(--phosphor-rgb), 0.25) !important;
+  background: linear-gradient(90deg, rgba(var(--phosphor-rgb), 0.42) 0%, rgba(var(--phosphor-rgb), 0.18) 65%, rgba(var(--phosphor-rgb), 0.08) 100%) !important;
+  border-left-color: var(--phosphor-bright, #fff) !important;
+  box-shadow: inset 0 0 22px rgba(var(--phosphor-rgb), 0.35), 0 0 14px rgba(var(--phosphor-rgb), 0.45) !important;
 }
 
 .foxnet-msg-header {
@@ -209,6 +209,20 @@ body::after {
   border: 1px solid var(--phosphor) !important;
   text-shadow: 0 0 4px var(--phosphor) !important;
   box-shadow: 0 0 6px rgba(var(--phosphor-rgb), 0.3) !important;
+}
+
+.foxnet-mention-badge {
+  color: var(--phosphor) !important;
+  background: rgba(var(--phosphor-rgb), 0.25) !important;
+  border: 1px solid var(--phosphor) !important;
+  padding: 0 5px !important;
+  border-radius: 2px !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 4px var(--phosphor) !important;
+  box-shadow: 0 0 8px rgba(var(--phosphor-rgb), 0.35) !important;
+  display: inline-flex !important;
+  align-items: center !important;
 }
 
 #foxnet-messages ::selection,
