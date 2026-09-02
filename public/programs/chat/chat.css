@@ -106,10 +106,22 @@ body::after {
   border-left: 2px solid rgba(var(--phosphor-rgb), 0.2) !important;
 }
 
+.foxnet-msg-item.foxnet-msg-mention {
+  background: rgba(var(--phosphor-rgb), 0.12) !important;
+  border-left: 3px solid var(--phosphor) !important;
+  box-shadow: inset 0 0 12px rgba(var(--phosphor-rgb), 0.16), 0 0 6px rgba(var(--phosphor-rgb), 0.1) !important;
+}
+
 .foxnet-msg-item:hover {
   background: rgba(var(--phosphor-rgb), 0.16) !important;
   border-left-color: var(--phosphor) !important;
   box-shadow: inset 0 0 10px rgba(var(--phosphor-rgb), 0.2), 0 0 8px rgba(var(--phosphor-rgb), 0.15) !important;
+}
+
+.foxnet-msg-item.foxnet-msg-mention:hover {
+  background: rgba(var(--phosphor-rgb), 0.2) !important;
+  border-left-color: var(--phosphor) !important;
+  box-shadow: inset 0 0 16px rgba(var(--phosphor-rgb), 0.25), 0 0 10px rgba(var(--phosphor-rgb), 0.18) !important;
 }
 
 .foxnet-msg-header {
@@ -167,6 +179,23 @@ body::after {
 .foxnet-quote-block a:hover {
   text-shadow: 0 0 6px var(--phosphor) !important;
   background: rgba(var(--phosphor-rgb), 0.2) !important;
+}
+
+.foxnet-mention-tag {
+  color: var(--phosphor) !important;
+  font-weight: bold !important;
+  background: rgba(var(--phosphor-rgb), 0.12) !important;
+  padding: 0 4px !important;
+  border-radius: 2px !important;
+  border-bottom: 1px solid rgba(var(--phosphor-rgb), 0.4) !important;
+  display: inline-block !important;
+}
+
+.foxnet-mention-tag.foxnet-mention-self {
+  background: rgba(var(--phosphor-rgb), 0.28) !important;
+  border: 1px solid var(--phosphor) !important;
+  text-shadow: 0 0 4px var(--phosphor) !important;
+  box-shadow: 0 0 6px rgba(var(--phosphor-rgb), 0.3) !important;
 }
 
 .foxnet-msg-img {

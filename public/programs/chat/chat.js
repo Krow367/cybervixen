@@ -39,6 +39,19 @@ function escapeHTML(str) {
 }
 
 /**
+ * Parses and formats @username mentions inside already HTML-escaped text chunks.
+ */
+function formatMentions(escapedText) {
+    if (!escapedText) return "";
+    const myHandleLower = (currentHandle || "").toLowerCase();
+    return escapedText.replace(/(^|\s|[^a-zA-Z0-9_\-])@([a-zA-Z0-9_\-]+)/g, (match, prefix, handle) => {
+        const isSelf = myHandleLower && handle.toLowerCase() === myHandleLower;
+        const tagClass = isSelf ? "foxnet-mention-tag foxnet-mention-self" : "foxnet-mention-tag";
+        return `${prefix}<span class="${tagClass}">@${handle}</span>`;
+    });
+}
+
+/**
  * Transforms plain text containing URLs (http://, https://, www.) into clickable anchor elements.
  * Fully XSS-safe: non-URL text and URL attributes/contents are HTML-escaped.
  * Trailing punctuation like period or comma after a URL is preserved as plain text.
@@ -51,7 +64,8 @@ function linkifyText(str) {
     let match;
 
     while ((match = urlPattern.exec(str)) !== null) {
-        result += escapeHTML(str.slice(lastIdx, match.index));
+        const precedingEscaped = escapeHTML(str.slice(lastIdx, match.index));
+        result += formatMentions(precedingEscaped);
 
         let rawUrl = match[0];
         let trailingPunct = "";
@@ -67,7 +81,8 @@ function linkifyText(str) {
         lastIdx = match.index + match[0].length;
     }
 
-    result += escapeHTML(str.slice(lastIdx));
+    const remainingEscaped = escapeHTML(str.slice(lastIdx));
+    result += formatMentions(remainingEscaped);
     return result;
 }
 
@@ -592,6 +607,24 @@ function updateMessageDOM(msgEl, msg) {
     const isVip = !isOwner && !isMod && msg.role === "vip";
     const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
 
+    // Highlight message if quoting the user or mentioning @username
+    const myHandleLower = (currentHandle || "").toLowerCase();
+    const isFromMe = msg.sender && myHandleLower && msg.sender.toLowerCase() === myHandleLower;
+    const isQuotingMe = !!(msg.replyTo && msg.replyTo.sender && myHandleLower && msg.replyTo.sender.toLowerCase() === myHandleLower);
+
+    let isMentioningMe = false;
+    if (myHandleLower && msg.text) {
+        const escapedHandle = currentHandle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const mentionRegex = new RegExp(`(^|\\s|[^a-zA-Z0-9_])@${escapedHandle}(?![a-zA-Z0-9_])`, 'i');
+        isMentioningMe = mentionRegex.test(msg.text);
+    }
+
+    if (!isFromMe && (isQuotingMe || isMentioningMe)) {
+        msgEl.classList.add("foxnet-msg-mention");
+    } else {
+        msgEl.classList.remove("foxnet-msg-mention");
+    }
+
     if (isSystem) {
         msgEl.style.fontStyle = "italic";
         msgEl.style.opacity = "0.85";
@@ -986,7 +1019,7 @@ function sendChatMessage(rawText, isSystem = false) {
         return;
     }
 
-    // 6. /8ball <question> - Retro Serenity Oracle
+    // 6. /8ball <question> - Two-step interactive quote-reply
     const eightBallMatch = trimmed.match(/^\/8ball(?:\s+(.*))?$/i);
     if (eightBallMatch) {
         const question = eightBallMatch[1] ? eightBallMatch[1].trim() : "";
@@ -994,6 +1027,10 @@ function sendChatMessage(rawText, isSystem = false) {
             renderLocalNotice("8-BALL: PLEASE SPECIFY A QUESTION (e.g. /8ball will I escape the grid?)");
             return;
         }
+
+        const userQuestionText = `Magic 8-Ball: ${question}`;
+        broadcastMessage(userQuestionText);
+
         const answers = [
             "Signs point to yes.",
             "Without a doubt.",
@@ -1013,10 +1050,27 @@ function sendChatMessage(rawText, isSystem = false) {
             "My sources say no.",
             "Outlook not so good.",
             "Very doubtful.",
-            "Serenity mainframes say no."
+            "Serenity mainframes say no.",
+            "404: Magic Not Found",
+            "Ask again when I've had my coffee.",
+            "[REDACTED]",
+            "Account Balance Low. Please deposit 7 foxCoin and ask again."
         ];
         const answer = answers[Math.floor(Math.random() * answers.length)];
-        broadcastMessage(`🎱 [8-BALL] "${question}" ➔ ${answer}`);
+
+        setTimeout(() => {
+            if (!db) return;
+            push(ref(db, "messages"), {
+                sender: "🎱",
+                text: answer,
+                replyTo: {
+                    sender: currentHandle,
+                    text: userQuestionText
+                },
+                isSystem: false,
+                timestamp: serverTimestamp()
+            });
+        }, 350);
         return;
     }
 
