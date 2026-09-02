@@ -619,7 +619,8 @@ function updateMessageDOM(msgEl, msg) {
         isMentioningMe = mentionRegex.test(msg.text);
     }
 
-    if (!isFromMe && (isQuotingMe || isMentioningMe)) {
+    const isTargeted = !isFromMe && (isQuotingMe || isMentioningMe);
+    if (isTargeted) {
         msgEl.classList.add("foxnet-msg-mention");
     } else {
         msgEl.classList.remove("foxnet-msg-mention");
