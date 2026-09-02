@@ -38,6 +38,39 @@ function escapeHTML(str) {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
+/**
+ * Transforms plain text containing URLs (http://, https://, www.) into clickable anchor elements.
+ * Fully XSS-safe: non-URL text and URL attributes/contents are HTML-escaped.
+ * Trailing punctuation like period or comma after a URL is preserved as plain text.
+ */
+function linkifyText(str) {
+    if (!str) return "";
+    const urlPattern = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+    let lastIdx = 0;
+    let result = "";
+    let match;
+
+    while ((match = urlPattern.exec(str)) !== null) {
+        result += escapeHTML(str.slice(lastIdx, match.index));
+
+        let rawUrl = match[0];
+        let trailingPunct = "";
+        const punctMatch = rawUrl.match(/[.,!?:;)\]]+$/);
+        if (punctMatch) {
+            trailingPunct = punctMatch[0];
+            rawUrl = rawUrl.slice(0, -trailingPunct.length);
+        }
+
+        const href = rawUrl.startsWith("www.") ? `https://${rawUrl}` : rawUrl;
+        result += `<a href="${escapeHTML(href)}" target="_blank" rel="noopener noreferrer" class="foxnet-link">${escapeHTML(rawUrl)}</a>${escapeHTML(trailingPunct)}`;
+
+        lastIdx = match.index + match[0].length;
+    }
+
+    result += escapeHTML(str.slice(lastIdx));
+    return result;
+}
+
 function simpleHash(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -150,7 +183,6 @@ async function initFirebaseEngine() {
         setupUIEvents();
         setupContextMenuEvents();
         setupUserRosterContextMenu();
-        renderLocalWelcomeMessage();
     } catch (e) {
         console.error("Firebase init error:", e);
     }
@@ -159,14 +191,25 @@ async function initFirebaseEngine() {
 function renderLocalWelcomeMessage() {
     const container = document.getElementById("foxnet-messages");
     if (!container) return;
+
+    // Remove any loading placeholder
+    const initMsg = container.querySelector(".user-item-loading, .msg-system:not(.foxnet-local-welcome)");
+    if (initMsg) initMsg.remove();
+
+    // Prevent duplicate welcome banners in the same session
+    if (container.querySelector(".foxnet-local-welcome")) return;
+
     const msgEl = document.createElement("div");
-    msgEl.className = "foxnet-msg-item msg-system";
+    msgEl.className = "foxnet-msg-item msg-system foxnet-local-welcome";
     msgEl.style.fontStyle = "italic";
-    msgEl.style.opacity = "0.9";
+    msgEl.style.opacity = "0.95";
     msgEl.style.padding = "6px 12px";
     msgEl.style.color = "var(--phosphor)";
-    msgEl.innerHTML = `<span>[ Welcome to foxNet! Type <strong style="text-shadow: 0 0 4px var(--phosphor);">/help</strong> for a list of available commands. ]</span>`;
+    msgEl.style.borderLeft = "2px dashed var(--phosphor)";
+    msgEl.style.background = "rgba(var(--phosphor-rgb), 0.05)";
+    msgEl.innerHTML = `<span>[ Welcome to foxNet! Type <strong style="text-shadow: 0 0 4px var(--phosphor); color: var(--phosphor); cursor: pointer; text-decoration: underline dotted;" title="Click to view available commands" onclick="const m=document.getElementById('foxnet-commands-modal');if(m)m.style.display='flex';">/help</strong> for available commands. ]</span>`;
     container.appendChild(msgEl);
+    container.scrollTop = container.scrollHeight + 10000;
 }
 
 function renderLocalNotice(text) {
@@ -397,7 +440,8 @@ function renderUserList() {
         if (websiteUrl) {
             const isCyberVixenDev = isOwner || /cybervixen\.dev/i.test(websiteUrl);
             const linkClass = isCyberVixenDev ? 'class="easter-egg-site-link"' : '';
-            siteBtn = ` <a href="${escapeHTML(websiteUrl)}" target="_blank" rel="noopener" ${linkClass} title="Visit ${escapeHTML(u.name)}'s website" style="margin-left: auto; color: var(--phosphor); text-decoration: none; border: 1px solid rgba(var(--phosphor-rgb), 0.5); padding: 0 5px; font-size: 0.8rem; background: rgba(var(--phosphor-rgb), 0.1); border-radius: 2px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px;">${wireframeGlobeSvg} [SITE]</a>`;
+            const normalizedUrl = /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`;
+            siteBtn = ` <a href="${escapeHTML(normalizedUrl)}" target="_blank" rel="noopener noreferrer" ${linkClass} title="Visit ${escapeHTML(u.name)}'s website" style="margin-left: auto; color: var(--phosphor); text-decoration: none; border: 1px solid rgba(var(--phosphor-rgb), 0.5); padding: 0 5px; font-size: 0.8rem; background: rgba(var(--phosphor-rgb), 0.1); border-radius: 2px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px;">${wireframeGlobeSvg} [SITE]</a>`;
         }
 
         return `<div class="sidebar-user-item" data-username="${escapeHTML(u.name)}" style="padding: 4px 6px; display: flex; align-items: center; gap: 8px; text-shadow: 0 0 3px var(--phosphor); border-radius: 2px; background: rgba(var(--phosphor-rgb), 0.04); cursor: pointer;" title="Click to whisper ${escapeHTML(u.name)}">
@@ -422,11 +466,14 @@ function listenToMessages() {
     onValue(messagesQuery, () => {
         setTimeout(() => {
             isInitialLoad = false;
+            renderLocalWelcomeMessage();
             container.scrollTop = container.scrollHeight + 10000;
-        }, 100);
+            container.dispatchEvent(new Event("scroll"));
+        }, 80);
         setTimeout(() => {
             container.scrollTop = container.scrollHeight + 10000;
-        }, 350);
+            container.dispatchEvent(new Event("scroll"));
+        }, 300);
     }, { onlyOnce: true });
 
     onChildAdded(messagesQuery, (snapshot, previousChildName) => {
@@ -440,7 +487,15 @@ function listenToMessages() {
         if (!msg) return;
         const existingEl = container.querySelector(`[data-msg-key="${snapshot.key}"]`);
         if (existingEl) {
+            const wasNearBottom = (container.scrollHeight - container.scrollTop - container.clientHeight) < 140;
+            const isSelf = msg.sender?.toLowerCase() === currentHandle.toLowerCase();
             updateMessageDOM(existingEl, msg);
+            if (isSelf || wasNearBottom) {
+                requestAnimationFrame(() => {
+                    container.scrollTop = container.scrollHeight + 10000;
+                    container.dispatchEvent(new Event("scroll"));
+                });
+            }
         }
     });
 
@@ -474,7 +529,11 @@ function insertMessageInOrder(container, msgEl, msgKey, previousChildName) {
     // Find previous child element
     const prevEl = container.querySelector(`[data-msg-key="${previousChildName}"]`);
     if (prevEl) {
-        container.insertBefore(msgEl, prevEl.nextSibling);
+        if (prevEl.nextSibling && prevEl.nextSibling.hasAttribute && prevEl.nextSibling.hasAttribute("data-msg-key")) {
+            container.insertBefore(msgEl, prevEl.nextSibling);
+        } else {
+            container.appendChild(msgEl);
+        }
     } else {
         container.appendChild(msgEl);
     }
@@ -497,6 +556,10 @@ function renderMessageItem(msg, container, msgKey, previousChildName = null) {
         }
     }
 
+    // Calculate whether user was at or near the bottom BEFORE appending new DOM height
+    const isSelf = msg.sender?.toLowerCase() === currentHandle.toLowerCase();
+    const wasNearBottom = (container.scrollHeight - container.scrollTop - container.clientHeight) < 140;
+
     const msgEl = document.createElement("div");
     msgEl.className = "foxnet-msg-item";
     if (msgKey) msgEl.setAttribute("data-msg-key", msgKey);
@@ -505,13 +568,12 @@ function renderMessageItem(msg, container, msgKey, previousChildName = null) {
     updateMessageDOM(msgEl, msg);
     insertMessageInOrder(container, msgEl, msgKey, previousChildName);
 
-    // Smooth auto-scroll if loading initially, sent by self, or user is already at bottom
-    const isSelf = msg.sender?.toLowerCase() === currentHandle.toLowerCase();
-    const isAtBottom = !previousChildName || container.lastElementChild === msgEl;
-    const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
-
-    if (isInitialLoad || isSelf || (isAtBottom && distanceToBottom < 160)) {
-        container.scrollTop = container.scrollHeight + 10000;
+    // Smooth auto-scroll if loading initially, sent by self, or user was already reading at bottom
+    if (isInitialLoad || isSelf || wasNearBottom) {
+        requestAnimationFrame(() => {
+            container.scrollTop = container.scrollHeight + 10000;
+            container.dispatchEvent(new Event("scroll"));
+        });
     } else if (!isInitialLoad && !isSelf) {
         unreadWhileScrolled++;
         const btnJump = document.getElementById("btn-jump-latest");
@@ -545,7 +607,7 @@ function updateMessageDOM(msgEl, msg) {
                 <span style="color: #DDA0DD; text-shadow: 0 0 4px #DDA0DD; font-weight: bold;">${headerText}</span>
                 <span class="foxnet-msg-time">${timeStr}</span>
             </div>
-            <div class="foxnet-msg-body" style="color: #E6E6FA; font-style: italic;">${escapeHTML(msg.text)}</div>
+            <div class="foxnet-msg-body" style="color: #E6E6FA; font-style: italic;">${linkifyText(msg.text)}</div>
         `;
     } else {
         const senderColor = "var(--phosphor)";
@@ -569,18 +631,18 @@ function updateMessageDOM(msgEl, msg) {
         const imgMatch = textContent.match(/^\/img\s+(https?:\/\/\S+)|^\/image\s+(https?:\/\/\S+)/i);
         if (imgMatch) {
             const imgUrl = imgMatch[1] || imgMatch[2];
-            imgHTML = `<img src="${escapeHTML(imgUrl)}" class="foxnet-msg-img" alt="Chat Image" onload="this.parentNode.parentNode.scrollTop = this.parentNode.parentNode.scrollHeight;">`;
+            imgHTML = `<img src="${escapeHTML(imgUrl)}" class="foxnet-msg-img" alt="Chat Image">`;
             textContent = textContent.replace(imgMatch[0], "").trim();
         }
 
-        const formattedText = textContent ? `<div>${escapeHTML(textContent)}</div>` : "";
+        const formattedText = textContent ? `<div>${linkifyText(textContent)}</div>` : "";
 
         let quoteHTML = "";
         if (msg.replyTo) {
             quoteHTML = `
                 <div class="foxnet-quote-block">
                     <small style="opacity: 0.75;">┌─ Replying to <strong>@${escapeHTML(msg.replyTo.sender)}</strong>:</small>
-                    <div style="opacity: 0.9;">"${escapeHTML(msg.replyTo.text)}"</div>
+                    <div style="opacity: 0.9;">"${linkifyText(msg.replyTo.text)}"</div>
                 </div>
             `;
         }
@@ -614,6 +676,29 @@ function updateMessageDOM(msgEl, msg) {
             <div class="foxnet-msg-body">${formattedText}${imgHTML}</div>
             ${reactionsHTML}
         `;
+
+        // Handle image download lifecycle and preserve scroll lock
+        const imgEl = msgEl.querySelector(".foxnet-msg-img");
+        if (imgEl) {
+            const onImageLoaded = () => {
+                const messagesContainer = document.getElementById("foxnet-messages");
+                if (!messagesContainer) return;
+                const isSelfMsg = msg.sender?.toLowerCase() === currentHandle.toLowerCase();
+                const dist = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight;
+                // If user was near bottom or sent by self, pin scroll to bottom as image renders
+                if (isInitialLoad || isSelfMsg || dist < (imgEl.offsetHeight + 180)) {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight + 10000;
+                    messagesContainer.dispatchEvent(new Event("scroll"));
+                }
+            };
+
+            if (imgEl.complete && imgEl.naturalHeight !== 0) {
+                onImageLoaded();
+            } else {
+                imgEl.addEventListener("load", onImageLoaded, { once: true });
+                imgEl.addEventListener("error", onImageLoaded, { once: true });
+            }
+        }
 
         // Handle reaction pill click delegation
         const reactionsContainer = msgEl.querySelector(".foxnet-msg-reactions");
@@ -749,31 +834,38 @@ function playWhisperSound() {
     }, 90);
 }
 
+let baseDocumentTitle = (typeof document !== "undefined" ? document.title.replace(/^\(\d+\)\s*/, "") : "") || "Cyber Vixen // foxOS Terminal";
+
 function incrementUnreadBadge() {
     const isDocHidden = document.hidden;
-    const isDocFocused = document.hasFocus && document.hasFocus();
-    const chatWin = document.getElementById("chat");
+    const isDocFocused = document.hasFocus ? document.hasFocus() : true;
+    const chatWin = document.getElementById("win-chat") || document.getElementById("mobile-chat-app");
     const isWinMinimized = chatWin && chatWin.classList.contains("minimized");
-    const isWinActive = chatWin && chatWin.classList.contains("active-window");
+    const isWinActive = chatWin ? chatWin.classList.contains("active") : true;
 
     if (isDocHidden || !isDocFocused || isWinMinimized || !isWinActive) {
         unreadCount++;
-        const titleEl = document.querySelector("#chat .window-title") || document.querySelector("#chat h1");
-        if (titleEl) {
-            titleEl.textContent = `SRC.EXE (${unreadCount}) - SERENITY RELAY CHAT`;
+        const titleSpan = document.querySelector("#win-chat .window-title span:last-child");
+        if (titleSpan) {
+            titleSpan.textContent = `RELAY CHAT (${unreadCount}) // foxNET NODE`;
         }
-        document.title = `(${unreadCount}) Cyber Vixen`;
+        if (!baseDocumentTitle) {
+            baseDocumentTitle = document.title.replace(/^\(\d+\)\s*/, "") || "Cyber Vixen // foxOS Terminal";
+        }
+        document.title = `(${unreadCount}) ${baseDocumentTitle}`;
     }
 }
 
 function clearUnreadBadge() {
-    if (unreadCount === 0) return;
+    if (unreadCount === 0 && !document.title.startsWith("(")) return;
     unreadCount = 0;
-    const titleEl = document.querySelector("#chat .window-title") || document.querySelector("#chat h1");
-    if (titleEl) {
-        titleEl.textContent = `SRC.EXE - SERENITY RELAY CHAT - YOU CHAT. WE READ.`;
+    const titleSpan = document.querySelector("#win-chat .window-title span:last-child");
+    if (titleSpan) {
+        titleSpan.textContent = "RELAY CHAT TERMINAL // foxNET NODE";
     }
-    document.title = "Cyber Vixen";
+    if (baseDocumentTitle) {
+        document.title = baseDocumentTitle;
+    }
 }
 
 async function toggleReaction(msgKey, emoji) {
@@ -801,13 +893,13 @@ function sendChatMessage(rawText, isSystem = false) {
     // Unlock Web Audio Context if needed
     unlockAudio();
 
-    // Check for /commands or /help
+    // 1. /help and /commands
     if (/^\/(?:commands|help)$/i.test(trimmed)) {
         openCommandsFlyout();
         return;
     }
 
-    // Check for whisper command syntax: /w handle message OR /whisper handle message
+    // 2. /w and /whisper <handle> <msg>
     const whisperMatch = trimmed.match(/^\/(?:w|whisper)\s+([^\s]+)\s+(.+)/i);
     if (whisperMatch) {
         const targetHandle = whisperMatch[1].trim();
@@ -826,7 +918,7 @@ function sendChatMessage(rawText, isSystem = false) {
         }
     }
 
-    // Check for reply command syntax: /r message OR /reply message OR just /r /reply
+    // 4. /r and /reply <msg>
     const replyMatch = trimmed.match(/^\/(?:r|reply)(?:\s+(.+))?$/i);
     if (replyMatch) {
         if (!lastWhisperSender) {
@@ -854,12 +946,116 @@ function sendChatMessage(rawText, isSystem = false) {
         return;
     }
 
+    // 5. /roll [dice] - Dice roller (e.g. /roll, /roll 20, /roll 2d6, /roll 1d20)
+    const rollMatch = trimmed.match(/^\/roll(?:\s+(.*))?$/i);
+    if (rollMatch) {
+        const diceArg = (rollMatch[1] || "").trim().toLowerCase();
+        let numDice = 1;
+        let numSides = 6;
+
+        if (diceArg) {
+            const NdNMatch = diceArg.match(/^(\d+)?d(\d+)$/i);
+            const singleNumMatch = diceArg.match(/^(\d+)$/);
+            if (NdNMatch) {
+                numDice = NdNMatch[1] ? parseInt(NdNMatch[1], 10) : 1;
+                numSides = parseInt(NdNMatch[2], 10);
+            } else if (singleNumMatch) {
+                numSides = parseInt(singleNumMatch[1], 10);
+            } else {
+                renderLocalNotice("INVALID DICE FORMAT. Use /roll, /roll 20, or /roll 2d6");
+                return;
+            }
+        }
+
+        numDice = Math.max(1, Math.min(20, numDice));
+        numSides = Math.max(2, Math.min(1000, numSides));
+
+        const rolls = [];
+        let total = 0;
+        for (let i = 0; i < numDice; i++) {
+            const val = Math.floor(Math.random() * numSides) + 1;
+            rolls.push(val);
+            total += val;
+        }
+
+        const rollText = numDice === 1
+            ? `🎲 [ROLL] rolled 1d${numSides} ➔ ${total}`
+            : `🎲 [ROLL] rolled ${numDice}d${numSides}: [${rolls.join(", ")}] ➔ Total: ${total}`;
+
+        broadcastMessage(rollText);
+        return;
+    }
+
+    // 6. /8ball <question> - Retro Serenity Oracle
+    const eightBallMatch = trimmed.match(/^\/8ball(?:\s+(.*))?$/i);
+    if (eightBallMatch) {
+        const question = eightBallMatch[1] ? eightBallMatch[1].trim() : "";
+        if (!question) {
+            renderLocalNotice("8-BALL: PLEASE SPECIFY A QUESTION (e.g. /8ball will I escape the grid?)");
+            return;
+        }
+        const answers = [
+            "Signs point to yes.",
+            "Without a doubt.",
+            "It is decidedly so.",
+            "Yes - definitely.",
+            "You may rely on it.",
+            "As I see it, yes.",
+            "Most likely.",
+            "Outlook good.",
+            "Reply hazy, try again.",
+            "Ask again later.",
+            "Better not tell you now.",
+            "Cannot predict now.",
+            "Concentrate and ask again.",
+            "Don't count on it.",
+            "My reply is no.",
+            "My sources say no.",
+            "Outlook not so good.",
+            "Very doubtful.",
+            "Serenity mainframes say no."
+        ];
+        const answer = answers[Math.floor(Math.random() * answers.length)];
+        broadcastMessage(`🎱 [8-BALL] "${question}" ➔ ${answer}`);
+        return;
+    }
+
+    // 7. /shrug [text]
+    const shrugMatch = trimmed.match(/^\/shrug(?:\s+(.*))?$/i);
+    if (shrugMatch) {
+        const extraText = shrugMatch[1] ? shrugMatch[1].trim() + " " : "";
+        broadcastMessage(`${extraText}¯\\_(ツ)_/¯`);
+        return;
+    }
+
+    // 8. /tableflip [text]
+    const tableflipMatch = trimmed.match(/^\/tableflip(?:\s+(.*))?$/i);
+    if (tableflipMatch) {
+        const extraText = tableflipMatch[1] ? tableflipMatch[1].trim() + " " : "";
+        broadcastMessage(`${extraText}(╯°□°)╯︵ ┻━┻`);
+        return;
+    }
+
+    // 9. /unflip [text]
+    const unflipMatch = trimmed.match(/^\/unflip(?:\s+(.*))?$/i);
+    if (unflipMatch) {
+        const extraText = unflipMatch[1] ? unflipMatch[1].trim() + " " : "";
+        broadcastMessage(`${extraText}┬─┬ノ( º _ ºノ)`);
+        return;
+    }
+
+    // Standard broadcast message
+    broadcastMessage(trimmed, isSystem);
+}
+
+function broadcastMessage(text, isSystem = false) {
+    if (!text || !db) return;
     const isOwner = currentUserRole === "owner" || isOwnerHandle(currentHandle);
     const msgData = {
         sender: isSystem ? "SYSTEM" : currentHandle,
         flair: currentFlair,
         role: currentUserRole,
-        text: trimmed,
+        text: text,
         isOwner: isOwner,
         isSystem: isSystem,
         timestamp: serverTimestamp()
@@ -1521,22 +1717,22 @@ function setupUIEvents() {
         });
     }
 
-    // Clear unread badge ONLY when user explicitly clicks/focuses in chat window or input
-    const chatWin = document.getElementById("chat");
-    if (chatWin) {
-        chatWin.addEventListener("click", clearUnreadBadge);
-    }
-    const messageInput = document.getElementById("foxnet-message-input");
-    if (messageInput) {
-        messageInput.addEventListener("focus", clearUnreadBadge);
-        messageInput.addEventListener("click", clearUnreadBadge);
-    }
-    document.addEventListener("click", () => {
-        unlockAudio();
-        if (document.hasFocus && document.hasFocus() && document.activeElement && (document.activeElement === messageInput || chatWin?.contains(document.activeElement))) {
+    // Unread Badge Reset Listeners: Clear badge as soon as browser tab regains focus or user interacts
+    window.addEventListener("focus", clearUnreadBadge);
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
             clearUnreadBadge();
         }
     });
+    document.addEventListener("click", () => {
+        unlockAudio();
+        clearUnreadBadge();
+    });
+    const messageInput = document.getElementById("foxnet-message-input");
+    if (messageInput) {
+        messageInput.addEventListener("focus", clearUnreadBadge);
+        messageInput.addEventListener("input", clearUnreadBadge);
+    }
 
     // Commands Flyout Modal Dismiss Handlers
     const commandsModal = document.getElementById("foxnet-commands-modal");
@@ -1666,7 +1862,12 @@ function setupUIEvents() {
     if (webInput) webInput.value = currentWebsite;
     const saveWeb = () => {
         if (webInput) {
-            currentWebsite = webInput.value.trim();
+            let val = webInput.value.trim();
+            if (val && !/^https?:\/\//i.test(val)) {
+                val = "https://" + val;
+            }
+            currentWebsite = val;
+            webInput.value = currentWebsite;
             localStorage.setItem("foxnet_website", currentWebsite);
             localStorage.setItem("website", currentWebsite);
             updatePresenceData();
@@ -1816,6 +2017,7 @@ export function teardownChatEngine() {
 
     initialized = false;
     activePresenceUsers.clear();
+    clearUnreadBadge();
 }
 
 export async function launchChat(ctx) {

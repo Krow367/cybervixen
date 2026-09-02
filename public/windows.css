@@ -32,7 +32,6 @@
     display: flex;
     flex-direction: column;
     pointer-events: auto; /* Enable dragging & interaction */
-    user-select: none;
     z-index: 10;
 }
 
@@ -54,6 +53,8 @@
     justify-content: space-between;
     cursor: grab;
     text-shadow: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .window-titlebar:active {
@@ -74,6 +75,8 @@
     display: flex;
     gap: 0.35rem;
     cursor: var(--cursor-pointer, pointer) !important;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .window-btn {
@@ -112,6 +115,8 @@
     justify-content: flex-end;
     padding: 0.2rem;
     box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 /* Classic 3-Stripe Diagonal Hatch Ridges */
@@ -141,16 +146,11 @@
     background: transparent;
     font-family: var(--terminal-font-family, 'VT323', monospace);
     font-size: var(--terminal-font-size, clamp(1.35rem, 2.2vmin, 1.7rem));
-}
-
-/* ─── Universal Window Content Containers ─────────────────────────────────────── */
-.window-body {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
     color: var(--phosphor);
     display: flex;
     flex-direction: column;
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 .window-body p {

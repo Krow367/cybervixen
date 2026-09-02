@@ -34,7 +34,7 @@ html, body {
   overflow: hidden !important;
 }
 
-a, button, input[type="button"], input[type="submit"], select, .ctx-item, .sidebar-user-item, #btn-enter-chat, #foxnet-btn-send, #btn-toggle-settings, #btn-save-handle, #btn-save-flair, #btn-save-website, #dialog-modal-submit, #dialog-modal-cancel {
+a, button, input[type="button"], input[type="submit"], select, .ctx-item, .sidebar-user-item, #btn-enter-chat, #foxnet-btn-send, #btn-toggle-settings, #btn-save-handle, #btn-save-flair, #btn-save-website, #dialog-modal-submit, #dialog-modal-cancel, .foxnet-link {
   cursor: var(--cursor-pointer, pointer) !important;
 }
 
@@ -81,12 +81,19 @@ body::after {
   height: 0 !important;
 }
 
+#foxnet-messages {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
 .foxnet-msg-item {
   padding: 5px 12px !important;
   border-radius: 3px !important;
   word-break: break-word !important;
   position: relative !important;
   transition: all 0.15s ease !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .foxnet-msg-item:nth-child(odd) {
@@ -112,22 +119,54 @@ body::after {
   font-weight: bold;
   font-size: var(--chat-font-header, 1.05rem) !important;
   margin-bottom: 2px;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .sender-name {
   font-size: var(--chat-font-sender, 1.1rem) !important;
   font-weight: bold !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .foxnet-msg-time {
   font-size: var(--chat-font-time, 0.88rem) !important;
   opacity: 0.6;
   margin-left: auto;
+  user-select: text !important;
+  -webkit-user-select: text !important;
 }
 
 .foxnet-msg-body {
   font-size: var(--chat-font-body, 1.25rem) !important;
   line-height: 1.35 !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.foxnet-quote-block {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.foxnet-link,
+.foxnet-msg-body a,
+.foxnet-quote-block a {
+  color: var(--phosphor) !important;
+  text-decoration: underline !important;
+  text-decoration-style: dotted !important;
+  cursor: var(--cursor-pointer, pointer) !important;
+  word-break: break-all !important;
+  pointer-events: auto !important;
+  transition: all 0.15s ease !important;
+}
+
+.foxnet-link:hover,
+.foxnet-msg-body a:hover,
+.foxnet-quote-block a:hover {
+  text-shadow: 0 0 6px var(--phosphor) !important;
+  background: rgba(var(--phosphor-rgb), 0.2) !important;
 }
 
 .foxnet-msg-img {
@@ -144,6 +183,8 @@ body::after {
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 5px;
+  user-select: none !important;
+  -webkit-user-select: none !important;
 }
 
 .reaction-pill {
@@ -157,7 +198,8 @@ body::after {
   padding: 1px 6px;
   border-radius: 10px;
   cursor: pointer;
-  user-select: none;
+  user-select: none !important;
+  -webkit-user-select: none !important;
   transition: all 0.15s ease;
 }
 

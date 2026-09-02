@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="./cartridges/chat.css">
+<link rel="stylesheet" href="./programs/chat/chat.css">
 <div class="chat-window-wrapper" style="display: flex; flex-direction: row; width: 100%; height: 100%; overflow: hidden; position: relative;">
     
     <!-- Left Sidebar: Users Roster & Settings -->
@@ -183,14 +183,12 @@
                 <div><strong style="color: var(--phosphor);">/help</strong> - Open this command manual</div>
                 <div><strong style="color: var(--phosphor);">/w &lt;handle&gt; &lt;msg&gt;</strong> - Send a private encrypted whisper</div>
                 <div><strong style="color: var(--phosphor);">/r &lt;msg&gt;</strong> - Reply to the most recent whisper received</div>
-                <div><strong style="color: var(--phosphor);">/me &lt;action&gt;</strong> - Broadcast an action message</div>
-                <div><strong style="color: var(--phosphor);">/roll [dice]</strong> - Roll retro dice (e.g. /roll 2d6, /roll 1d20)</div>
-                <div><strong style="color: var(--phosphor);">/8ball &lt;question&gt;</strong> - Ask the oracle a question</div>
-                <div><strong style="color: var(--phosphor);">/flip</strong> - Flip a binary phosphor coin</div>
-                <div><strong style="color: var(--phosphor);">/shrug</strong> - Append ¯\_(ツ)_/¯ to your transmission</div>
-                <div><strong style="color: var(--phosphor);">/tableflip</strong> - Broadcast (╯°□°)╯︵ ┻━┻</div>
-                <div><strong style="color: var(--phosphor);">/unflip</strong> - Broadcast ┬─┬ノ( º _ ºノ)</div>
-                <div><strong style="color: var(--phosphor);">/clear</strong> - Clear the local message display buffer</div>
+                <div><strong style="color: var(--phosphor);">/img &lt;url&gt;</strong> - Transmit an inline image</div>
+                <div><strong style="color: var(--phosphor);">/roll [dice]</strong> - Roll retro dice (e.g. /roll, /roll 2d6, /roll 1d20)</div>
+                <div><strong style="color: var(--phosphor);">/8ball &lt;question&gt;</strong> - Consult the Serenity 8-ball oracle</div>
+                <div><strong style="color: var(--phosphor);">/shrug [text]</strong> - Append ¯\_(ツ)_/¯ to transmission</div>
+                <div><strong style="color: var(--phosphor);">/tableflip [text]</strong> - Broadcast (╯°□°)╯︵ ┻━┻</div>
+                <div><strong style="color: var(--phosphor);">/unflip [text]</strong> - Broadcast ┬─┬ノ( º _ ºノ)</div>
             </div>
             <button type="button" id="btn-dismiss-commands-modal" style="margin-top: 12px; padding: 6px; background: rgba(var(--phosphor-rgb), 0.15); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.1rem; cursor: pointer;">[ DISMISS MANUAL ]</button>
         </div>
