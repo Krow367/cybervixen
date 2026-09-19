@@ -138,10 +138,19 @@
             <button type="button" id="btn-cancel-reply" style="background: transparent; border: none; color: var(--phosphor); font-family: 'VT323', monospace; cursor: pointer; font-size: 1rem;">[ X ]</button>
         </div>
 
+        <!-- Native Chat Edit Banner -->
+        <div id="foxnet-edit-bar" style="display: none; border-top: 1px dashed rgba(var(--phosphor-rgb), 0.4); padding: 4px 10px; background: rgba(var(--phosphor-rgb), 0.12); font-family: 'VT323', monospace; color: var(--phosphor); font-size: 0.95rem; align-items: center; justify-content: space-between; flex-shrink: 0;">
+            <span id="edit-bar-text">// EDITING TRANSMISSION • [ENTER] TO SAVE • [ESC] TO CANCEL //</span>
+            <button type="button" id="btn-cancel-edit-banner" style="background: transparent; border: none; color: var(--phosphor); font-family: 'VT323', monospace; cursor: pointer; font-size: 1rem;" title="Cancel edit">[ X ]</button>
+        </div>
+
         <!-- Native Chat Input Bar -->
-        <div id="foxnet-input-bar" style="border-top: 1px solid rgba(var(--phosphor-rgb), 0.4); padding: 6px 10px; background: rgba(0, 0, 0, 0.4); display: flex; align-items: center; gap: 8px; box-sizing: border-box; min-height: 44px; flex-shrink: 0;">
-            <input type="text" id="foxnet-message-input" name="chat_message_body_input" placeholder="Send Message [Enter to send, or /w handle msg]" autocomplete="off" spellcheck="false" data-lpignore="true" data-form-type="other" style="flex: 1; background: transparent; border: none; outline: none; color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.15rem; text-shadow: 0 0 3px var(--phosphor);">
-            <button type="button" id="foxnet-btn-send" style="background: rgba(var(--phosphor-rgb), 0.15); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.05rem; padding: 4px 12px; cursor: pointer;">[ SEND ]</button>
+        <div id="foxnet-input-bar" style="border-top: 1px solid rgba(var(--phosphor-rgb), 0.4); padding: 6px 32px 6px 10px; background: rgba(0, 0, 0, 0.4); display: flex; align-items: flex-end; gap: 8px; box-sizing: border-box; min-height: 44px; flex-shrink: 0; position: relative;">
+            <textarea id="foxnet-message-input" name="chat_message_body_input" placeholder="Send Message [Enter to send, Shift+Enter for newline]" autocomplete="off" spellcheck="false" data-lpignore="true" data-form-type="other" rows="1" style="flex: 1; min-height: 24px; max-height: 160px; background: transparent; border: none; outline: none; resize: none; overflow-y: hidden; color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.15rem; line-height: 1.35; padding: 4px 0; box-sizing: border-box; text-shadow: 0 0 3px var(--phosphor);"></textarea>
+            <div id="foxnet-input-actions" style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; padding-bottom: 2px;">
+                <button type="button" id="foxnet-btn-cancel-edit" style="display: none; background: transparent; border: 1px solid rgba(var(--phosphor-rgb), 0.5); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.05rem; padding: 4px 10px; cursor: pointer;">[ CANCEL ]</button>
+                <button type="button" id="foxnet-btn-send" style="background: rgba(var(--phosphor-rgb), 0.15); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.05rem; padding: 4px 12px; cursor: pointer;">[ SEND ]</button>
+            </div>
         </div>
 
         <!-- Right-Click Message Context Menu -->
@@ -179,16 +188,45 @@
                 <span style="font-size: 1.3rem; letter-spacing: 1px;">AVAILABLE FOXNET COMMANDS</span>
                 <button type="button" id="btn-close-commands" style="background: transparent; border: none; color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.2rem; cursor: pointer;">[ X ]</button>
             </div>
-            <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 1.05rem; line-height: 1.4;">
-                <div><strong style="color: var(--phosphor);">/help</strong> - Open this command manual</div>
-                <div><strong style="color: var(--phosphor);">/w &lt;handle&gt; &lt;msg&gt;</strong> - Send a private encrypted whisper</div>
-                <div><strong style="color: var(--phosphor);">/r &lt;msg&gt;</strong> - Reply to the most recent whisper received</div>
-                <div><strong style="color: var(--phosphor);">/img &lt;url&gt;</strong> - Transmit an inline image</div>
-                <div><strong style="color: var(--phosphor);">/roll [dice]</strong> - Roll retro dice (e.g. /roll, /roll 2d6, /roll 1d20)</div>
-                <div><strong style="color: var(--phosphor);">/8ball &lt;question&gt;</strong> - Consult the Serenity 8-ball oracle</div>
-                <div><strong style="color: var(--phosphor);">/shrug [text]</strong> - Append ¯\_(ツ)_/¯ to transmission</div>
-                <div><strong style="color: var(--phosphor);">/tableflip [text]</strong> - Broadcast (╯°□°)╯︵ ┻━┻</div>
-                <div><strong style="color: var(--phosphor);">/unflip [text]</strong> - Broadcast ┬─┬ノ( º _ ºノ)</div>
+            <div style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; font-size: 1.05rem; line-height: 1.4;">
+                <!-- Terminal Commands -->
+                <div>
+                    <div style="color: var(--phosphor); font-weight: bold; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3); margin-bottom: 5px; padding-bottom: 2px;">// TERMINAL COMMANDS //</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div><strong style="color: var(--phosphor);">/help</strong> - Open this command manual</div>
+                        <div><strong style="color: var(--phosphor);">/w &lt;handle&gt; &lt;msg&gt;</strong> - Send a private encrypted whisper</div>
+                        <div><strong style="color: var(--phosphor);">/r &lt;msg&gt;</strong> - Reply to the most recent whisper received</div>
+                        <div><strong style="color: var(--phosphor);">/img &lt;url&gt;</strong> - Transmit an inline image</div>
+                        <div><strong style="color: var(--phosphor);">/roll [dice]</strong> - Roll retro dice (e.g. /roll, /roll 2d6, /roll 1d20)</div>
+                        <div><strong style="color: var(--phosphor);">/8ball &lt;question&gt;</strong> - Consult the Serenity 8-ball oracle</div>
+                        <div><strong style="color: var(--phosphor);">/shrug [text]</strong> - Append ¯\_(ツ)_/¯ to transmission</div>
+                        <div><strong style="color: var(--phosphor);">/tableflip [text]</strong> - Broadcast (╯°□°)╯︵ ┻━┻</div>
+                        <div><strong style="color: var(--phosphor);">/unflip [text]</strong> - Broadcast ┬─┬ノ( º _ ºノ)</div>
+                    </div>
+                </div>
+
+                <!-- Text Formatting (Markdown) -->
+                <div>
+                    <div style="color: var(--phosphor); font-weight: bold; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3); margin-bottom: 5px; padding-bottom: 2px;">// TEXT FORMATTING (MARKDOWN) //</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div><strong style="color: var(--phosphor);">**bold**</strong> or <strong style="color: var(--phosphor);">__bold__</strong> → <strong>bold text</strong></div>
+                        <div><strong style="color: var(--phosphor);">*italic*</strong> or <strong style="color: var(--phosphor);">_italic_</strong> → <em>italic text</em></div>
+                        <div><strong style="color: var(--phosphor);">~~strike~~</strong> → <del>strikethrough</del></div>
+                        <div><strong style="color: var(--phosphor);">`code`</strong> → <code class="foxnet-inline-code">inline code highlight</code></div>
+                        <div><strong style="color: var(--phosphor);">```code```</strong> → Multi-line code block (preserves ASCII art, indentation & spacing)</div>
+                    </div>
+                </div>
+
+                <!-- Shortcuts & Navigation -->
+                <div>
+                    <div style="color: var(--phosphor); font-weight: bold; border-bottom: 1px dashed rgba(var(--phosphor-rgb), 0.3); margin-bottom: 5px; padding-bottom: 2px;">// SHORTCUTS & NAVIGATION //</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; opacity: 0.9;">
+                        <div>• <strong style="color: var(--phosphor);">[Enter]</strong> - Send message or save active edit</div>
+                        <div>• <strong style="color: var(--phosphor);">[Shift+Enter]</strong> - Insert newline (input field expands up to 7 lines)</div>
+                        <div>• <strong style="color: var(--phosphor);">[Esc]</strong> - Cancel message edit (restores unsent draft)</div>
+                        <div>• Right-click any message for reactions, quotes, whispers, edit & moderation</div>
+                    </div>
+                </div>
             </div>
             <button type="button" id="btn-dismiss-commands-modal" style="margin-top: 12px; padding: 6px; background: rgba(var(--phosphor-rgb), 0.15); border: 1px solid var(--phosphor); color: var(--phosphor); font-family: 'VT323', monospace; font-size: 1.1rem; cursor: pointer;">[ DISMISS MANUAL ]</button>
         </div>

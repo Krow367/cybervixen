@@ -341,6 +341,17 @@ When I'm not sewing, cooking or playing games, I play the violin as well! I'm ha
         }
     },
 
+    atabook: {
+        desc: "Visit the guestbook to read or sign.",
+        outputs: [
+            "Signed in blood...",
+        ],
+        exec: async (args, ctx) => {
+            await sleep(150);
+            window.open("https://cybervixen.atabook.org", "_blank");
+        }    
+    },
+
     // Terminal Buffer Integrity Repair Utility
     repair: {
         desc: "Initializes diagnostic recovery and file restoration (Syntax: repair help.sys)",

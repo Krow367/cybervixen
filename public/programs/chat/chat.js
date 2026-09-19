@@ -31,6 +31,9 @@ let currentUserRole = "user"; // "owner", "mod", "vip", "user"
 let activePresenceUsers = new Map();
 let activeContextMenu = null;
 let activeReplyData = null;
+let editingMessageId = null;
+let originalMessageText = "";
+let savedDraftText = "";
 let visitorMeta = { ip: "unknown", ipKey: "unknown", fpHash: "unknown" };
 
 function escapeHTML(str) {
@@ -84,6 +87,63 @@ function linkifyText(str) {
     const remainingEscaped = escapeHTML(str.slice(lastIdx));
     result += formatMentions(remainingEscaped);
     return result;
+}
+
+/**
+ * Lightweight, XSS-safe Retro Markdown & Formatting Engine.
+ * 1. Stashes multiline code blocks (```code```) and inline code (`code`) into placeholder tokens.
+ * 2. Processes URLs and @mentions on remaining text safely.
+ * 3. Formats **bold**, *italic*, and ~~strikethrough~~.
+ * 4. Re-inserts code tokens with escaped HTML into <pre> / <code> blocks, preserving ASCII art formatting.
+ */
+function formatChatMessage(str) {
+    if (!str) return "";
+
+    const codeBlocks = [];
+    const inlineCodes = [];
+
+    // 1. Extract multiline code blocks (```code```) with optional language identifier
+    let parsed = str.replace(/```(?:[a-zA-Z0-9_\-]+)?\n?([\s\S]*?)```/g, (match, code) => {
+        const token = `___FOXNET_CODEBLOCK_${codeBlocks.length}___`;
+        codeBlocks.push(code);
+        return token;
+    });
+
+    // 2. Extract inline backtick code (`code`)
+    parsed = parsed.replace(/`([^`\n]+)`/g, (match, code) => {
+        const token = `___FOXNET_INLINE_${inlineCodes.length}___`;
+        inlineCodes.push(code);
+        return token;
+    });
+
+    // 3. Process URLs & @username mentions (automatically escapes HTML)
+    parsed = linkifyText(parsed);
+
+    // 4. Inline basic markdown formatting on escaped text
+    // Bold: **text** or __text__
+    parsed = parsed.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    parsed = parsed.replace(/__([^_<\n]+)__/g, '<strong>$1</strong>');
+
+    // Italic: *text* or _text_ (ensuring no collision with bold or tags)
+    parsed = parsed.replace(/(^|[^\*])\*([^\*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+    parsed = parsed.replace(/(^|[^_a-zA-Z0-9])_([^_\n]+)_(?![_a-zA-Z0-9])/g, '$1<em>$2</em>');
+
+    // Strikethrough: ~~text~~
+    parsed = parsed.replace(/~~([^~\n]+)~~/g, '<del>$1</del>');
+
+    // 5. Re-insert multiline code blocks with strict white-space: pre styling for ASCII art
+    parsed = parsed.replace(/___FOXNET_CODEBLOCK_(\d+)___/g, (match, idx) => {
+        const rawCode = codeBlocks[parseInt(idx, 10)] ?? "";
+        return `<pre class="foxnet-code-block"><code>${escapeHTML(rawCode)}</code></pre>`;
+    });
+
+    // 6. Re-insert inline code
+    parsed = parsed.replace(/___FOXNET_INLINE_(\d+)___/g, (match, idx) => {
+        const rawCode = inlineCodes[parseInt(idx, 10)] ?? "";
+        return `<code class="foxnet-inline-code">${escapeHTML(rawCode)}</code>`;
+    });
+
+    return parsed;
 }
 
 function simpleHash(str) {
@@ -178,8 +238,9 @@ async function initFirebaseEngine() {
         const msgInput = document.getElementById("foxnet-message-input");
         if (msgInput) {
             msgInput.value = "";
-            setTimeout(() => { if (msgInput) msgInput.value = ""; }, 100);
-            setTimeout(() => { if (msgInput) msgInput.value = ""; }, 500);
+            autoResizeChatInput();
+            setTimeout(() => { if (msgInput) { msgInput.value = ""; autoResizeChatInput(); } }, 100);
+            setTimeout(() => { if (msgInput) { msgInput.value = ""; autoResizeChatInput(); } }, 500);
         }
 
         app = initializeApp(firebaseConfig);
@@ -641,7 +702,7 @@ function updateMessageDOM(msgEl, msg) {
                 <span style="color: #DDA0DD; text-shadow: 0 0 4px #DDA0DD; font-weight: bold;">${headerText}</span>
                 <span class="foxnet-msg-time">${timeStr}</span>
             </div>
-            <div class="foxnet-msg-body" style="color: #E6E6FA; font-style: italic;">${linkifyText(msg.text)}</div>
+            <div class="foxnet-msg-body" style="color: #E6E6FA; font-style: italic;">${formatChatMessage(msg.text)}</div>
         `;
     } else {
         const senderColor = "var(--phosphor)";
@@ -675,7 +736,7 @@ function updateMessageDOM(msgEl, msg) {
             textContent = textContent.replace(imgMatch[0], "").trim();
         }
 
-        const formattedText = textContent ? `<div>${linkifyText(textContent)}</div>` : "";
+        const formattedText = textContent ? `<div>${formatChatMessage(textContent)}</div>` : "";
 
         let quoteHTML = "";
         if (msg.replyTo) {
@@ -686,7 +747,7 @@ function updateMessageDOM(msgEl, msg) {
             quoteHTML = `
                 <div class="foxnet-quote-block ${isQuotedSelf ? 'foxnet-quote-self' : ''}">
                     <small style="opacity: 0.85;">┌─ Replying to ${replySenderBadge}:</small>
-                    <div style="opacity: 0.95;">"${linkifyText(msg.replyTo.text)}"</div>
+                    <div style="opacity: 0.95;">"${formatChatMessage(msg.replyTo.text)}"</div>
                 </div>
             `;
         }
@@ -974,6 +1035,7 @@ function sendChatMessage(rawText, isSystem = false) {
             const input = document.getElementById("foxnet-message-input");
             if (input) {
                 input.value = `/w ${lastWhisperSender} `;
+                autoResizeChatInput();
                 input.focus();
             }
             return;
@@ -1386,22 +1448,21 @@ function setupContextMenuEvents() {
             const input = document.getElementById("foxnet-message-input");
             if (input) {
                 input.value = `/w ${targetMsgEl._msgData.sender} `;
+                autoResizeChatInput();
                 input.focus();
             }
         });
     }
 
     if (btnEdit) {
-        btnEdit.addEventListener("click", async () => {
-            if (!targetMsgEl || !targetMsgEl._msgData || !db) return;
+        btnEdit.addEventListener("click", () => {
+            if (!targetMsgEl || !targetMsgEl._msgData) return;
             const msgKey = targetMsgEl.getAttribute("data-msg-key");
             const oldText = targetMsgEl._msgData.text;
-            const newText = await showRetroPrompt("// EDIT MESSAGE //", "Modify message text below:", oldText);
-            if (newText && newText.trim() && newText.trim() !== oldText) {
-                await update(ref(db, `messages/${msgKey}`), {
-                    text: newText.trim(),
-                    isEdited: true
-                });
+            startEditMessage(msgKey, oldText);
+            if (activeContextMenu) {
+                activeContextMenu.style.display = "none";
+                activeContextMenu = null;
             }
         });
     }
@@ -1600,6 +1661,7 @@ function setupUserRosterContextMenu() {
             const input = document.getElementById("foxnet-message-input");
             if (input) {
                 input.value = `/w ${targetUserName} `;
+                autoResizeChatInput();
                 input.focus();
             }
         });
@@ -1734,6 +1796,140 @@ function applyFontSizeLevel(levelVal) {
     targetEl.style.setProperty("--chat-font-body", lvl.body);
 
     localStorage.setItem("foxnet_fontsize_level", val);
+    autoResizeChatInput();
+}
+
+/**
+ * Dynamically resizes the chat textarea up to a strict cap of 7 lines.
+ * Enables vertical scrollbar only after exceeding 7 lines.
+ */
+function autoResizeChatInput() {
+    const input = document.getElementById("foxnet-message-input");
+    if (!input) return;
+
+    // Reset height to auto so scrollHeight recalculates correctly when deleting text
+    input.style.height = "auto";
+
+    const computed = window.getComputedStyle(input);
+    let lineHeight = parseFloat(computed.lineHeight);
+    if (!lineHeight || isNaN(lineHeight)) {
+        const fontSize = parseFloat(computed.fontSize) || 18;
+        lineHeight = fontSize * 1.35;
+    }
+    const padTop = parseFloat(computed.paddingTop) || 0;
+    const padBottom = parseFloat(computed.paddingBottom) || 0;
+    const verticalPad = padTop + padBottom;
+
+    // Strict 7-line dynamic ceiling
+    const maxAllowedHeight = Math.round((lineHeight * 7) + verticalPad);
+    const scrollH = input.scrollHeight;
+
+    if (scrollH > maxAllowedHeight) {
+        input.style.height = `${maxAllowedHeight}px`;
+        input.style.overflowY = "auto";
+    } else {
+        const minHeight = Math.round(lineHeight + verticalPad);
+        input.style.height = `${Math.max(scrollH, minHeight)}px`;
+        input.style.overflowY = "hidden";
+    }
+}
+
+/**
+ * Initiates in-place editing for an existing message.
+ * Backs up any current user draft, populates the input bar, switches button to [ EDIT ],
+ * and reveals the [ CANCEL ] button and status banner.
+ */
+function startEditMessage(msgKey, currentText) {
+    if (!msgKey) return;
+    const inputMsg = document.getElementById("foxnet-message-input");
+    const btnSend = document.getElementById("foxnet-btn-send");
+    const btnCancel = document.getElementById("foxnet-btn-cancel-edit");
+    const editBar = document.getElementById("foxnet-edit-bar");
+
+    // Preserve any draft currently typed before entering edit mode
+    if (!editingMessageId && inputMsg) {
+        savedDraftText = inputMsg.value;
+    }
+
+    editingMessageId = msgKey;
+    originalMessageText = currentText || "";
+
+    if (btnSend) {
+        btnSend.textContent = "[ EDIT ]";
+        btnSend.setAttribute("title", "Save edited message (Enter)");
+    }
+    if (btnCancel) {
+        btnCancel.style.display = "inline-block";
+    }
+    if (editBar) {
+        editBar.style.display = "flex";
+    }
+
+    if (inputMsg) {
+        inputMsg.value = currentText || "";
+        inputMsg.placeholder = "Edit Message [Enter to save, Esc to cancel]";
+        autoResizeChatInput();
+        inputMsg.focus();
+        inputMsg.setSelectionRange(inputMsg.value.length, inputMsg.value.length);
+    }
+}
+
+/**
+ * Aborts in-place edit mode, restoring the [ SEND ] button, hiding [ CANCEL ],
+ * and bringing back any unfinished draft.
+ */
+function cancelEditMode() {
+    editingMessageId = null;
+    originalMessageText = "";
+
+    const inputMsg = document.getElementById("foxnet-message-input");
+    const btnSend = document.getElementById("foxnet-btn-send");
+    const btnCancel = document.getElementById("foxnet-btn-cancel-edit");
+    const editBar = document.getElementById("foxnet-edit-bar");
+
+    if (btnSend) {
+        btnSend.textContent = "[ SEND ]";
+        btnSend.removeAttribute("title");
+    }
+    if (btnCancel) {
+        btnCancel.style.display = "none";
+    }
+    if (editBar) {
+        editBar.style.display = "none";
+    }
+
+    if (inputMsg) {
+        inputMsg.value = savedDraftText || "";
+        savedDraftText = "";
+        inputMsg.placeholder = "Send Message [Enter to send, Shift+Enter for newline]";
+        autoResizeChatInput();
+        inputMsg.focus();
+    }
+}
+
+/**
+ * Commits an in-place message edit to Firebase Realtime Database.
+ */
+async function commitMessageEdit() {
+    const inputMsg = document.getElementById("foxnet-message-input");
+    if (!inputMsg || !editingMessageId || !db) return;
+
+    const msgKey = editingMessageId;
+    const oldText = originalMessageText;
+    const newText = inputMsg.value.trim();
+
+    cancelEditMode();
+
+    if (newText && newText !== oldText) {
+        try {
+            await update(ref(db, `messages/${msgKey}`), {
+                text: newText,
+                isEdited: true
+            });
+        } catch (err) {
+            console.error("Failed to update message:", err);
+        }
+    }
 }
 
 // ─── UI Controls & Events ────────────────────────────────────────────────────
@@ -1741,14 +1937,24 @@ function applyFontSizeLevel(levelVal) {
 function setupUIEvents() {
     const inputMsg = document.getElementById("foxnet-message-input");
     const btnSend = document.getElementById("foxnet-btn-send");
+    const btnCancelEdit = document.getElementById("foxnet-btn-cancel-edit");
+    const btnCancelEditBanner = document.getElementById("btn-cancel-edit-banner");
 
     const doSend = () => {
+        if (editingMessageId) {
+            commitMessageEdit();
+            return;
+        }
         if (inputMsg && inputMsg.value.trim()) {
             sendChatMessage(inputMsg.value.trim());
             inputMsg.value = "";
+            autoResizeChatInput();
             inputMsg.focus();
         }
     };
+
+    if (btnCancelEdit) btnCancelEdit.addEventListener("click", cancelEditMode);
+    if (btnCancelEditBanner) btnCancelEditBanner.addEventListener("click", cancelEditMode);
 
     // Reply Bar Cancel Button
     const replyBar = document.getElementById("foxnet-reply-bar");
@@ -1793,11 +1999,6 @@ function setupUIEvents() {
         unlockAudio();
         clearUnreadBadge();
     });
-    const messageInput = document.getElementById("foxnet-message-input");
-    if (messageInput) {
-        messageInput.addEventListener("focus", clearUnreadBadge);
-        messageInput.addEventListener("input", clearUnreadBadge);
-    }
 
     // Commands Flyout Modal Dismiss Handlers
     const commandsModal = document.getElementById("foxnet-commands-modal");
@@ -1815,6 +2016,12 @@ function setupUIEvents() {
             e.preventDefault();
             e.stopPropagation();
             closeCommandsModal();
+            return;
+        }
+        if (e.key === "Escape" && editingMessageId) {
+            e.preventDefault();
+            e.stopPropagation();
+            cancelEditMode();
         }
     }, true);
 
@@ -1824,9 +2031,22 @@ function setupUIEvents() {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 doSend();
+            } else if (e.key === "Escape") {
+                if (editingMessageId) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    cancelEditMode();
+                }
             }
         });
+        inputMsg.addEventListener("input", () => {
+            autoResizeChatInput();
+            clearUnreadBadge();
+        });
+        inputMsg.addEventListener("focus", clearUnreadBadge);
     }
+
+    window.addEventListener("resize", autoResizeChatInput);
 
     // Return to Bottom / Jump to Latest Button
     const btnJumpLatest = document.getElementById("btn-jump-latest");
@@ -2000,6 +2220,7 @@ function setupUIEvents() {
                     const input = document.getElementById("foxnet-message-input");
                     if (input) {
                         input.value = `/w ${targetUser} `;
+                        autoResizeChatInput();
                         input.focus();
                     }
                 }

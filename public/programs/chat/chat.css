@@ -153,10 +153,52 @@ body::after {
 }
 
 .foxnet-msg-body {
-  font-size: var(--chat-font-body, 1.25rem) !important;
-  line-height: 1.35 !important;
-  user-select: text !important;
-  -webkit-user-select: text !important;
+  font-size: var(--chat-font-body, 1.25rem);
+  line-height: 1.35;
+  user-select: text;
+  -webkit-user-select: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Static Multi-Line Code Block / ASCII Art Container */
+.foxnet-code-block {
+  margin: 6px 0;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(var(--phosphor-rgb), 0.35);
+  border-left: 3px solid var(--phosphor);
+  border-radius: 2px;
+  font-family: 'VT323', monospace;
+  font-size: 1.1rem;
+  line-height: 1.2;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--phosphor);
+  text-shadow: 0 0 2px var(--phosphor);
+  tab-size: 2;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--phosphor-rgb), 0.4) transparent;
+}
+
+.foxnet-code-block::-webkit-scrollbar {
+  height: 4px;
+}
+
+.foxnet-code-block::-webkit-scrollbar-thumb {
+  background: rgba(var(--phosphor-rgb), 0.4);
+  border-radius: 2px;
+}
+
+/* Inline Backtick Code */
+.foxnet-inline-code {
+  background: rgba(var(--phosphor-rgb), 0.15);
+  border: 1px solid rgba(var(--phosphor-rgb), 0.35);
+  padding: 0 4px;
+  border-radius: 2px;
+  font-family: 'VT323', monospace;
+  font-size: 1.05em;
+  color: var(--phosphor);
 }
 
 .foxnet-quote-block {
@@ -711,6 +753,104 @@ blockquote {
   border-left: none;
 }
 
+/* ─── Dynamic Multi-Line Input Bar & In-Place Actions ───────────────────────── */
+#foxnet-input-bar {
+  border-top: 1px solid rgba(var(--phosphor-rgb), 0.4);
+  padding: 6px 32px 6px 10px; /* 32px right padding clears window .resize-handle corner */
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  box-sizing: border-box;
+  min-height: 44px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+body.mobile-chat-body #foxnet-input-bar {
+  padding: 8px 10px;
+}
+
+#foxnet-message-input {
+  flex: 1 1 auto;
+  min-height: 24px;
+  max-height: 160px;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow-y: hidden;
+  color: var(--phosphor);
+  font-family: 'VT323', monospace;
+  font-size: 1.15rem;
+  line-height: 1.35;
+  padding: 4px 2px;
+  margin: 0;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-shadow: 0 0 3px var(--phosphor);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--phosphor-rgb), 0.5) transparent;
+}
+
+#foxnet-message-input::-webkit-scrollbar {
+  width: 5px;
+}
+
+#foxnet-message-input::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+#foxnet-message-input::-webkit-scrollbar-thumb {
+  background: rgba(var(--phosphor-rgb), 0.4);
+  border-radius: 2px;
+}
+
+#foxnet-message-input::-webkit-scrollbar-thumb:hover {
+  background: var(--phosphor);
+}
+
+#foxnet-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
+#foxnet-btn-send,
+#foxnet-btn-cancel-edit {
+  background: rgba(var(--phosphor-rgb), 0.15);
+  border: 1px solid var(--phosphor);
+  color: var(--phosphor);
+  font-family: 'VT323', monospace;
+  font-size: 1.05rem;
+  padding: 4px 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  text-shadow: 0 0 3px var(--phosphor);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+#foxnet-btn-send:hover {
+  background: rgba(var(--phosphor-rgb), 0.3);
+  box-shadow: 0 0 6px rgba(var(--phosphor-rgb), 0.4);
+}
+
+#foxnet-btn-cancel-edit {
+  background: transparent;
+  border: 1px solid rgba(var(--phosphor-rgb), 0.5);
+}
+
+#foxnet-btn-cancel-edit:hover {
+  background: rgba(255, 60, 60, 0.2);
+  border-color: #ff5555;
+  color: #ff5555;
+  text-shadow: 0 0 5px #ff5555;
+}
+
 /* ─── Mobile Responsiveness ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .chat-sidebar {
@@ -734,17 +874,22 @@ blockquote {
   }
 
   #foxnet-input-bar {
-    padding: 4px 6px !important;
-    min-height: 40px !important;
+    padding: 4px 28px 4px 6px;
+    min-height: 40px;
+  }
+
+  body.mobile-chat-body #foxnet-input-bar {
+    padding: 6px 8px;
   }
 
   #foxnet-message-input {
-    font-size: 1rem !important;
+    font-size: 1rem;
   }
 
-  #foxnet-btn-send {
-    padding: 4px 8px !important;
-    font-size: 0.95rem !important;
+  #foxnet-btn-send,
+  #foxnet-btn-cancel-edit {
+    padding: 4px 8px;
+    font-size: 0.95rem;
   }
 
   #foxnet-context-menu {
