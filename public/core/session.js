@@ -57,6 +57,16 @@ export function simpleHash(str) {
         hash = (hash << 5) - hash + char;
         hash |= 0;
     }
+    return Math.abs(hash).toString(36);
+}
+
+function legacySignedHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash |= 0;
+    }
     return hash.toString(36);
 }
 
@@ -85,7 +95,8 @@ export async function authenticateHandleAndPin(handle, enteredPin = "") {
 
     try {
         const { getDatabase, ref, child, get, set, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
-        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+        const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+        const { getUnlockedCiphers, syncCiphersToFirebase } = await import("../programs/ciphers/ciphers.js");
 
         const firebaseConfig = {
             apiKey: "AIzaSyBvUk_WFAnCs2YpfnYsjdFJ0zyoimbguJA",
@@ -94,7 +105,10 @@ export async function authenticateHandleAndPin(handle, enteredPin = "") {
             databaseURL: "https://foxnet-chat-default-rtdb.firebaseio.com"
         };
 
-        const app = initializeApp(firebaseConfig, "foxos-auth-session");
+        const appName = "foxos-auth-session";
+        const app = getApps().some(a => a.name === appName)
+            ? getApp(appName)
+            : initializeApp(firebaseConfig, appName);
         const db = getDatabase(app);
 
         const handleSnap = await Promise.race([
@@ -108,13 +122,15 @@ export async function authenticateHandleAndPin(handle, enteredPin = "") {
             // Handle IS RESERVED!
             const storedPinHash = reservedData.pinHash;
             const myStoredToken = localStorage.getItem(`foxnet_authtoken_${handleKey}`);
-            const hashedEnteredPin = enteredPin && enteredPin.trim() ? simpleHash(enteredPin.trim()) : "";
+            const trimmedPin = enteredPin ? enteredPin.trim() : "";
+            const hashedEnteredPin = trimmedPin ? simpleHash(trimmedPin) : "";
+            const legacyEnteredPin = trimmedPin ? legacySignedHash(trimmedPin) : "";
+            const isPinMatch = Boolean(trimmedPin) && (hashedEnteredPin === storedPinHash || legacyEnteredPin === storedPinHash);
 
-            if (myStoredToken === storedPinHash || hashedEnteredPin === storedPinHash) {
-                if (hashedEnteredPin === storedPinHash) {
-                    localStorage.setItem(`foxnet_authtoken_${handleKey}`, storedPinHash);
-                }
+            if (myStoredToken === storedPinHash || isPinMatch) {
+                localStorage.setItem(`foxnet_authtoken_${handleKey}`, storedPinHash);
                 setActiveUser(cleanHandle);
+                await syncCiphersToFirebase();
                 return { success: true, cleanHandle };
             } else {
                 // Easter Egg: If attempting to spoof CyberVixen, trigger the hidden cipher and playful denial!
@@ -138,10 +154,12 @@ export async function authenticateHandleAndPin(handle, enteredPin = "") {
             // Handle IS NOT RESERVED YET!
             if (enteredPin && enteredPin.trim()) {
                 const hashedPin = simpleHash(enteredPin.trim());
+                const unlockedIds = Object.keys(getUnlockedCiphers());
                 await set(ref(db, `reserved_handles/${handleKey}`), {
                     handle: cleanHandle,
                     pinHash: hashedPin,
                     role: "user",
+                    ciphers: unlockedIds,
                     createdAt: serverTimestamp()
                 });
                 localStorage.setItem(`foxnet_authtoken_${handleKey}`, hashedPin);

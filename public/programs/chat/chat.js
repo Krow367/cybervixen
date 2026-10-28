@@ -1,10 +1,10 @@
 import { openWindow } from "../../core/windows.js";
 import { type } from "../../core/typer.js";
 import { setupScrollbar } from "../../core/scrollbar.js";
-import { unlockCipher } from "../ciphers/ciphers.js";
+import { unlockCipher, getUnlockedCiphers, syncCiphersToFirebase } from "../ciphers/ciphers.js";
 
 // Firebase ESM SDK Imports
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
     getDatabase, ref, push, onChildAdded, onChildChanged, onChildRemoved,
     onValue, set, get, child, update, remove, onDisconnect, serverTimestamp,
@@ -243,7 +243,9 @@ async function initFirebaseEngine() {
             setTimeout(() => { if (msgInput) { msgInput.value = ""; autoResizeChatInput(); } }, 500);
         }
 
-        app = initializeApp(firebaseConfig);
+        app = getApps().some(a => a.name === "[DEFAULT]")
+            ? getApp()
+            : initializeApp(firebaseConfig);
         db = getDatabase(app);
         initialized = true;
 
@@ -532,12 +534,55 @@ function renderUserList() {
 
 let isInitialLoad = true;
 let unreadWhileScrolled = 0;
+let relativeTimeInterval = null;
+
+/**
+ * ─── RELATIVE TIME CLOCK CIRCUIT (EPOCH DELTA DECODER) ──────────────────────
+ * Calculates the elapsed time between a message's Unix epoch timestamp (ms)
+ * and the current system clock, returning a compact shorthand string:
+ *   < 60s   -> "now"
+ *   1–59m   -> "1m ago" .. "59m ago"
+ *   1–23h   -> "1h ago" .. "23h ago"
+ *   >= 24h  -> "1d ago", "2d ago", etc.
+ */
+function formatRelativeTime(timestamp) {
+    if (!timestamp) return "";
+    const diffMs = Math.max(0, Date.now() - Number(timestamp));
+    const diffMinutes = Math.floor(diffMs / 60000);
+
+    if (diffMinutes < 1) return "now";
+    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+}
+
+/**
+ * Sweeps all rendered message timestamp nodes in the DOM and updates their
+ * relative elapsed text in place without re-rendering message bodies or images.
+ */
+function refreshRelativeTimestamps() {
+    const container = document.getElementById("foxnet-messages");
+    if (!container) return;
+    container.querySelectorAll("[data-timestamp]").forEach((el) => {
+        const ts = Number(el.getAttribute("data-timestamp"));
+        if (ts) {
+            el.textContent = formatRelativeTime(ts);
+        }
+    });
+}
 
 function listenToMessages() {
     if (!db) return;
     const messagesQuery = query(ref(db, "messages"), limitToLast(100));
     const container = document.getElementById("foxnet-messages");
     if (!container) return;
+
+    if (relativeTimeInterval) clearInterval(relativeTimeInterval);
+    relativeTimeInterval = setInterval(refreshRelativeTimestamps, 60000);
 
     onValue(messagesQuery, () => {
         setTimeout(() => {
@@ -666,7 +711,8 @@ function updateMessageDOM(msgEl, msg) {
     const isOwner = msg.role === "owner" || msg.isOwner || isOwnerHandle(msg.sender);
     const isMod = !isOwner && msg.role === "mod";
     const isVip = !isOwner && !isMod && msg.role === "vip";
-    const timeStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+    const timeStr = formatRelativeTime(msg.timestamp);
+    const fullTimeTitle = msg.timestamp ? new Date(msg.timestamp).toLocaleString() : "";
 
     // Highlight message if quoting the user or mentioning @username
     const myHandleLower = (currentHandle || "").toLowerCase();
@@ -700,7 +746,7 @@ function updateMessageDOM(msgEl, msg) {
         msgEl.innerHTML = `
             <div class="foxnet-msg-header">
                 <span style="color: #DDA0DD; text-shadow: 0 0 4px #DDA0DD; font-weight: bold;">${headerText}</span>
-                <span class="foxnet-msg-time">${timeStr}</span>
+                <span class="foxnet-msg-time" title="${escapeHTML(fullTimeTitle)}"><span data-timestamp="${msg.timestamp || ''}">${timeStr}</span></span>
             </div>
             <div class="foxnet-msg-body" style="color: #E6E6FA; font-style: italic;">${formatChatMessage(msg.text)}</div>
         `;
@@ -775,7 +821,7 @@ function updateMessageDOM(msgEl, msg) {
             <div class="foxnet-msg-header">
                 <span class="sender-name" style="color: ${senderColor}; text-shadow: 0 0 3px ${senderColor};">${escapeHTML(msg.sender)}</span>
                 ${roleBadge}${mentionBadge}
-                <span class="foxnet-msg-time">${timeStr}${editedLabel}</span>
+                <span class="foxnet-msg-time" title="${escapeHTML(fullTimeTitle)}"><span data-timestamp="${msg.timestamp || ''}">${timeStr}</span>${editedLabel}</span>
             </div>
             ${quoteHTML}
             <div class="foxnet-msg-body">${formattedText}${imgHTML}</div>
@@ -1235,12 +1281,11 @@ async function checkAndSetHandle(newHandle, enteredPin = "") {
             const hashedEnteredPin = enteredPin && enteredPin.trim() ? simpleHash(enteredPin.trim()) : "";
 
             if (myStoredToken === storedPinHash || hashedEnteredPin === storedPinHash) {
-                if (hashedEnteredPin === storedPinHash) {
-                    localStorage.setItem(`foxnet_authtoken_${handleKey}`, storedPinHash);
-                }
+                localStorage.setItem(`foxnet_authtoken_${handleKey}`, storedPinHash);
                 const role = reservedData.role || (isOwnerHandle(cleanName) ? "owner" : "user");
                 currentUserRole = role;
                 setHandleSuccess(cleanName);
+                await syncCiphersToFirebase();
                 if (statusMsg) statusMsg.textContent = `[ AUTHENTICATED AS ${cleanName.toUpperCase()} ]`;
                 return true;
             } else {
@@ -1257,10 +1302,12 @@ async function checkAndSetHandle(newHandle, enteredPin = "") {
 
             if (enteredPin && enteredPin.trim()) {
                 const hashedPin = simpleHash(enteredPin.trim());
+                const unlockedIds = Object.keys(getUnlockedCiphers());
                 await set(ref(db, `reserved_handles/${handleKey}`), {
                     handle: cleanName,
                     pinHash: hashedPin,
                     role: role,
+                    ciphers: unlockedIds,
                     createdAt: serverTimestamp()
                 });
                 localStorage.setItem(`foxnet_authtoken_${handleKey}`, hashedPin);
@@ -2285,6 +2332,11 @@ export function teardownChatEngine() {
     if (presenceHeartbeat) {
         clearInterval(presenceHeartbeat);
         presenceHeartbeat = null;
+    }
+
+    if (relativeTimeInterval) {
+        clearInterval(relativeTimeInterval);
+        relativeTimeInterval = null;
     }
 
     if (db) {

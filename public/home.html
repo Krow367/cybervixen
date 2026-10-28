@@ -264,8 +264,10 @@
                             const isMasked = activeInputPrompt?.mask;
                             activeInputPrompt = null;
                             printToVRAM(`${pText}${isMasked ? "*".repeat(val.length) : val}`);
-                            const echoIndex = getLastVRAMIndex();
-                            snapToRow1(echoIndex);
+                            if (options.snap !== false) {
+                                const echoIndex = getLastVRAMIndex();
+                                snapToRow1(echoIndex);
+                            }
                             updatePrompt();
                             resolve(val);
                         }

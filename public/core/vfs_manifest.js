@@ -170,6 +170,16 @@ export const systemManifest = [
         date: "08-14-81",
         time: "02:30p"
     },
+    {
+        path: "C:/PROGRAMS/ABM.EXE",
+        type: "exe",
+        executable: true,
+        command: "abm",
+        desc: "Anything But Metric — Imperial Equivalency Engine",
+        size: "24 KB",
+        date: "08-14-81",
+        time: "02:35p"
+    },
 
     // Guest Workspace
     {

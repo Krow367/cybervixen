@@ -4,17 +4,19 @@
  * Defines all built-in shell commands, alias lookups, and runtime registration.
  */
 
-import { listDirectory, changeDirectory, readFileContent, resetCurrentPathToUser, generateTree, DRIVE_INFO } from "./vfs.js";
-import { applyTheme, getAllThemes, createCustomTheme, deleteCustomTheme } from "./themes.js";
+import { listDirectory, changeDirectory, readFileContent, resetCurrentPathToUser, generateTree, getPromptPath, DRIVE_INFO } from "./vfs.js";
+import { applyTheme, getAllThemes, getSavedTheme, createCustomTheme, deleteCustomTheme } from "./themes.js";
+import { FOX_BRAILLE_LOGO } from "./art.js";
 import { launchBlog } from "../programs/blog/blog.js";
 import { launchRecipes } from "../programs/recipes/recipes.js";
 import { launchRepair } from "../programs/repair/repair.js";
 import { launchFoxhound } from "../programs/foxhound/foxhound.js";
 import { launchThemeStudio } from "../programs/theme_studio/theme_studio.js";
 import { launchChat } from "../programs/chat/chat.js";
-import { launchCipherVault, unlockCipher } from "../programs/ciphers/ciphers.js";
+import { launchCipherVault, unlockCipher, getCipherProgress } from "../programs/ciphers/ciphers.js";
 import { launchLinks } from "../programs/links/links.js";
 import { launchNano } from "../programs/nano/nano.js";
+import { launchABM } from "../programs/abm/abm.js";
 import { decryptVault } from "./vault.js";
 import { getActiveUser, logoutUser, generateBackupToken, restoreBackupToken, authenticateHandleAndPin } from "./session.js";
 
@@ -28,6 +30,9 @@ export const aliases = {
     edit: "nano",
     guestbook: "atabook",
     auth: "login",
+    fetch: "sysinfo",
+    fastfetch: "sysinfo",
+    neofetch: "sysinfo",
 };
 
 // ─── Built-in Command Compendium ──────────────────────────────────────────────
@@ -42,7 +47,7 @@ export const commandRegistry = {
                 const corrupted = `
 THE MACHINE OFFERS WHAT LITTLE HELP IT CAN... 
 Available commands:
-help, clear, blog, recipes, about, atabook, links, follow, balls:;̷͓͆X̴͓͒:̷̲̋^̶̱̒!̶̛͉$̶͎̈_̵̪͑\\̷̻͝*̴̠̓~̴̝̚!̵̢̐>̷̗̈́@̶͖̉#̶̫̈́'̶̣̐,̴̱̔~̵̀ͅ▒̷̬̅:̶̢̽|̵͉̈́7̵̡̚(̶͎̿^̵̳̿*̵̢̅2̶̤̈́9̸͓͐-̷̘͛_̴̯̈&̷̥̿-̸̣̓&̷̧̿<̴̗͆
+help, clear, sysinfo, blog, recipes, about, atabook, links, follow, balls:;̷͓͆X̴͓͒:̷̲̋^̶̱̒!̶̛͉$̶͎̈_̵̪͑\\̷̻͝*̴̠̓~̴̝̚!̵̢̐>̷̗̈́@̶͖̉#̶̫̈́'̶̣̐,̴̱̔~̵̀ͅ▒̷̬̅:̶̢̽|̵͉̈́7̵̡̚(̶͎̿^̵̳̿*̵̢̅2̶̤̈́9̸͓͐-̷̘͛_̴̯̈&̷̥̿-̸̣̓&̷̧̿<̴̗͆
 
 [ERROR: FILE BUFFER CORRUPTED. UNABLE TO DISPLAY ALL COMMANDS]
 Please run 'repair' to restore corrupted file integrity.
@@ -54,7 +59,7 @@ Please run 'repair' to restore corrupted file integrity.
             let out = `
 ======================================================================
   foxOS SYSTEM COMMAND COMPENDIUM (INTEGRITY: 100% RESTORED)          
-======================================================================
+=====================================================================
 
   FILE SYSTEM:
     dir / ls        List contents of current directory
@@ -62,6 +67,7 @@ Please run 'repair' to restore corrupted file integrity.
     type / cat      Display file contents (or inspect live site code!)
 
   SYSTEM & DISPLAY:
+    sysinfo / fetch Display hardware & system telemetry summary
     theme <name / studio>    Recalibrate phosphor tube (green, amber, cyan, crimson) or launches the Theme Studio
     cls / clear     Flush terminal screen buffer
     help            Display this command compendium
@@ -72,6 +78,7 @@ Please run 'repair' to restore corrupted file integrity.
     recipes         Culinary Compendium & Formulae
     links           Neighboring Network Nodes
     chat            Relay Chat Terminal
+    abm             Anything But Metric (Imperial Equivalency Engine)
     repair          Terminal Buffer Integrity Restoration
     nano / edit     Interactive Terminal Text Editor
     balls           An echo of a ghost
@@ -84,6 +91,85 @@ Please run 'repair' to restore corrupted file integrity.
     restore <token> Import offline save token to restore progress
 `;
             await ctx.type(out, { speed: 4 });
+        }
+    },
+
+    // System Telemetry & Hardware Fetch (sysinfo / fetch / fastfetch / neofetch)
+    sysinfo: {
+        desc: "Displays hardware specifications, active drives, and system telemetry",
+        exec: async (args, ctx) => {
+            const isRepaired = localStorage.getItem("helpRepaired") === "true";
+            const activeUser = (localStorage.getItem("foxos_active_session") || getActiveUser() || "GUEST").toUpperCase();
+
+            // 1. Resolve active phosphor display calibration name
+            const allThemes = getAllThemes();
+            const savedThemeKey = (typeof getSavedTheme === "function" ? getSavedTheme() : localStorage.getItem("foxos_theme")) || "green";
+            const activeTheme = allThemes[savedThemeKey] || allThemes.green;
+            const displayName = activeTheme ? activeTheme.name : "P39 Green (525nm)";
+
+            // 2. Resolve current working directory from prompt string (strip trailing '> ')
+            const cwdPath = getPromptPath().replace(/>\s*$/, "");
+
+            // 3. Check whether Relay Chat window is open for Uplink status
+            const chatWin = document.getElementById("win-chat");
+            const isChatOpen = Boolean(chatWin && chatWin.style.display !== "none");
+            const uplinkStatus = isChatOpen
+                ? "Bell 212A // foxNet Relay Hijacked"
+                : "Bell 212A // Directive 20.77 Active";
+
+            // 4. Resolve decrypted cipher progress
+            const cipherProg = getCipherProgress();
+            const cipherStatus = `${cipherProg.count} / ${cipherProg.total} Decrypted`;
+
+            // 5. Resolve puzzle-aware system & floppy drive states
+            const sysStatus = isRepaired ? "OK" : "[!] CORRUPT: C:\\SYSTEM\\HELP.SYS";
+            const driveAStatus = isRepaired
+                ? "5.25\" Floppy [MEDIA READY]"
+                : "5.25\" Floppy [!] READ ERROR CONTACT SYSTEM ADMINISTRATOR";
+
+            const telemetryRows = [
+                `${activeUser}@SERENITY-NODE-42`,
+                `───────────────────────────────────────────`,
+                `OS       : foxOS Kernel v1.33.7 (SI-2077)`,
+                `BIOS     : Serenity ROM v4.02`,
+                `CPU      : Intel D8088 @ 4.77 MHz`,
+                `MEMORY   : 640 KB Base RAM`,
+                `DISPLAY  : MC6845 // ${displayName}`,
+                `SHELL    : COMMAND.COM (CWD: ${cwdPath})`,
+                `UPLINK   : ${uplinkStatus}`,
+                `CIPHERS  : ${cipherStatus}`,
+                `STATUS   : ${sysStatus}`,
+                `DRIVE C: : 10MB Winchester HD [MOUNTED]`,
+                `DRIVE A: : ${driveAStatus}`,
+                ``
+            ];
+
+            // Slice 3 leading and 3 trailing blank Braille cells so the 24-col logo
+            // pairs cleanly alongside the telemetry table without line-wrapping.
+            const logoRows = FOX_BRAILLE_LOGO.trim().split("\n").map(line => line.slice(3, 27));
+            const totalRows = Math.max(logoRows.length, telemetryRows.length);
+            const combinedLines = [];
+
+            for (let i = 0; i < totalRows; i++) {
+                const leftCol = (logoRows[i] || "⠀".repeat(24)).padEnd(24, "⠀");
+                const rightCol = telemetryRows[i] || "";
+                // Wrap in <span> so the VRAM parser preserves single-line horizontal layout
+                combinedLines.push(
+                    rightCol
+                        ? `<span>${leftCol}   ${rightCol}</span>`
+                        : `<span>${leftCol}</span>`
+                );
+            }
+
+            await ctx.type(combinedLines.join("\n"), { speed: 2, lineDelay: 15, pager: false });
+        }
+    },
+
+    // Anything But Metric (Imperial Equivalency Engine)
+    abm: {
+        desc: "Anything But Metric — converts Imperial weights & distances into absurd comparisons",
+        exec: async (args, ctx) => {
+            await launchABM(args, ctx);
         }
     },
 

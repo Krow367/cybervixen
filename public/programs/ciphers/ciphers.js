@@ -281,15 +281,21 @@ export function importCipherSaveString(code) {
     }
 }
 
-// ─── Firebase Account Sync ───────────────────────────────────────────────────
+// ─── Firebase Account Sync (reserved_handles/<handleKey>/ciphers) ────────────
 
-async function syncCiphersToFirebase(unlockedMap) {
-    const handle = localStorage.getItem("foxnet_handle");
-    if (!handle || handle.startsWith("Guest_")) return;
+export async function syncCiphersToFirebase(unlockedMap = null) {
+    const rawHandle = localStorage.getItem("foxnet_handle") || localStorage.getItem("foxos_active_session") || "";
+    const handle = rawHandle.trim();
+    if (!handle || handle.toUpperCase() === "GUEST" || handle.toUpperCase().startsWith("GUEST_")) return;
+
+    const handleKey = handle.toLowerCase();
+    const myStoredToken = localStorage.getItem(`foxnet_authtoken_${handleKey}`);
+    // Only sync with reserved_handles if this device has authenticated the reserved handle's PIN
+    if (!myStoredToken) return;
 
     try {
-        const { getDatabase, ref, update } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
-        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
+        const { getDatabase, ref, get, update } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
+        const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
 
         const firebaseConfig = {
             apiKey: "AIzaSyBvUk_WFAnCs2YpfnYsjdFJ0zyoimbguJA",
@@ -298,17 +304,60 @@ async function syncCiphersToFirebase(unlockedMap) {
             databaseURL: "https://foxnet-chat-default-rtdb.firebaseio.com"
         };
 
-        const app = initializeApp(firebaseConfig, "ciphers-sync-app");
+        const appName = "foxos-ciphers-sync";
+        const app = getApps().some(a => a.name === appName)
+            ? getApp(appName)
+            : initializeApp(firebaseConfig, appName);
         const db = getDatabase(app);
-        const handleKey = handle.toLowerCase();
 
-        await update(ref(db, `user_ciphers/${handleKey}`), {
-            ciphers: Object.keys(unlockedMap),
-            updatedAt: Date.now(),
-            count: Object.keys(unlockedMap).length
-        });
-    } catch {}
+        const reservedRef = ref(db, `reserved_handles/${handleKey}`);
+        const snap = await get(reservedRef);
+        if (!snap.exists()) return;
+
+        const reservedData = snap.val();
+        // Verify this device's stored PIN token matches the reserved handle record
+        if (!reservedData || !reservedData.pinHash || reservedData.pinHash !== myStoredToken) return;
+
+        const currentLocal = unlockedMap || getUnlockedCiphers();
+        const remoteList = Array.isArray(reservedData.ciphers) ? reservedData.ciphers : [];
+
+        // 1. Pull any cloud ciphers missing from local NVRAM
+        let localUpdated = false;
+        for (const id of remoteList) {
+            if (CIPHER_DEFINITIONS.some(d => d.id === id) && !currentLocal[id]) {
+                currentLocal[id] = {
+                    unlockedAt: Date.now(),
+                    dateStr: "Synced from foxNet"
+                };
+                localUpdated = true;
+            }
+        }
+
+        if (localUpdated) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentLocal));
+            window.dispatchEvent(new CustomEvent("foxos_cipher_unlocked"));
+        }
+
+        // 2. Push merged cipher ID array back into reserved_handles/<handleKey>/ciphers
+        const mergedIds = Object.keys(currentLocal);
+        const remoteSet = new Set(remoteList);
+        const needsCloudUpdate = !Array.isArray(reservedData.ciphers) ||
+            mergedIds.length !== remoteList.length ||
+            mergedIds.some(id => !remoteSet.has(id));
+
+        if (needsCloudUpdate) {
+            await update(reservedRef, {
+                ciphers: mergedIds
+            });
+        }
+    } catch (err) {
+        console.warn("[CipherSync] Could not sync ciphers with Firebase:", err.message);
+    }
 }
+
+// Automatically sync on boot if the operator has an active authenticated session
+syncCiphersToFirebase();
+
 
 // ─── Vault Window Cartridge Implementation ───────────────────────────────────
 
@@ -318,7 +367,7 @@ export function launchCipherVault(ctx) {
         const { count, total, percentage } = getCipherProgress();
         const unlocked = getUnlockedCiphers();
         const handle = localStorage.getItem("foxnet_handle") || "";
-        const isChatUser = handle && !handle.startsWith("Guest_");
+        const isChatUser = handle && handle.toUpperCase() !== "GUEST" && !handle.toUpperCase().startsWith("GUEST_");
 
         return `
         <div style="display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; background: transparent; font-family: inherit; font-size: inherit; color: var(--phosphor);">
