@@ -16,6 +16,18 @@
       }
     },
 
+    "user_nonces": {
+      ".read": false,
+      ".write": false,
+      "$handleKey": {
+        ".read": false,
+        ".write": false,
+        "$nonce": {
+          ".write": "!data.exists() && newData.isString() && root.child('handle_pins/' + $handleKey + '/' + newData.val()).exists()"
+        }
+      }
+    },
+
     "admin_nonces": {
       ".read": false,
       ".write": false,
@@ -64,7 +76,7 @@
       ".read": true,
       ".write": false,
       "$msgId": {
-        ".write": "(!data.exists() && newData.exists()) || (data.exists() && newData.exists() && newData.child('sender').val() === data.child('sender').val()) || (data.exists() && !newData.exists())",
+        ".write": "(!data.exists() && newData.exists() && (!root.child('handle_pins/' + newData.child('sender').val().toLowerCase()).exists() || (newData.hasChild('nonce') && !root.child('user_nonces/' + newData.child('sender').val().toLowerCase() + '/' + newData.child('nonce').val()).exists() && newData.parent().parent().child('user_nonces/' + newData.child('sender').val().toLowerCase() + '/' + newData.child('nonce').val()).exists()))) || (data.exists() && newData.exists() && newData.child('sender').val() === data.child('sender').val()) || (data.exists() && !newData.exists())",
         ".validate": "!newData.exists() || (newData.hasChildren(['sender', 'text', 'timestamp']) && newData.child('sender').isString() && newData.child('sender').val().length > 0 && newData.child('sender').val().length <= 32 && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000)"
       }
     },

@@ -373,7 +373,18 @@ async function checkUserRole(handle) {
     if (!db) return "user";
     const handleKey = (handle || "").toLowerCase();
 
-    // Only grant owner/mod role if this client actually holds the valid auth token for the reserved handle!
+    const evictUnverifiedHandle = () => {
+        const fallbackGuest = "Guest_" + Math.floor(1000 + Math.random() * 9000);
+        currentHandle = fallbackGuest;
+        currentUserRole = "user";
+        localStorage.setItem("foxnet_handle", fallbackGuest);
+        localStorage.setItem("name", fallbackGuest);
+        const handleInput = document.getElementById("setting-handle-input");
+        if (handleInput) handleInput.value = fallbackGuest;
+        return "user";
+    };
+
+    // Only allow a reserved handle (or owner handle) if this client holds the valid PIN token!
     try {
         const handleSnap = await get(child(ref(db), `reserved_handles/${handleKey}`));
         const reservedData = handleSnap.val();
@@ -386,12 +397,10 @@ async function checkUserRole(handle) {
                 isVerified = true;
             }
             if (!isVerified) {
-                currentUserRole = "user";
-                return "user";
+                return evictUnverifiedHandle();
             }
         } else if (isOwnerHandle(handle)) {
-            currentUserRole = "user";
-            return "user";
+            return evictUnverifiedHandle();
         }
 
         if (isOwnerHandle(handle)) {
@@ -1078,7 +1087,7 @@ function sendChatMessage(rawText, isSystem = false) {
         const targetHandle = whisperMatch[1].trim();
         const whisperMsg = whisperMatch[2].trim();
         if (targetHandle && whisperMsg) {
-            push(ref(db, "messages"), {
+            pushVerifiedMessage({
                 sender: currentHandle,
                 whisperTo: targetHandle.toLowerCase(),
                 flair: currentFlair,
@@ -1108,7 +1117,7 @@ function sendChatMessage(rawText, isSystem = false) {
             }
             return;
         }
-        push(ref(db, "messages"), {
+        pushVerifiedMessage({
             sender: currentHandle,
             whisperTo: lastWhisperSender.toLowerCase(),
             flair: currentFlair,
@@ -1243,6 +1252,23 @@ function sendChatMessage(rawText, isSystem = false) {
     broadcastMessage(trimmed, isSystem);
 }
 
+function pushVerifiedMessage(msgData) {
+    if (!db) return;
+    const newMsgRef = push(ref(db, "messages"));
+    const senderKey = (msgData.sender || "").toLowerCase();
+    const myToken = localStorage.getItem(`foxnet_authtoken_${senderKey}`) || "";
+
+    if (myToken && myToken.length === 64 && !msgData.isSystem && senderKey !== "🎱") {
+        const nonce = "u_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+        update(ref(db), {
+            [`user_nonces/${senderKey}/${nonce}`]: myToken,
+            [`messages/${newMsgRef.key}`]: { ...msgData, nonce }
+        });
+    } else {
+        set(newMsgRef, msgData);
+    }
+}
+
 function broadcastMessage(text, isSystem = false) {
     if (!text || !db) return;
     const isOwner = currentUserRole === "owner";
@@ -1263,7 +1289,7 @@ function broadcastMessage(text, isSystem = false) {
         if (replyBar) replyBar.style.display = "none";
     }
 
-    push(ref(db, "messages"), msgData);
+    pushVerifiedMessage(msgData);
     if (!isSystem) {
         unlockCipher("chat_signal");
         playSendSound();
