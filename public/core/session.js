@@ -71,9 +71,46 @@ function legacySignedHash(str) {
 }
 
 /**
+ * Cryptographic SHA-256 salted PIN hash (64-char hex).
+ * Salted with the lowercase handleKey so identical PINs across users never share a hash.
+ */
+export async function hashPinSecure(handleKey, pin) {
+    const cleanKey = (handleKey || "").trim().toLowerCase();
+    const cleanPin = (pin || "").trim();
+    if (!cleanKey || !cleanPin) return "";
+    const payload = `foxos_pin_v2:${cleanKey}:${cleanPin}`;
+    if (globalThis.crypto && globalThis.crypto.subtle) {
+        const msgBuffer = new TextEncoder().encode(payload);
+        const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+    // Fallback if subtle crypto unavailable (non-HTTPS local IP)
+    return (simpleHash(payload) + simpleHash(cleanPin + cleanKey)).padEnd(64, "0").slice(0, 64);
+}
+
+/**
+ * Verifies a candidate 64-char SHA-256 token against the non-enumerable
+ * /handle_pins/<handleKey>/<token> vault in Firebase RTDB.
+ * Because /handle_pins/<handleKey> has .read: false and /handle_pins/<handleKey>/<token>
+ * has .read: "data.exists()", Firebase only allows reading the path if the token is exact.
+ */
+export async function verifyPinInVault(db, ref, get, handleKey, candidateToken) {
+    if (!candidateToken || candidateToken.length !== 64) return false;
+    try {
+        const vaultSnap = await get(ref(db, `handle_pins/${handleKey}/${candidateToken}`));
+        return Boolean(vaultSnap && vaultSnap.exists() && vaultSnap.val() === true);
+    } catch {
+        // PERMISSION_DENIED means the candidateToken does not exist in handle_pins
+        return false;
+    }
+}
+
+/**
  * Authenticates a handle and PIN against Firebase RTDB reserved handles.
- * - If handle is reserved: validates PIN or existing valid auth token.
- * - If handle is unreserved and PIN is provided: automatically registers/reserves it.
+ * - If handle is reserved: validates PIN or existing valid auth token against /handle_pins/<handleKey>/<sha256>.
+ * - Automatically migrates legacy simpleHash PINs to the unreadable /handle_pins vault.
+ * - If handle is unreserved and PIN is provided: registers it in /reserved_handles and /handle_pins.
  * - If offline / network error: allows login with warning or stored local token.
  * 
  * @param {string} handle
@@ -94,7 +131,7 @@ export async function authenticateHandleAndPin(handle, enteredPin = "") {
     }
 
     try {
-        const { getDatabase, ref, child, get, set, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
+        const { getDatabase, ref, child, get, set, update, remove, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js");
         const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js");
         const { getUnlockedCiphers, syncCiphersToFirebase } = await import("../programs/ciphers/ciphers.js");
 
@@ -120,15 +157,47 @@ export async function authenticateHandleAndPin(handle, enteredPin = "") {
 
         if (reservedData) {
             // Handle IS RESERVED!
-            const storedPinHash = reservedData.pinHash;
-            const myStoredToken = localStorage.getItem(`foxnet_authtoken_${handleKey}`);
+            const myStoredToken = localStorage.getItem(`foxnet_authtoken_${handleKey}`) || "";
             const trimmedPin = enteredPin ? enteredPin.trim() : "";
-            const hashedEnteredPin = trimmedPin ? simpleHash(trimmedPin) : "";
-            const legacyEnteredPin = trimmedPin ? legacySignedHash(trimmedPin) : "";
-            const isPinMatch = Boolean(trimmedPin) && (hashedEnteredPin === storedPinHash || legacyEnteredPin === storedPinHash);
+            const sha256Pin = trimmedPin ? await hashPinSecure(handleKey, trimmedPin) : "";
 
-            if (myStoredToken === storedPinHash || isPinMatch) {
-                localStorage.setItem(`foxnet_authtoken_${handleKey}`, storedPinHash);
+            // 1. Check non-enumerable /handle_pins/<handleKey>/<token> vault
+            let isAuthenticated = false;
+            let activeToken = "";
+
+            if (sha256Pin && await verifyPinInVault(db, ref, get, handleKey, sha256Pin)) {
+                isAuthenticated = true;
+                activeToken = sha256Pin;
+            } else if (myStoredToken.length === 64 && await verifyPinInVault(db, ref, get, handleKey, myStoredToken)) {
+                isAuthenticated = true;
+                activeToken = myStoredToken;
+            } else if (reservedData.pinHash) {
+                // 2. Legacy fallback & automatic migration to /handle_pins/<handleKey>/<sha256>
+                const legacyStoredPinHash = reservedData.pinHash;
+                const legacyEnteredUnsigned = trimmedPin ? simpleHash(trimmedPin) : "";
+                const legacyEnteredSigned = trimmedPin ? legacySignedHash(trimmedPin) : "";
+                const isLegacyPinMatch = Boolean(trimmedPin) && (
+                    legacyEnteredUnsigned === legacyStoredPinHash ||
+                    legacyEnteredSigned === legacyStoredPinHash ||
+                    sha256Pin === legacyStoredPinHash
+                );
+
+                if (isLegacyPinMatch || myStoredToken === legacyStoredPinHash) {
+                    isAuthenticated = true;
+                    activeToken = sha256Pin || legacyStoredPinHash;
+                    // If user typed their PIN, upgrade their account to SHA-256 vault and scrub exposed pinHash
+                    if (sha256Pin) {
+                        try {
+                            await set(ref(db, `handle_pins/${handleKey}/${sha256Pin}`), true);
+                            await remove(ref(db, `reserved_handles/${handleKey}/pinHash`));
+                            await update(ref(db, `reserved_handles/${handleKey}`), { isReserved: true });
+                        } catch {}
+                    }
+                }
+            }
+
+            if (isAuthenticated) {
+                localStorage.setItem(`foxnet_authtoken_${handleKey}`, activeToken);
                 setActiveUser(cleanHandle);
                 await syncCiphersToFirebase();
                 return { success: true, cleanHandle };
@@ -153,16 +222,17 @@ export async function authenticateHandleAndPin(handle, enteredPin = "") {
         } else {
             // Handle IS NOT RESERVED YET!
             if (enteredPin && enteredPin.trim()) {
-                const hashedPin = simpleHash(enteredPin.trim());
+                const sha256Pin = await hashPinSecure(handleKey, enteredPin.trim());
                 const unlockedIds = Object.keys(getUnlockedCiphers());
+                await set(ref(db, `handle_pins/${handleKey}/${sha256Pin}`), true);
                 await set(ref(db, `reserved_handles/${handleKey}`), {
                     handle: cleanHandle,
-                    pinHash: hashedPin,
+                    isReserved: true,
                     role: "user",
                     ciphers: unlockedIds,
                     createdAt: serverTimestamp()
                 });
-                localStorage.setItem(`foxnet_authtoken_${handleKey}`, hashedPin);
+                localStorage.setItem(`foxnet_authtoken_${handleKey}`, sha256Pin);
                 setActiveUser(cleanHandle);
                 return { success: true, cleanHandle, isNewRegistration: true };
             } else {

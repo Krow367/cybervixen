@@ -1,6 +1,7 @@
 import { openWindow } from "../../core/windows.js";
 import { type } from "../../core/typer.js";
 import { setupScrollbar } from "../../core/scrollbar.js";
+import { hashPinSecure, verifyPinInVault } from "../../core/session.js";
 import { unlockCipher, getUnlockedCiphers, syncCiphersToFirebase } from "../ciphers/ciphers.js";
 
 // Firebase ESM SDK Imports
@@ -220,9 +221,11 @@ async function fetchVisitorMetadata() {
     ].join("||");
 
     const fpHash = "fp_" + simpleHash(rawFingerprint);
-    const ipKey = "ip_" + ip.replace(/[\.\:]/g, "_");
+    const ipKey = ip === "unknown"
+        ? "ip_unknown"
+        : "ip_" + (await hashPinSecure("foxnet_ip_v2", ip)).slice(0, 24);
 
-    visitorMeta = { ip, ipKey, fpHash };
+    visitorMeta = { ip: "redacted", ipKey, fpHash };
     return visitorMeta;
 }
 
@@ -321,7 +324,7 @@ async function checkBannedStatus() {
         if (visitorMeta.ipKey !== "ip_unknown") {
             const ipBanSnap = await get(ref(db, `banned_ips/${visitorMeta.ipKey}`));
             if (ipBanSnap.exists()) {
-                disconnectAndLockout(`[ ACCESS DENIED: YOUR IP (${visitorMeta.ip}) IS PERMANENTLY BANNED FROM FOXNET ]`);
+                disconnectAndLockout("[ ACCESS DENIED: YOUR NETWORK NODE IS PERMANENTLY BANNED FROM FOXNET ]");
                 return true;
             }
         }
@@ -367,24 +370,44 @@ function disconnectAndLockout(reasonMessage) {
 }
 
 async function checkUserRole(handle) {
-    if (isOwnerHandle(handle)) {
-        currentUserRole = "owner";
-        return "owner";
-    }
     if (!db) return "user";
+    const handleKey = (handle || "").toLowerCase();
 
+    // Only grant owner/mod role if this client actually holds the valid auth token for the reserved handle!
     try {
-        const roleSnap = await get(child(ref(db), `user_roles/${handle.toLowerCase()}`));
+        const handleSnap = await get(child(ref(db), `reserved_handles/${handleKey}`));
+        const reservedData = handleSnap.val();
+        if (reservedData) {
+            const myStoredToken = localStorage.getItem(`foxnet_authtoken_${handleKey}`) || "";
+            let isVerified = false;
+            if (myStoredToken.length === 64) {
+                isVerified = await verifyPinInVault(db, ref, get, handleKey, myStoredToken);
+            } else if (reservedData.pinHash && myStoredToken === reservedData.pinHash) {
+                isVerified = true;
+            }
+            if (!isVerified) {
+                currentUserRole = "user";
+                return "user";
+            }
+        } else if (isOwnerHandle(handle)) {
+            currentUserRole = "user";
+            return "user";
+        }
+
+        if (isOwnerHandle(handle)) {
+            currentUserRole = "owner";
+            return "owner";
+        }
+
+        const roleSnap = await get(child(ref(db), `user_roles/${handleKey}`));
         if (roleSnap.exists() && roleSnap.val()) {
             currentUserRole = roleSnap.val();
             return roleSnap.val();
         }
 
-        const handleSnap = await get(child(ref(db), `reserved_handles/${handle.toLowerCase()}`));
-        const data = handleSnap.val();
-        if (data && data.role) {
-            currentUserRole = data.role;
-            return data.role;
+        if (reservedData && reservedData.role) {
+            currentUserRole = reservedData.role;
+            return reservedData.role;
         }
     } catch (e) {}
 
@@ -441,7 +464,7 @@ function setupPresence() {
 function updatePresenceData() {
     if (!db) return;
     const myPresenceRef = ref(db, `presence/${sessionKey}`);
-    const isOwner = currentUserRole === "owner" || isOwnerHandle(currentHandle);
+    const isOwner = currentUserRole === "owner";
     const website = isOwner ? "https://cybervixen.dev" : currentWebsite;
 
     set(myPresenceRef, {
@@ -452,7 +475,6 @@ function updatePresenceData() {
         isOwner: isOwner,
         ipKey: visitorMeta.ipKey,
         fpHash: visitorMeta.fpHash,
-        ip: visitorMeta.ip,
         joinedAt: serverTimestamp()
     });
 }
@@ -1223,7 +1245,7 @@ function sendChatMessage(rawText, isSystem = false) {
 
 function broadcastMessage(text, isSystem = false) {
     if (!text || !db) return;
-    const isOwner = currentUserRole === "owner" || isOwnerHandle(currentHandle);
+    const isOwner = currentUserRole === "owner";
     const msgData = {
         sender: isSystem ? "SYSTEM" : currentHandle,
         flair: currentFlair,
@@ -1276,12 +1298,38 @@ async function checkAndSetHandle(newHandle, enteredPin = "") {
 
         if (reservedData) {
             // Handle IS RESERVED!
-            const storedPinHash = reservedData.pinHash;
-            const myStoredToken = localStorage.getItem(`foxnet_authtoken_${handleKey}`);
-            const hashedEnteredPin = enteredPin && enteredPin.trim() ? simpleHash(enteredPin.trim()) : "";
+            const myStoredToken = localStorage.getItem(`foxnet_authtoken_${handleKey}`) || "";
+            const trimmedPin = enteredPin ? enteredPin.trim() : "";
+            const sha256Pin = trimmedPin ? await hashPinSecure(handleKey, trimmedPin) : "";
 
-            if (myStoredToken === storedPinHash || hashedEnteredPin === storedPinHash) {
-                localStorage.setItem(`foxnet_authtoken_${handleKey}`, storedPinHash);
+            let isAuthenticated = false;
+            let activeToken = "";
+
+            if (sha256Pin && await verifyPinInVault(db, ref, get, handleKey, sha256Pin)) {
+                isAuthenticated = true;
+                activeToken = sha256Pin;
+            } else if (myStoredToken.length === 64 && await verifyPinInVault(db, ref, get, handleKey, myStoredToken)) {
+                isAuthenticated = true;
+                activeToken = myStoredToken;
+            } else if (reservedData.pinHash) {
+                // Legacy fallback & automatic migration to /handle_pins/<handleKey>/<sha256>
+                const legacyStoredPinHash = reservedData.pinHash;
+                const hashedEnteredPin = trimmedPin ? simpleHash(trimmedPin) : "";
+                if ((trimmedPin && (hashedEnteredPin === legacyStoredPinHash || sha256Pin === legacyStoredPinHash)) || myStoredToken === legacyStoredPinHash) {
+                    isAuthenticated = true;
+                    activeToken = sha256Pin || legacyStoredPinHash;
+                    if (sha256Pin) {
+                        try {
+                            await set(ref(db, `handle_pins/${handleKey}/${sha256Pin}`), true);
+                            await remove(ref(db, `reserved_handles/${handleKey}/pinHash`));
+                            await update(ref(db, `reserved_handles/${handleKey}`), { isReserved: true });
+                        } catch {}
+                    }
+                }
+            }
+
+            if (isAuthenticated) {
+                localStorage.setItem(`foxnet_authtoken_${handleKey}`, activeToken);
                 const role = reservedData.role || (isOwnerHandle(cleanName) ? "owner" : "user");
                 currentUserRole = role;
                 setHandleSuccess(cleanName);
@@ -1297,20 +1345,28 @@ async function checkAndSetHandle(newHandle, enteredPin = "") {
             }
         } else {
             // Handle IS NOT RESERVED YET!
+            if (isOwnerHandle(cleanName) && (!enteredPin || !enteredPin.trim())) {
+                const handleInput = document.getElementById("setting-handle-input");
+                if (handleInput) handleInput.value = currentHandle;
+                if (statusMsg) statusMsg.textContent = `[ ERROR: PIN REQUIRED FOR OWNER HANDLE ]`;
+                return false;
+            }
+
             const role = isOwnerHandle(cleanName) ? "owner" : "user";
             currentUserRole = role;
 
             if (enteredPin && enteredPin.trim()) {
-                const hashedPin = simpleHash(enteredPin.trim());
+                const sha256Pin = await hashPinSecure(handleKey, enteredPin.trim());
                 const unlockedIds = Object.keys(getUnlockedCiphers());
+                await set(ref(db, `handle_pins/${handleKey}/${sha256Pin}`), true);
                 await set(ref(db, `reserved_handles/${handleKey}`), {
                     handle: cleanName,
-                    pinHash: hashedPin,
+                    isReserved: true,
                     role: role,
                     ciphers: unlockedIds,
                     createdAt: serverTimestamp()
                 });
-                localStorage.setItem(`foxnet_authtoken_${handleKey}`, hashedPin);
+                localStorage.setItem(`foxnet_authtoken_${handleKey}`, sha256Pin);
                 setHandleSuccess(cleanName);
                 if (statusMsg) statusMsg.textContent = `[ HANDLE ${cleanName.toUpperCase()} RESERVED WITH PIN ]`;
             } else {
@@ -1540,13 +1596,26 @@ function setupContextMenuEvents() {
     }
 }
 
+async function adminUpdate(updatesObj) {
+    const myHandleKey = (currentHandle || "").toLowerCase();
+    const myToken = localStorage.getItem(`foxnet_authtoken_${myHandleKey}`) || localStorage.getItem("foxnet_authtoken_cybervixen") || "";
+    const nonce = "n_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+    await update(ref(db), {
+        [`admin_nonces/${nonce}`]: { handleKey: myHandleKey, token: myToken },
+        "admin_last_nonce": nonce,
+        ...updatesObj
+    });
+}
+
 async function kickUser(targetHandle) {
     if (!targetHandle || !db) return;
     const confirmed = await showRetroConfirm("// KICK USER //", `Disconnect @${targetHandle} from foxNet?`);
     if (confirmed) {
-        await set(ref(db, `kicked_users/${targetHandle.toLowerCase()}`), {
-            kickedBy: currentHandle,
-            timestamp: serverTimestamp()
+        await adminUpdate({
+            [`kicked_users/${targetHandle.toLowerCase()}`]: {
+                kickedBy: currentHandle,
+                timestamp: serverTimestamp()
+            }
         });
         sendChatMessage(`[ SYSTEM ]: @${targetHandle} was kicked from the node by @${currentHandle}.`, true);
     }
@@ -1556,36 +1625,35 @@ async function banUser(targetHandle) {
     if (!targetHandle || !db) return;
     const confirmed = await showRetroConfirm("// BAN USER //", `PERMANENTLY BAN @${targetHandle} (IP & Device) from foxNet?`);
     if (confirmed) {
-        const targetUserObj = activePresenceUsers.get(targetHandle.toLowerCase());
-
-        // 1. Handle Ban
-        await set(ref(db, `banned_users/${targetHandle.toLowerCase()}`), {
-            bannedBy: currentHandle,
-            timestamp: serverTimestamp()
-        });
+        const targetKey = targetHandle.toLowerCase();
+        const targetUserObj = activePresenceUsers.get(targetKey);
+        const updates = {
+            [`banned_users/${targetKey}`]: {
+                bannedBy: currentHandle,
+                timestamp: serverTimestamp()
+            },
+            [`reserved_handles/${targetKey}`]: null
+        };
 
         // 2. IP Ban (if present in presence metadata)
         if (targetUserObj && targetUserObj.ipKey && targetUserObj.ipKey !== "ip_unknown") {
-            await set(ref(db, `banned_ips/${targetUserObj.ipKey}`), {
+            updates[`banned_ips/${targetUserObj.ipKey}`] = {
                 handle: targetHandle,
-                ip: targetUserObj.ip,
                 bannedBy: currentHandle,
                 timestamp: serverTimestamp()
-            });
+            };
         }
 
         // 3. Canvas Hardware Fingerprint Ban (if present in presence metadata)
         if (targetUserObj && targetUserObj.fpHash && targetUserObj.fpHash !== "fp_unknown") {
-            await set(ref(db, `banned_fingerprints/${targetUserObj.fpHash}`), {
+            updates[`banned_fingerprints/${targetUserObj.fpHash}`] = {
                 handle: targetHandle,
                 bannedBy: currentHandle,
                 timestamp: serverTimestamp()
-            });
+            };
         }
 
-        // 4. Remove Reserved Handle & Presence
-        await remove(ref(db, `reserved_handles/${targetHandle.toLowerCase()}`));
-        
+        await adminUpdate(updates);
         sendChatMessage(`[ SYSTEM ]: @${targetHandle} (IP & Device) was PERMANENTLY BANNED from foxNet by @${currentHandle}.`, true);
     }
 }
@@ -1593,7 +1661,7 @@ async function banUser(targetHandle) {
 // ─── Owner-Only User Roster Role Management Context Menu ─────────────────────
 
 async function setUserRole(targetUser, newRole) {
-    if (!db || !targetUser || (currentUserRole !== "owner" && !isOwnerHandle(currentHandle))) {
+    if (!db || !targetUser || currentUserRole !== "owner") {
         renderLocalNotice("ONLY THE OWNER CAN ASSIGN ROLES");
         return;
     }
@@ -1611,15 +1679,18 @@ async function setUserRole(targetUser, newRole) {
     if (!confirmed) return;
 
     try {
-        // 1. Persist role in /user_roles/handleKey
-        await set(ref(db, `user_roles/${handleKey}`), newRole);
+        const updates = {
+            [`user_roles/${handleKey}`]: newRole
+        };
 
         // 2. Persist in /reserved_handles/handleKey/role if handle is reserved
         const reservedRef = ref(db, `reserved_handles/${handleKey}`);
         const snap = await get(reservedRef);
         if (snap.exists()) {
-            await update(reservedRef, { role: newRole });
+            updates[`reserved_handles/${handleKey}/role`] = newRole;
         }
+
+        await adminUpdate(updates);
 
         // 3. Update active presence entry for real-time live tag/color update
         const presenceSnap = await get(ref(db, "presence"));
@@ -1682,8 +1753,8 @@ function setupUserRosterContextMenu() {
     };
 
     userListEl.addEventListener("contextmenu", (e) => {
-        // ONLY Owner can open the User Roster Context Menu
-        const isOwner = currentUserRole === "owner" || isOwnerHandle(currentHandle);
+        // ONLY verified Owner can open the User Roster Context Menu
+        const isOwner = currentUserRole === "owner";
         if (!isOwner) return;
 
         const userItem = e.target.closest(".sidebar-user-item");
@@ -1734,13 +1805,13 @@ function setupUserRosterContextMenu() {
 
     if (btnUserKick) {
         btnUserKick.addEventListener("click", () => {
-            if (targetUserName) performKickUser(targetUserName);
+            if (targetUserName) kickUser(targetUserName);
         });
     }
 
     if (btnUserBan) {
         btnUserBan.addEventListener("click", () => {
-            if (targetUserName) performBanUser(targetUserName);
+            if (targetUserName) banUser(targetUserName);
         });
     }
 }

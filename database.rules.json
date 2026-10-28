@@ -1,0 +1,126 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "handle_pins": {
+      ".read": false,
+      ".write": false,
+      "$handleKey": {
+        ".read": false,
+        ".write": false,
+        "$pinHash": {
+          ".read": "data.exists()",
+          ".write": "!data.exists() && newData.val() === true && $pinHash.length === 64"
+        }
+      }
+    },
+
+    "admin_nonces": {
+      ".read": false,
+      ".write": false,
+      "$nonce": {
+        ".write": "!data.exists() && newData.hasChildren(['handleKey', 'token']) && ((newData.child('handleKey').val() === 'cybervixen' && root.child('handle_pins/cybervixen/' + newData.child('token').val()).exists()) || (root.child('user_roles/' + newData.child('handleKey').val()).val() === 'mod' && root.child('handle_pins/' + newData.child('handleKey').val() + '/' + newData.child('token').val()).exists()))"
+      }
+    },
+
+    "admin_last_nonce": {
+      ".read": false,
+      ".write": "newData.isString() && !root.child('admin_nonces/' + newData.val()).exists() && newData.parent().child('admin_nonces/' + newData.val()).exists()"
+    },
+
+    "reserved_handles": {
+      ".read": false,
+      ".write": false,
+      "$handleKey": {
+        ".read": true,
+        ".write": "!data.exists() || (!newData.exists() && newData.parent().parent().child('admin_last_nonce').val() !== data.parent().parent().child('admin_last_nonce').val())",
+        "handle": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 32"
+        },
+        "isReserved": {
+          ".write": "newData.isBoolean()"
+        },
+        "role": {
+          ".write": "!data.exists() || newData.parent().parent().parent().child('admin_last_nonce').val() !== data.parent().parent().parent().child('admin_last_nonce').val()",
+          ".validate": "newData.isString() && (newData.val() === 'user' || newData.val() === 'vip' || newData.val() === 'mod' || newData.val() === 'owner')"
+        },
+        "ciphers": {
+          ".write": "newData.exists()",
+          "$idx": {
+            ".validate": "newData.isString() && newData.val().length <= 48"
+          }
+        },
+        "pinHash": {
+          ".write": "!newData.exists()"
+        },
+        "createdAt": {
+          ".validate": "newData.isNumber()"
+        }
+      }
+    },
+
+    "messages": {
+      ".read": true,
+      ".write": false,
+      "$msgId": {
+        ".write": "(!data.exists() && newData.exists()) || (data.exists() && newData.exists() && newData.child('sender').val() === data.child('sender').val()) || (data.exists() && !newData.exists())",
+        ".validate": "!newData.exists() || (newData.hasChildren(['sender', 'text', 'timestamp']) && newData.child('sender').isString() && newData.child('sender').val().length > 0 && newData.child('sender').val().length <= 32 && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 2000)"
+      }
+    },
+
+    "presence": {
+      ".read": true,
+      ".write": false,
+      "$sessionKey": {
+        ".write": true,
+        ".validate": "!newData.exists() || (newData.hasChildren(['name', 'joinedAt']) && newData.child('name').isString() && newData.child('name').val().length <= 32 && (!newData.hasChild('flair') || (newData.child('flair').isString() && newData.child('flair').val().length <= 64)) && (!newData.hasChild('website') || (newData.child('website').isString() && newData.child('website').val().length <= 128)))"
+      }
+    },
+
+    "user_roles": {
+      ".read": false,
+      ".write": false,
+      "$handleKey": {
+        ".read": true,
+        ".write": "newData.parent().parent().child('admin_last_nonce').val() !== data.parent().parent().child('admin_last_nonce').val() && newData.isString() && (newData.val() === 'user' || newData.val() === 'vip' || newData.val() === 'mod')"
+      }
+    },
+
+    "banned_users": {
+      ".read": false,
+      ".write": false,
+      "$handleKey": {
+        ".read": true,
+        ".write": "$handleKey !== 'cybervixen' && $handleKey !== 'owner' && newData.parent().parent().child('admin_last_nonce').val() !== data.parent().parent().child('admin_last_nonce').val()"
+      }
+    },
+
+    "banned_ips": {
+      ".read": false,
+      ".write": false,
+      "$ipKey": {
+        ".read": true,
+        ".write": "newData.parent().parent().child('admin_last_nonce').val() !== data.parent().parent().child('admin_last_nonce').val()"
+      }
+    },
+
+    "banned_fingerprints": {
+      ".read": false,
+      ".write": false,
+      "$fpHash": {
+        ".read": true,
+        ".write": "newData.parent().parent().child('admin_last_nonce').val() !== data.parent().parent().child('admin_last_nonce').val()"
+      }
+    },
+
+    "kicked_users": {
+      ".read": false,
+      ".write": false,
+      "$handleKey": {
+        ".read": true,
+        ".write": "!newData.exists() || ($handleKey !== 'cybervixen' && $handleKey !== 'owner' && newData.parent().parent().child('admin_last_nonce').val() !== data.parent().parent().child('admin_last_nonce').val())"
+      }
+    }
+  }
+}

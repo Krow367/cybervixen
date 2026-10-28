@@ -315,8 +315,20 @@ export async function syncCiphersToFirebase(unlockedMap = null) {
         if (!snap.exists()) return;
 
         const reservedData = snap.val();
-        // Verify this device's stored PIN token matches the reserved handle record
-        if (!reservedData || !reservedData.pinHash || reservedData.pinHash !== myStoredToken) return;
+        if (!reservedData) return;
+
+        // Verify this device's stored PIN token against /handle_pins/<handleKey>/<token> vault (or legacy pinHash)
+        let isValidToken = false;
+        if (myStoredToken.length === 64) {
+            try {
+                const pinSnap = await get(ref(db, `handle_pins/${handleKey}/${myStoredToken}`));
+                isValidToken = Boolean(pinSnap && pinSnap.exists() && pinSnap.val() === true);
+            } catch {}
+        }
+        if (!isValidToken && reservedData.pinHash && reservedData.pinHash === myStoredToken) {
+            isValidToken = true;
+        }
+        if (!isValidToken) return;
 
         const currentLocal = unlockedMap || getUnlockedCiphers();
         const remoteList = Array.isArray(reservedData.ciphers) ? reservedData.ciphers : [];
