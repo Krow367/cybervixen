@@ -62,33 +62,34 @@ Please run 'repair' to restore corrupted file integrity.
 =====================================================================
 
   FILE SYSTEM:
-    dir / ls        List contents of current directory
-    cd <path>       Navigate to directory (e.g. cd DOCS, cd .., cd /)
-    type / cat      Display file contents (or inspect live site code!)
+    dir / ls                 List contents of current directory
+    cd <path>                Navigate to directory (e.g. cd DOCS, cd .., cd /)
+    type / cat               Display file contents (or inspect live site code!)
 
   SYSTEM & DISPLAY:
-    sysinfo / fetch Display hardware & system telemetry summary
+    sysinfo / fetch          Display hardware & system telemetry summary
     theme <name / studio>    Recalibrate phosphor tube (green, amber, cyan, crimson) or launches the Theme Studio
-    cls / clear     Flush terminal screen buffer
-    help            Display this command compendium
-    about           Display operator profile & background dossier
+    cls / clear              Flush terminal screen buffer
+    help                     Display this command compendium
+    about                    Display operator profile & background dossier
 
   APPLICATIONS & CARTRIDGES:
-    blog            CyberVixen's Transmissions & Articles
-    recipes         Culinary Compendium & Formulae
-    links           Neighboring Network Nodes
-    chat            Relay Chat Terminal
-    abm             Anything But Metric (Imperial Equivalency Engine)
-    repair          Terminal Buffer Integrity Restoration
-    nano / edit     Interactive Terminal Text Editor
-    balls           An echo of a ghost
+    atabook                  Sign or read the guestbook
+    blog                     Ramblings and thoughts of the developer
+    recipes                  Culinary Compendium & Formulae
+    links                    Neighboring Network Nodes
+    chat                     Relay Chat Terminal
+    abm                      Anything But Metric (Imperial Equivalency Engine)
+    repair                   Terminal Buffer Integrity Restoration
+    nano / edit              Interactive Terminal Text Editor
+    balls                    An echo of a ghost
 
   USER & SESSION:
-    login / auth    Authenticate with foxNet Operator Handle & PIN
-    logout          End active session and return to GUEST
-    whoami          Display active user identity and access level
-    backup          Export offline NVRAM save token
-    restore <token> Import offline save token to restore progress
+    login / auth             Authenticate with foxNet Operator Handle & PIN
+    logout                   End active session and return to GUEST
+    whoami                   Display active user identity and access level
+    backup                   Export offline NVRAM save token
+    restore <token>          Import offline save token to restore progress
 `;
             await ctx.type(out, { speed: 4 });
         }
